@@ -9,12 +9,18 @@
     <Canvas Name="GameCanvas">
         <Label Name="InfoTitleLbl" Content="Game Info:" FontWeight="DemiBold" HorizontalContentAlignment="Center" FontStyle="Italic" FontSize="16" Canvas.Left="10" Canvas.Top="10" Height="35" Width="90"></Label>
 
-        <Label Name="TimeLbl" Content="Time: " FontSize="13" FontStyle="Italic" Canvas.Left="15" Canvas.Top="43" Width="50"></Label>
-        <Label Name="ScoreLbl" Content="Score: " FontSize="13" FontStyle="Italic"  Canvas.Left="15" Canvas.Top="69" Width="50"></Label>
-        <Label Name="TimeDisplayTXT" Height="29" FontSize="13" Width="45" Content ="0000" Canvas.Left="55" HorizontalContentAlignment="Center" Canvas.Top="43"></Label>
-        <Label Name="ScoreDisplayTXT" Height="28" FontSize="13" Width="45" Content ="0000" Canvas.Left="55" HorizontalContentAlignment="Center" Canvas.Top="69"/>
+        <Label Name="TimeLbl" Content="Time: " FontSize="13" FontStyle="Italic" Canvas.Left="15" Canvas.Top="37" Width="50"></Label>
+        <Label Name="ScoreLbl" Content="Score: " FontSize="13" FontStyle="Italic"  Canvas.Left="15" Canvas.Top="64" Width="50"></Label>
+        <Label Name="TimeDisplayTXT" Height="29" FontSize="13" Width="45" Content ="0000" Canvas.Left="55" HorizontalContentAlignment="Center" Canvas.Top="37"></Label>
+        <Label Name="ScoreDisplayTXT" Height="28" FontSize="13" Width="45" Content ="0000" Canvas.Left="55" HorizontalContentAlignment="Center" Canvas.Top="64"/>
 
-        <Label Name="PowerupsBoxLbl" Content="Active Powerups:" FontStyle="Italic" FontWeight="SemiBold" FontSize="11" Canvas.Left="8" Canvas.Top="142"></Label>
-        <TextBox Name="PowerupInfoBlock" Width="90" Canvas.Left="10" FontSize="10" Canvas.Top="172" Height="237" BorderThickness="0" BorderBrush="White" TextWrapping="Wrap"/>
+        <Label Name="PowerupsBoxLbl" Content="Active Powerups:" FontStyle="Italic" FontWeight="SemiBold" FontSize="11" Canvas.Left="6" Canvas.Top="223"></Label>
+        <TextBox Name="PowerupInfoBlock" Width="90" Canvas.Left="11" FontSize="10" Canvas.Top="248" Height="161" BorderThickness="0" BorderBrush="White" TextWrapping="Wrap"/>
+
+        <Label Name="PowerupsKeyLbl" FontWeight="SemiBold" FontStyle="Italic" FontSize="11" Content="Powerup Types:" Canvas.Left="10" Canvas.Top="123"></Label>
+        <Label Name="SpeedUpLbl" Content="= Speed Up" Canvas.Left="25" FontSize="10" Canvas.Top="140"></Label>
+        <Label Name="SpeedDownLbl" Content="= Slow Enemy" Canvas.Left="25" FontSize="10" Canvas.Top="160"></Label>
+        <Label Name="FreezeLbl" Content="= Freeze Enemy" Canvas.Left="25" FontSize="10" Canvas.Top="180"></Label>
+        <Label Name="PointsLbl" Content="= x2 Points" Canvas.Left="25" FontSize="10" Canvas.Top="200"></Label>
     </Canvas>
 </Window>

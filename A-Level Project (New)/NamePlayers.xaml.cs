@@ -24,6 +24,9 @@ namespace A_Level_Project__New_
         public NamePlayers(int PlayerNum)
         {
             InitializeComponent();
+
+            SetColours();
+
             Title = "Player " + Convert.ToString(PlayerNum);
             ExplainTxt.Text = "Input a name for player " + PlayerNum;
             InputTxt.Text = "";
@@ -51,6 +54,16 @@ namespace A_Level_Project__New_
         private void DoneBtn_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        private void SetColours()
+        {
+            myCanvas.Background = GameConstants.BackgroundColour;
+            ExplainTxt.Foreground = GameConstants.ForegroundColour;
+            DoneBtn.Foreground = GameConstants.ForegroundColour;
+            DoneBtn.Background = GameConstants.BackgroundColour;
+            InputTxt.Background = GameConstants.BackgroundColour;
+            InputTxt.Foreground = GameConstants.ForegroundColour;
         }
     }
 }

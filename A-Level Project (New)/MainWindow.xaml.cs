@@ -23,9 +23,14 @@ namespace A_Level_Project__New_
         public MainWindow()
         {
             InitializeComponent();
-            SetColours();
 
-            Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
+            BitmapImage WindowIconSource = new BitmapImage();
+            WindowIconSource.BeginInit();
+            WindowIconSource.UriSource = new Uri(Environment.CurrentDirectory + "/P1" + GameConstants.FileNameSuffixes[2]);
+            WindowIconSource.EndInit();
+
+            this.Icon = WindowIconSource;
+            SetColours();
         }
 
         private void NewGameBtn_Click(object sender, RoutedEventArgs e)

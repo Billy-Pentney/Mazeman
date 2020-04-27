@@ -163,6 +163,7 @@ namespace A_Level_Project__New_
             GraphSides[1].Y1 = TopRightIndent[1] * (1 - fractionFromGraph);
             GraphSides[1].X2 = BottomLeftIndent[0] * (1 - fractionFromGraph);     //bottom left point
             GraphSides[1].Y2 = TopRightIndent[1] * (1 + fractionFromGraph) + AvailableArea[1];
+           
         }
 
         public void ClearCanvas()
@@ -394,6 +395,7 @@ namespace A_Level_Project__New_
             InputLbl.Foreground = frg;
             InputNameTxtBox.Background = bkg;
             InputNameTxtBox.Foreground = frg;
+
             SearchBtn.Background = bkg;
             SearchBtn.Foreground = frg;
             IncCapsCheckBox.Foreground = frg;

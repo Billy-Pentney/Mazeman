@@ -42,7 +42,14 @@ namespace A_Level_Project__New_
             InitializeComponent();
 
             AddObjectsToWindow();
+            //adds sprites and labels (i.e. the entities/powerups/scorepoints and the key the user sees)
             SetColours();
+
+            BitmapImage SettingsIconSource = new BitmapImage();
+            SettingsIconSource.BeginInit();
+            SettingsIconSource.UriSource = new Uri(Environment.CurrentDirectory + "/SettingsIcon.png");
+            SettingsIconSource.EndInit();
+            this.Icon = SettingsIconSource;
 
             DefaultCheck.IsChecked = true;
             MedRBtn.IsChecked = true;
@@ -234,11 +241,11 @@ namespace A_Level_Project__New_
 
                 SettingsCanvas.Children.Add(PointSpriteImages[i]);
                 Canvas.SetRight(PointSpriteImages[i], 240);
-                Canvas.SetTop(PointSpriteImages[i], 245 + i * 40);
+                Canvas.SetTop(PointSpriteImages[i], 240 + i * 40);
 
                 SettingsCanvas.Children.Add(PointLabels[i]);
                 Canvas.SetRight(PointLabels[i], 170);
-                Canvas.SetTop(PointLabels[i], 240 + i * 40);
+                Canvas.SetTop(PointLabels[i], 235 + i * 40);
                 
             }
 
@@ -262,7 +269,7 @@ namespace A_Level_Project__New_
 
             SettingsCanvas.Children.Add(ControlsIMG);
             Canvas.SetRight(ControlsIMG, 10);
-            Canvas.SetTop(ControlsIMG, 230);
+            Canvas.SetTop(ControlsIMG, 225);
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)

@@ -23,7 +23,7 @@
         <CheckBox Name="DefaultCheck" Content="Default Maze Dimensions" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="60" Canvas.Top="330" Checked="DefaultCheck_Checked" Height="16" Width="150"></CheckBox>
         <CheckBox Name="TwoPlayersCheck" Content="Two Players" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="60" Canvas.Top="355"/>
 
-        <Button Name="StartBtn" Content="Start Game" Canvas.Bottom="20" Canvas.Right="20" VerticalContentAlignment="Center" Height="30" Width="254" Click="StartBtn_Click" Canvas.Left="265" Canvas.Top="369"></Button>
+        <Button Name="StartBtn" Content="Start Game" Canvas.Bottom="20" Canvas.Right="20" VerticalContentAlignment="Center" Height="30" Width="270" Click="StartBtn_Click" Canvas.Left="249" Canvas.Top="369"></Button>
 
         <RadioButton Name="EasyRBtn" Canvas.Left="60" Canvas.Top="238" Checked="EasyRBtn_Checked"></RadioButton>
         <RadioButton Name="MedRBtn" Canvas.Left="125" Canvas.Top="238" Checked="MedRBtn_Checked"></RadioButton>
@@ -34,15 +34,16 @@
         <Label Name="HardLbl" Content="Hard" FontSize="9" HorizontalContentAlignment="Center" Canvas.Left="180" Canvas.Top="253" Width="36"></Label>
 
         <Label Name="MazeDimText" Content="Maze Dimensions:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="168" Canvas.Left="48" Canvas.Top="10"/>
-        <Label Name="EnemyDifficultyText" Content="Enemy Difficulty:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="168" Canvas.Left="48" Canvas.Top="195"/>
+        <Label Name="EnemyDifficultyText" Content="Enemy Difficulty:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="168" Canvas.Left="48" Canvas.Top="190"/>
         <Label Name="OtherOptionsText" Content="Game Options:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="168" Canvas.Left="48" Canvas.Top="290"/>
 
         <TextBlock Name="ControlsExplainText" Width="0" Text="Player 1 is controlled by the W,A,S,D keys.&#x0a; &#x0a;Player 2 is controlled by the arrow keys." TextWrapping="Wrap" Height="92" Canvas.Left="402" Canvas.Top="253"></TextBlock>
 
         <Label Name="PlayersLbl" Content="Players:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="100" Canvas.Left="265" Canvas.Top="10"/>
         <Label Name="PowerupsLbl" Content="Powerups:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="100" Canvas.Left="400" Canvas.Top="10"/>
-        <Label Name="PointsLbl" Content="Points:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="100" Canvas.Left="265" Canvas.Top="195"/>
-        <Label Name="ControlsLbl" Content="Controls:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="100" Canvas.Left="400" Canvas.Top="195"/>
+        <Label Name="PointsLbl" Content="Points:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="100" Canvas.Left="265" Canvas.Top="190"/>
+        <Label Name="ControlsLbl" Content="Controls:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="100" Canvas.Left="400" Canvas.Top="190"/>
 
+        <Line Name="SeparatorLine" StrokeThickness="0.5" Stroke="Gray" X1="235" X2="235" Y1="5" Y2="415"></Line>
     </Canvas>
 </Window>
