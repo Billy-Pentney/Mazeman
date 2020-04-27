@@ -62,20 +62,6 @@ namespace A_Level_Project__New_
             MediumLbl.Foreground = foregroundColour;
             HardLbl.Foreground = foregroundColour;
 
-            //EasyRBtn.Background = backgroundColour;
-            //EasyRBtn.Foreground = foregroundColour;
-            //MedRBtn.Background = backgroundColour;
-            //MedRBtn.Foreground = foregroundColour;
-            //HardRBtn.Background = backgroundColour;
-            //HardRBtn.Foreground = foregroundColour;
-
-            //DefaultCheck.Background = backgroundColour;
-            //DefaultCheck.Foreground = foregroundColour;
-            //TwoPlayersCheck.Background = backgroundColour;
-            //TwoPlayersCheck.Foreground = foregroundColour;
-            //ClassicControlsCheckBox.Background = backgroundColour;
-            //ClassicControlsCheckBox.Foreground = foregroundColour;
-
             StartBtn.Background = backgroundColour;
             StartBtn.Foreground = foregroundColour;
             BackBtn.Foreground = foregroundColour;

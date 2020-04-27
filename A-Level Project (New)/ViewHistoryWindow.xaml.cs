@@ -25,7 +25,7 @@ namespace A_Level_Project__New_
         private List<Rectangle> shapes = new List<Rectangle>();
         public static double Width = 20;
         private string GameStatsText;
-        private static Brush[] Colours = new Brush[] { Brushes.Green, Brushes.Yellow, Brushes.Red };
+        private static Brush[] Colours = new Brush[] { Brushes.Green, Brushes.Orange, Brushes.Red };
 
         public BarLine(DataEntry thisEntry, double heightScale)
         {
@@ -110,13 +110,10 @@ namespace A_Level_Project__New_
         
         private List<DataEntry> DisplayedEntries = new List<DataEntry>();
         private int HighestScoreForGraph = 0;
-        private int ObjectsToKeepDisplayed;
 
         public VisualGraph(Canvas myCanvas)
         {
             thisCanvas = myCanvas;
-
-            ObjectsToKeepDisplayed = myCanvas.Children.Count + 1;
             //prevents the first objects from being removed from the canvas
         }
 
@@ -146,7 +143,6 @@ namespace A_Level_Project__New_
 
         public void ClearCanvas()
         {
-            //thisCanvas.Children.RemoveRange(ObjectsToKeepDisplayed, thisCanvas.Children.Count);
             //keeps the user input and labels, but removes the graph
 
             foreach (var item in GraphLines)

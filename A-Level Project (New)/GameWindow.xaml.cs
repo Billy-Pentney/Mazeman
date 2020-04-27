@@ -27,17 +27,19 @@ namespace A_Level_Project__New_
         public static double WallThicknessProportion = 0.1;
 
         public static int[] WinIndent { get; } = new int[2] { 90, 20 };
-        public static int[] MazeIndent { get; } = new int[2] { 65, 0 };
+        public static int[] MazeIndent { get; } = new int[2] { 80, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
         public const string FileName = "History.txt";
         //the name/address of the file where scores should be written to/read from
 
-        public static int[] difficulties = new int[] { 1, 2, 3 };
-        public const double DefaultMovementSpeed = 3;
+        public static double[] difficulties = new double[] { 1, 2, 3 };
         //the player movement speed with no powerups
+        
+        public static int ClearPointsValue { get; } = 50;
 
         public static Brush[] PlayerColours { get; } = new Brush[] { Brushes.Yellow, Brushes.Blue, Brushes.Red };
+        public static Brush[] PlayerFreezeColours { get; } = new Brush[] { Brushes.Gray, Brushes.DarkGray, Brushes.DarkRed };
         public static Brush[] PowerUpColours { get; } = new Brush[] { Brushes.Orange, Brushes.LimeGreen, Brushes.LightBlue, Brushes.Purple };
         public static Brush[] ScorePointColours { get; } = new Brush[] { Brushes.Gray, Brushes.Orange, Brushes.Purple };
 
@@ -73,7 +75,7 @@ namespace A_Level_Project__New_
     {
         private double multiplier = 1.5;            ///speed increased by 50%
 
-        public SpeedUpPowerup(GameConstants constants, Point MazePt, Point PixelPt): base(constants, MazePt, PixelPt)
+        public SpeedUpPowerup(Point MazePt, Point PixelPt): base(MazePt, PixelPt)
         {
             TypeName = "Player Speed is increased for " + maxDuration + " seconds!";
             Effects[0] = multiplier;
@@ -96,7 +98,7 @@ namespace A_Level_Project__New_
     {
         private double multiplier = 0.5;            ///speed decreased by 50%
 
-        public SpeedDownPowerup(GameConstants constants, Point MazePt, Point PixelPt) : base(constants, MazePt, PixelPt)
+        public SpeedDownPowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt)
         {
             TypeName = "Enemy Speed is halved for " + maxDuration + " seconds!";
             Effects[1] = multiplier;
@@ -117,13 +119,13 @@ namespace A_Level_Project__New_
 
     class FreezePowerup : Powerup
     {
-        public FreezePowerup(GameConstants constants, Point MazePt, Point PixelPt) : base(constants, MazePt, PixelPt)
+        public FreezePowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt)
         {
             Random rand = new Random();
             TypeName = "Enemy is frozen for " + Convert.ToString(maxDuration) + " seconds!";
             TypeNumber = 2;
             shape.Fill = GameConstants.PowerUpColours[TypeNumber];
-            Effects[1] = -1;            //sets speed to -1 to prevent movement
+            Effects[1] = -1;            //sets speed to -1 to prevent movement, but multiplies out to give original value again
         }
 
         public override void Collect(Player collector)
@@ -142,7 +144,7 @@ namespace A_Level_Project__New_
     {
         private double multiplier = 2;
 
-        public PointPowerup(GameConstants constants, Point MazePt, Point PixelPt) : base(constants, MazePt, PixelPt)
+        public PointPowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt)
         {
             TypeName = "Points are x" + multiplier + " for " + maxDuration + " seconds!";
             Effects[2] = multiplier;
@@ -183,7 +185,7 @@ namespace A_Level_Project__New_
         protected int TypeNumber = -1;
         protected Random rand = new Random();
 
-        public Powerup(GameConstants constants, Point mazePt, Point pixelPt)
+        public Powerup(Point mazePt, Point pixelPt)
         {
             shape.Width = GameConstants.CellDimensions[0] / 3;
             shape.Height = GameConstants.CellDimensions[1] / 3;
@@ -251,11 +253,11 @@ namespace A_Level_Project__New_
             if (ReverseEffects)
             {
                 //flips the effects so that the enemy receives the friendly effect, when it collects it
-                double temporary = Effects[0];
+                double temporaryVal = Effects[0];
                 Effects[0] = Effects[1];
-                Effects[1] = temporary;
+                Effects[1] = temporaryVal;
 
-                maxDuration = (int)Math.Truncate((double)(maxDuration / 2));
+                maxDuration = (int)Math.Truncate((maxDuration * 0.5));
             }
 
         }
@@ -291,10 +293,12 @@ namespace A_Level_Project__New_
         protected Ellipse Shape = new Ellipse();
         protected Point CurrentMazePt = new Point();
         protected Point PixelPt = new Point();
-        protected int CurrentDirection = 3;     //moving left at start
+        protected int CurrentDirection = -1;     //moving left at start
         private int Score = 0;
         private int PlayerNum;
         private int ScorePointValue = 1;
+        private int DisplayNumber = 0;          ///used to reduce movement to every other frame
+        private double UpdateFrequency = 1;
 
         private Point PixelPtChange = new Point(0, 0);        /// used during movement
         private Point NextPixelPt;
@@ -308,8 +312,9 @@ namespace A_Level_Project__New_
             SetCurrentCellPt(StartMazePt);
             SetPixelPt(StartPixelPt);
 
-            DefaultMovementSpeed = GameConstants.DefaultMovementSpeed;
-            CurrentMovementSpeed = GameConstants.DefaultMovementSpeed;
+            DefaultMovementSpeed = GameConstants.difficulties.Last();
+            SetSpeed(DefaultMovementSpeed);
+
             PlayerNum = Number;
             //player 1 has number 0, player 2 has number 1, Enemy has number 2
 
@@ -329,6 +334,11 @@ namespace A_Level_Project__New_
 
             Game.MW.GameCanvas.Children.Add(Shape);
             Draw();
+        }
+
+        public void IncrementDisplayNumber()
+        {
+            DisplayNumber += 1;
         }
 
         public void ConvertMoveToChange(Point newPoint, Point newPixelPt)
@@ -358,19 +368,39 @@ namespace A_Level_Project__New_
 
         public void IncrementPixelPt()
         {
-            for (int i = 0; i < CurrentMovementSpeed; i++)
-            {
-                PixelPt.X += PixelPtChange.X;
-                PixelPt.Y += PixelPtChange.Y;
+            int TimestoIncrement = 0;
+            //how many times the pixel position is incremented by 1
 
-                if (PixelPt == NextPixelPt)
+            if (CurrentMovementSpeed > 0)
+            {
+                if (UpdateFrequency == 1)
                 {
-                    PixelPtChange.X = 0;
-                    PixelPtChange.Y = 0;
-                    CurrentMazePt = NextPoint;
+                    TimestoIncrement = (int)Math.Truncate(CurrentMovementSpeed);
+                }
+                else if (DisplayNumber % UpdateFrequency == 0)
+                {
+                    TimestoIncrement = 1;
+                }
+
+                for (int i = 0; i < TimestoIncrement; i++)
+                {
+                    PixelPt.X += PixelPtChange.X;
+                    PixelPt.Y += PixelPtChange.Y;
+
+                    if (PixelPt == NextPixelPt)
+                    {
+                        PixelPtChange.X = 0;
+                        PixelPtChange.Y = 0;
+                        CurrentMazePt = NextPoint;
+
+                        //if (NextDirection != -1)
+                        //{
+                        //    CurrentDirection = NextDirection;
+                        //    NextDirection = -1;
+                        //}
+                    }
                 }
             }
-
         }
 
         public double GetSpeed()
@@ -389,11 +419,25 @@ namespace A_Level_Project__New_
             {
                 CurrentMovementSpeed = newSpeed;
             }
+
+            if (CurrentMovementSpeed < 1 && CurrentMovementSpeed > 0)
+            {
+                UpdateFrequency = 1 / CurrentMovementSpeed;
+            }
+            else
+            {
+                UpdateFrequency = 1;
+            }
+
+            DisplayNumber = 0;
         }
 
-        public void IncrementScore()
+        public void IncrementScore(int Increment)
         {
-            Score += ScorePointValue;
+            if (Increment > 0)
+            {
+                Score += Increment;
+            }
         }
 
         public void RemoveFromMap()
@@ -438,7 +482,6 @@ namespace A_Level_Project__New_
         public int GetDirection()
         {
             int toReturn = CurrentDirection;
-            //CurrentDirection = -1;
 
             return toReturn;
         }
@@ -509,7 +552,7 @@ namespace A_Level_Project__New_
 
         public Enemy(Point StartMazePt, Point StartPixelPt, GameConstants Constants, int Number, double Difficulty) : base(StartMazePt, StartPixelPt, Constants, Number)
         {
-            CurrentMovementSpeed = Difficulty;
+            SetSpeed(Difficulty);
             DefaultMovementSpeed = Difficulty;
         }
 
@@ -699,6 +742,8 @@ namespace A_Level_Project__New_
         private Cell[,] Cells;
         private int NumOfActivePoints;
         //the number of visible ScorePoints in the maze
+        private int NumOfBoards = 0;
+        //the number of times the ScorePoints have been displayed in the game;
 
         #region Maze Generation/Recursive Backtracker Variables
         private List<int> ValidMoves = new List<int>();
@@ -1181,13 +1226,15 @@ namespace A_Level_Project__New_
             throw new Exception("Attempt to convert two invalid points to a movement");
         }
 
-        public bool PointCrossed(Point newPoint)
+        public int PointCrossed(Point newPoint, double Value)
         {
+            int IncrementVal = 0;
+
             if (NumOfActivePoints < 1)
             {
                 //if there are no visible collectible points, they are all redrawn
                 DrawAllScorePoints();
-                NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
+                IncrementVal += (int)(Value * GameConstants.ClearPointsValue);
             }
 
             bool Unvisited = Cells[(int)newPoint.X, (int)newPoint.Y].HideScorePoint();
@@ -1195,9 +1242,10 @@ namespace A_Level_Project__New_
             if (Unvisited)
             {
                 NumOfActivePoints -= 1;
+                IncrementVal += (int)(1 * Value);
             }
 
-            return Unvisited;
+            return IncrementVal;
         }
 
         private void DrawAllScorePoints()
@@ -1206,6 +1254,9 @@ namespace A_Level_Project__New_
             {
                 cell.DrawScorePoint();
             }
+
+            NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
+            NumOfBoards += 1;
         }
 
         public void SetScorePointColour(double effectVal)
@@ -1224,6 +1275,11 @@ namespace A_Level_Project__New_
                     cell.DrawScorePoint();
                 }
             }
+        }
+
+        public int GetNumOfBoards()
+        {
+            return NumOfBoards;
         }
     }
 
@@ -1410,9 +1466,11 @@ namespace A_Level_Project__New_
         public static GameWindow MW { get; set; }                 ////allows access to canvas outside of main window
         private Maze MazeOne;
         private int[] MazeDimensions;
-        private const int DisplayRefreshConstant = 20;          /// refresh rate for the entities
+        private const int DisplayRefreshConstant = 16;          ///number of milliseconds between each refresh of the entities
+
         private DispatcherTimer GameTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 1), };
         private DispatcherTimer MovementTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 0, 0, DisplayRefreshConstant), };
+
         private List<Player> ActivePlayers = new List<Player>();
         private List<Enemy> ActiveEnemies = new List<Enemy>();
         private TextBlock TimeDisplayTXT = new TextBlock();
@@ -1432,7 +1490,7 @@ namespace A_Level_Project__New_
         private int NumOfPlayers = 1;
         private int currentTime = 0;
         private int TotalScore = 0;
-        private double Difficulty = GameConstants.DefaultMovementSpeed;
+        private double Difficulty = GameConstants.difficulties.Last();
         //this is set just in case it is not passed by the Settings Window (default = 2 is normal speed)
 
         public Game(GameWindow thisWindow, int[] MazeDimensions, int[] CellDimensions, bool TwoPlayers, double EnemyDifficulty)
@@ -1461,14 +1519,14 @@ namespace A_Level_Project__New_
             TimeDisplayTXT.Foreground = GameConstants.ForegroundColour;
             MW.GameCanvas.Children.Add(TimeDisplayTXT);
             Canvas.SetLeft(TimeDisplayTXT, 55);
-            Canvas.SetTop(TimeDisplayTXT, 15);
+            Canvas.SetTop(TimeDisplayTXT, 55);
 
             ScoreDisplayTXT.Width = 30;
             ScoreDisplayTXT.Foreground = GameConstants.ForegroundColour;
             MW.GameCanvas.Children.Add(ScoreDisplayTXT);
             ScoreDisplayTXT.Text = Convert.ToString(0);
             Canvas.SetLeft(ScoreDisplayTXT, 55);
-            Canvas.SetTop(ScoreDisplayTXT, 45);
+            Canvas.SetTop(ScoreDisplayTXT, 85);
 
             MazeOne.SetScorePointColour(1);
         }
@@ -1493,22 +1551,31 @@ namespace A_Level_Project__New_
             return GeneratedPt;
         }
 
+        public void CollectPoint(Player thisPlayer)
+        {
+            int IncrementScore = MazeOne.PointCrossed(thisPlayer.GetCurrentMazePt(), thisPlayer.GetScorePointValue());
+
+            thisPlayer.IncrementScore(IncrementScore);
+            TotalScore += IncrementScore;
+
+            if (IncrementScore > 10)
+            {
+                //if the board was cleared
+            }
+        }
+
         private void MovementTimer_Tick(object sender, EventArgs e)
         {
             List<int> ExpiredPowerupIndexes = new List<int>();
 
             foreach (Player player in ActivePlayers)
             {
+                player.IncrementDisplayNumber();
                 CheckTouchingPowerup(player);
 
                 if (!player.IsMoving())
                 {
-                    if (MazeOne.PointCrossed(player.GetCurrentMazePt()))
-                    {
-                        //if the player is on a new point, it increments the score by 1
-                        player.IncrementScore();
-                        TotalScore += player.GetScorePointValue();
-                    }
+                    CollectPoint(player);
                     UpdatePlayerPosition(player);
                 }
 
@@ -1517,6 +1584,7 @@ namespace A_Level_Project__New_
 
             foreach (Enemy enemy in ActiveEnemies)
             {
+                enemy.IncrementDisplayNumber();
                 CheckTouches(enemy);
                 CheckTouchingPowerup(enemy);
 
@@ -1567,11 +1635,6 @@ namespace A_Level_Project__New_
             {
                 currentSpeed = ActivePlayers[i].GetSpeed();
 
-                //if (currentSpeed < 0)
-                //{
-                //    MessageBox.Show("Players unfrozen");
-                //}
-
                 ActivePlayers[i].SetSpeed(currentSpeed / effects[0]);
                 ActivePlayers[i].SetScoreValue(1);
             }
@@ -1580,11 +1643,6 @@ namespace A_Level_Project__New_
             {
                 currentSpeed = ActiveEnemies[i].GetSpeed();
                 ActiveEnemies[i].SetSpeed(currentSpeed / effects[1]);
-
-                //if (currentSpeed < 0)
-                //{
-                //    MessageBox.Show("Enemy unfrozen");
-                //}
             }
 
             MazeOne.SetScorePointColour(1);
@@ -1658,23 +1716,23 @@ namespace A_Level_Project__New_
             Point MazeLocation = GenerateRandomLocation();     //gets random location inside the maze                ///needs to be amended to ensure it is certain distance from entities
             Point PixelPt = MazeOne.GetPixelPoint(MazeLocation);
 
-            Powerup PowerupToAdd = new Powerup(Constants, MazeLocation, PixelPt);
+            Powerup PowerupToAdd = new Powerup(MazeLocation, PixelPt);
 
             if (MazeLocation != new Point(0, 0) && CountOfPowerupType[type] < 1)
             {
                 switch (type % 4)
                 {
                     case 0:
-                        PowerupToAdd = new SpeedUpPowerup(Constants, MazeLocation, PixelPt);
+                        PowerupToAdd = new SpeedUpPowerup(MazeLocation, PixelPt);
                         break;
                     case 1:
-                        PowerupToAdd = new SpeedDownPowerup(Constants, MazeLocation, PixelPt);
+                        PowerupToAdd = new SpeedDownPowerup(MazeLocation, PixelPt);
                         break;
                     case 2:
-                        PowerupToAdd = new FreezePowerup(Constants, MazeLocation, PixelPt);
+                        PowerupToAdd = new FreezePowerup(MazeLocation, PixelPt);
                         break;
                     case 3:
-                        PowerupToAdd = new PointPowerup(Constants, MazeLocation, PixelPt);
+                        PowerupToAdd = new PointPowerup(MazeLocation, PixelPt);
                         break;
                     default:
                         break;
@@ -1701,6 +1759,7 @@ namespace A_Level_Project__New_
                 if (player.GetSpeed() <= 0)
                 {
                     appliedEffect = false;
+                    //doesn't apply if player already frozen
                 }
             }
 
@@ -1709,6 +1768,7 @@ namespace A_Level_Project__New_
                 if (enemy.GetSpeed() <= 0)
                 {
                     appliedEffect = false;
+                    //doesn't apply effect if the enemy is already frozen
                 }
             }
 
@@ -2041,6 +2101,7 @@ namespace A_Level_Project__New_
 
             this.ResizeMode = ResizeMode.NoResize;
 
+            InfoTitleLbl.Foreground = GameConstants.ForegroundColour;
             ScoreLbl.Foreground = GameConstants.ForegroundColour;
             TimeLbl.Foreground = GameConstants.ForegroundColour;
             GameCanvas.Background = GameConstants.BackgroundColour;
