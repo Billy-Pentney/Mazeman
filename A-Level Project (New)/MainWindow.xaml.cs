@@ -27,7 +27,7 @@ namespace A_Level_Project__New_
 
             BitmapImage WindowIconSource = new BitmapImage();
             WindowIconSource.BeginInit();
-            WindowIconSource.UriSource = new Uri(Environment.CurrentDirectory + "/P1" + GameConstants.FileNameSuffixes[2]);
+            WindowIconSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/P1" + GameConstants.FileNameSuffixes[2]);
             WindowIconSource.EndInit();
 
             this.Icon = WindowIconSource;

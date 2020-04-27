@@ -68,9 +68,6 @@
     <Compile Include="LeaderboardWindow.xaml.cs">
       <DependentUpon>LeaderboardWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="MessageWindow.xaml.cs">
-      <DependentUpon>MessageWindow.xaml</DependentUpon>
-    </Compile>
     <Compile Include="NamePlayers.xaml.cs">
       <DependentUpon>NamePlayers.xaml</DependentUpon>
     </Compile>
@@ -100,10 +97,6 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="MessageWindow.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="NamePlayers.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

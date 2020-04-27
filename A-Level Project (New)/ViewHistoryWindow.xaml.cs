@@ -1,18 +1,13 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Newtonsoft.Json;
-using System.IO;
 
 namespace A_Level_Project__New_
 {
@@ -147,8 +142,8 @@ namespace A_Level_Project__New_
             #region Preparing Area/Indents
             ClearCanvas();
 
-            BottomLeftIndent[0] = thisCanvas.ActualWidth * 0.05;
-            BottomLeftIndent[1] = thisCanvas.ActualHeight * 0.1;
+            BottomLeftIndent[0] = 60;
+            BottomLeftIndent[1] = 60;
 
             TopRightIndent[0] = 220;
             TopRightIndent[1] = 30;
@@ -398,7 +393,7 @@ namespace A_Level_Project__New_
         {
             InitializeComponent();
 
-            this.Width = SystemParameters.MaximizedPrimaryScreenWidth;
+            this.Width = SystemParameters.MaximizedPrimaryScreenWidth - 10;
             this.Height = SystemParameters.MaximizedPrimaryScreenHeight - 20;
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             //fills screen and centres window
@@ -451,14 +446,6 @@ namespace A_Level_Project__New_
             GraphInfoBlock.Foreground = frg;
 
             GamesDisplayedTxt.Foreground = frg;
-            //DateRadioBtn.Foreground = frg;
-            //TimeSurvivedRadioBtn.Foreground = frg;
-            //PScoreRadioBtn.Foreground = frg;
-            //DiffRadioBtn.Foreground = frg;
-            //< RadioButton Name = "DateRadioBtn" Canvas.Right = "50" Width = "180" Canvas.Top = "80" Content = "Sort by date/time played" Checked = "DateRadioBtn_Checked" ></ RadioButton >        
-            //< RadioButton Name = "TimeSurvivedRadioBtn" Canvas.Right = "50" Width = "180" Canvas.Top = "110" Content = "Sort by longest time survived" Checked = "TimeSurvivedRadioBtn_Checked" ></ RadioButton >
-            //< RadioButton Name = "PScoreRadioBtn" Canvas.Right = "50" Width = "180" Canvas.Top = "140" Content = "Sort by this player's score" Checked = "PScoreRadioBtn_Checked" ></ RadioButton >
-            //< RadioButton Name = "DiffRadioBtn" Canvas.Right = "50" Width = "180" Canvas.Top = "170" Content = "Sort by Game Difficulty" Checked = "DiffRadioBtn_Checked" />
             
             LeaderboardBtn.Background = bkg;
             LeaderboardBtn.Foreground = frg;

@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Windows.Threading;
 
 namespace A_Level_Project__New_
 {
@@ -17,7 +13,7 @@ namespace A_Level_Project__New_
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        int[] MazeDimRange = new int[2] { 5, 30 };
+        int[] MazeDimRange = new int[2] { 10, 30 };
         //the range of values that are allowed to be inputted
         int[] defMazeDimensions = new int[2] { 15, 15 };
         //the default values to use if the user checks the box
@@ -48,7 +44,7 @@ namespace A_Level_Project__New_
 
             BitmapImage SettingsIconSource = new BitmapImage();
             SettingsIconSource.BeginInit();
-            SettingsIconSource.UriSource = new Uri(Environment.CurrentDirectory + "/SettingsIcon.png");
+            SettingsIconSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/SettingsIcon.png");
             SettingsIconSource.EndInit();
             this.Icon = SettingsIconSource;
 
@@ -61,7 +57,7 @@ namespace A_Level_Project__New_
                 EnemyIMGSources[i] = new BitmapImage();
                 EnemyIMGSources[i].BeginInit();
 
-                EnemyIMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost" + (i + 1) + "-R.png");
+                EnemyIMGSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Ghost" + (i + 1) + GameConstants.FileNameSuffixes[1]);
 
                 EnemyIMGSources[i].EndInit();
             }
@@ -130,15 +126,17 @@ namespace A_Level_Project__New_
                 EntitySpriteSources[i] = new BitmapImage();
                 EntitySpriteSources[i].BeginInit();
 
+                string suffix = GameConstants.FileNameSuffixes[1];
+
                 if (i < 2)
                 {
                     //the player sprites are set here
-                    EntitySpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/P" + (i + 1) + "-R.png");
+                    EntitySpriteSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/P" + (i + 1) + suffix);
                 }
                 else
                 {
                     //the third, enemy sprite is set here
-                    EntitySpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost1-R.png");
+                    EntitySpriteSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Ghost1" + suffix);
                 }
 
                 EntitySpriteSources[i].EndInit();
@@ -181,7 +179,7 @@ namespace A_Level_Project__New_
                 PowerupSpriteSources[i] = new BitmapImage();
 
                 PowerupSpriteSources[i].BeginInit();
-                PowerupSpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Powerup-" + (i) + ".png");
+                PowerupSpriteSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Powerup-" + (i) + ".png");
                 PowerupSpriteSources[i].EndInit();
 
                 PowerupSpriteImages[i] = new Image() { Width = 20, Height = 20};
@@ -226,7 +224,7 @@ namespace A_Level_Project__New_
                 PointSpriteSources[i] = new BitmapImage();
 
                 PointSpriteSources[i].BeginInit();
-                PointSpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/SP-" + i + ".png");
+                PointSpriteSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/SP-" + i + ".png");
                 PointSpriteSources[i].EndInit();
 
                 PointSpriteImages[i] = new Image();
@@ -262,7 +260,7 @@ namespace A_Level_Project__New_
             BitmapImage ControlsIMGSource = new BitmapImage();
 
             ControlsIMGSource.BeginInit();
-            ControlsIMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/ControlsIMG.png");
+            ControlsIMGSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/ControlsIMG.png");
             ControlsIMGSource.EndInit();
 
             ControlsIMG.Source = ControlsIMGSource;

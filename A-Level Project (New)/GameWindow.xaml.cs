@@ -12,28 +12,21 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
-
 namespace A_Level_Project__New_
 {
-    /// <summary>
-    /// Interaction logic for GameWindow.xaml
-    /// </summary>
-    /// 
-
     static class GameConstants
     {
-        //this class contains most of the major Game constants/variables
-        //these can be changed to affect the way the game looks/plays
+        //this class contains most of the major Game constants/variables that may need to be changed
 
         public static int[] CellDimensions { get; } = new int[2] { 25, 25 };
-        public static double WallThicknessProportion = 0.10;
+        public static double WallThicknessProportion = 0.1;
         //the walls are 25 * 0.1 pixels thick
 
         public static int[] WinIndent { get; } = new int[2] { 85, 20 };
         public static int[] MazeIndent { get; } = new int[2] { 85, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
-        public const string FileName = "History - New.txt";
+        public const string FileName = "History.txt";
         //the name/address of the file where scores should be written to/read from
 
         public static double[] difficulties { get; } = new double[] { 1, 2, 3 };
@@ -45,6 +38,8 @@ namespace A_Level_Project__New_
 
         public static string[] FileNameSuffixes { get; } = new string[] { "-U.png", "-R.png", "-D.png", "-L.png" };
         //added to the end of the Character Sprite Filenames, corresponding to each direction e.g. Suffixes[0] is the filename for the Up image
+
+        public static string SpriteFolderAddress { get; } = Environment.CurrentDirectory + "/Sprites";
 
         public const int NumOfUniquePowerupTypes = 4;
 
@@ -98,7 +93,7 @@ namespace A_Level_Project__New_
                 TypeNumber = 0;
             }
 
-            maxDuration = rand.Next(5, 10);
+            maxDuration = rand.Next(3, 8);
             //generates a random time for the powerup to appear/be applied for
             //e.g. if maxDuration = 5, then the powerup will be displayed for 5 seconds, and then when collected, its effect will be applied for 5 seconds
 
@@ -125,7 +120,7 @@ namespace A_Level_Project__New_
             }
 
             IMGSource.BeginInit();
-            IMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/Powerup-" + TypeNumber + ".png");
+            IMGSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Powerup-" + TypeNumber + ".png");
             IMGSource.EndInit();
 
             Sprite.Source = IMGSource;
@@ -162,30 +157,55 @@ namespace A_Level_Project__New_
                 Effects[0] = Effects[1];
                 Effects[1] = temporaryVal;
 
-                maxDuration = (int)Math.Truncate((maxDuration * 0.5));
+                Enemy enemy = (Enemy)collector;
+
+                maxDuration = (int)Math.Round(enemy.GetSpeed());
                 //halves the duration if the enemy collected it
-                //this is for balancing as the enemy would be too powerful otherwise
 
                 switch (TypeNumber)
                 {
                     case 0:
-                        DisplayMessage = "Enemy Speed is increased for " + maxDuration + " seconds!";
+                        DisplayMessage = "Enemy Speed is increased";
                         break;
                     case 1:
-                        DisplayMessage = "Player Speed is decreased for " + maxDuration + " seconds!";
+                        DisplayMessage = "Player Speed is decreased";
                         break;
                     case 2:
-                        DisplayMessage = "Players are frozen for " + maxDuration + " seconds!";
+                        DisplayMessage = "Players are frozen";
                         break;
                     case 3:
                         Effects[2] = -1;
-                        DisplayMessage = "Points have no value for " + maxDuration + " seconds!";
+                        DisplayMessage = "Points have no value";
                         break;
                     default:
                         break;
                 }
+
+                DisplayMessage += " for " + maxDuration;
+                if (maxDuration > 1)
+                {
+                    DisplayMessage += " seconds!";
+                }
+                else
+                {
+                    DisplayMessage += " second";
+                }
             }
 
+        }
+
+        public void SetDuration(double distance)
+        {
+            if (distance < 1)
+            {
+                distance = 1;
+            }
+            else if (distance > 25)
+            {
+                distance = 25;
+            }
+
+            maxDuration = (int)Math.Sqrt(distance);
         }
 
         public double[] GetEffects()
@@ -305,15 +325,19 @@ namespace A_Level_Project__New_
             double speed = thisPlayer.GetSpeed();
             double PointValue = thisPlayer.GetScorePointValue();
 
-            if (!(speed > 0 && Effects[0] < 0 || speed > 0 && Effects[1] < 0))
+            if (thisPlayer is Enemy && !(speed > 0 && Effects[1] < 0))
             {
-                if (thisPlayer is Enemy)
-                {
-                    thisPlayer.SetSpeed(speed / Effects[1]);
-                }
-                else
+                thisPlayer.SetSpeed(speed / Effects[1]);
+            }
+            else
+            {
+                if (!(speed > 0 && Effects[0] < 0))
                 {
                     thisPlayer.SetSpeed(speed / Effects[0]);
+                }
+
+                if (!(PointValue > 0 && Effects[2] < 0))
+                {
                     thisPlayer.SetScorePointValue((int)(PointValue / Effects[2]));
                 }
             }
@@ -363,14 +387,14 @@ namespace A_Level_Project__New_
                 {
                     IMGSources[i] = new BitmapImage();
                     IMGSources[i].BeginInit();
-                    IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/P" + (PlayerNum + 1) + GameConstants.FileNameSuffixes[i]);
+                    IMGSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/P" + (PlayerNum + 1) + GameConstants.FileNameSuffixes[i]);
                     IMGSources[i].EndInit();
                 }
 
                 //sets colour based on which player is being created 
 
                 FrozenIMGSource.BeginInit();
-                FrozenIMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/P1-F.png");
+                FrozenIMGSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/P-F.png");
                 FrozenIMGSource.EndInit();
 
                 Sprite.Source = IMGSources[1];
@@ -500,8 +524,8 @@ namespace A_Level_Project__New_
         {
             NextPoint = newPoint;
             NextPixelPt = newPixelPt;
-            PixelPtChange.X = (newPixelPt.X - PixelPt.X) / GameConstants.CellDimensions[0];
-            PixelPtChange.Y = (newPixelPt.Y - PixelPt.Y) / GameConstants.CellDimensions[1];
+            PixelPtChange.X += (newPixelPt.X - PixelPt.X) / GameConstants.CellDimensions[0];
+            PixelPtChange.Y += (newPixelPt.Y - PixelPt.Y) / GameConstants.CellDimensions[1];
             //determines the movement in terms of x and y for that move based on the pixel positions
 
             Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
@@ -645,7 +669,8 @@ namespace A_Level_Project__New_
         private Queue<int> DirectionsToFollow = new Queue<int>();
         //a list of movements for the enemy to follow to reach the target
 
-        private double PowerupAffinity;
+        private double PlayerAffinity;
+        //represents the enemy tendency to follow the player, not go for powerups
 
         public Enemy(Point StartMazePt, Point StartPixelPt, int PNumber, double Difficulty, int ColourIndex) : base(StartMazePt, StartPixelPt, PNumber)
         {
@@ -657,23 +682,23 @@ namespace A_Level_Project__New_
 
             if (PNumber == -1)
             {
-                PowerupAffinity = 999;
+                PlayerAffinity = 50;
             }
             else
             {
-                PowerupAffinity = 1 + (0.15 * (PNumber + 1));
+                PlayerAffinity = 1 + (0.1 * (PNumber + 1));
             }
 
             for (int i = 0; i < IMGSources.Length; i++)
             {
                 IMGSources[i] = new BitmapImage();
                 IMGSources[i].BeginInit();
-                IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost" + ColourIndex + GameConstants.FileNameSuffixes[i]);
+                IMGSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Ghost" + ColourIndex + GameConstants.FileNameSuffixes[i]);
                 IMGSources[i].EndInit();
             }
 
             FrozenIMGSource.BeginInit();
-            FrozenIMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/Ghost1-F.png");
+            FrozenIMGSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Ghost-F.png");
             FrozenIMGSource.EndInit();
 
             Sprite.Source = IMGSources[3];
@@ -683,9 +708,9 @@ namespace A_Level_Project__New_
             //close to 1 means high preference for players
         }
 
-        public double GetPUpAffinity()
+        public double GetPlayerAffinity()
         {
-            return PowerupAffinity;
+            return PlayerAffinity;
         }
 
         public override void Reset()
@@ -721,21 +746,6 @@ namespace A_Level_Project__New_
         public void SetTarget(Point newTarget)
         {
             Target = newTarget;
-        }
-
-        public int GetChangeToPlayerPosition()
-        {
-            int PNum = GetPlayerNum();
-
-            if (PNum != -1)
-            {
-                return Math.Abs(GetPlayerNum()) % 4;
-            }
-            else
-            {
-                return -1;
-            }
-
         }
 
     }
@@ -849,7 +859,6 @@ namespace A_Level_Project__New_
             ///Depth First Maze Generation Algorithm which uses recursive calls to step through cells
 
             //stores maze coordinates of maze cell currently being processed by algorithm
-            //thisCell = Cells[(int)currentCellPt.X, (int)currentCellPt.Y];
 
             GetAdjacentDirections(currentCellPt, IsBacktracking);
             //gets all possible moves from the current cell to adjacent ones
@@ -864,13 +873,13 @@ namespace A_Level_Project__New_
                 {
                     NumOfMovesSinceSplit = 0;
                 }
-                else if (NumOfMovesSinceSplit > 3 && RandNumOfWallsToRemove < ValidMoves.Count())
+                else if (NumOfMovesSinceSplit > 2 && RandNumOfWallsToRemove < ValidMoves.Count())
                 {
                     //if it has been 5 moves since the path split, then an additional wall is taken this time
                     RandNumOfWallsToRemove += 1;
                     NumOfMovesSinceSplit = 0;
                 }
-                else
+                else if (RandNumOfWallsToRemove < ValidMoves.Count())
                 {
                     NumOfMovesSinceSplit += RandNumOfWallsToRemove;
                 }
@@ -943,10 +952,11 @@ namespace A_Level_Project__New_
 
         #region Path-finding (A*)
 
-        public Queue<int> GeneratePathToTarget(Point Target, Point Current)
+        public Queue<int> GeneratePathToTarget(Point Target, Point Current, List<Point> OccupiedPositions)
         {
             ///A* SEARCH ALGORITHM 
             ///Takes two points (T, C) in the maze and returns a queue of movements to move from C to T in the shortest valid path
+            //NOTE: occupiedpositions is a list of points the Path should avoid if possible
 
             SimplePriorityQueue<Point, double> SearchCells = new SimplePriorityQueue<Point, double>();
             //search cells is the list of cells to be checked by the algorithm
@@ -967,6 +977,14 @@ namespace A_Level_Project__New_
 
             List<Point> AdjacentCells = new List<Point>();
             List<Point> NewPath = new List<Point>();
+
+            int CostOfBlockage = 5;
+            //the additional cost of moving through another occupied position
+
+            if (OccupiedPositions.Contains(Current))
+            {
+                OccupiedPositions.Remove(Current);
+            }
 
             double newCost = 0;
             double thisPriority = 0;
@@ -990,8 +1008,16 @@ namespace A_Level_Project__New_
 
                     foreach (var NextCell in AdjacentCells)
                     {
-                        newCost = MovesToReach[Current] + 1;
-                        //adds one to the total number of moves to reach that cell from the start (each move increases the path length by 1)
+                        if (OccupiedPositions.Contains(NextCell))
+                        {
+                            newCost = MovesToReach[Current] + CostOfBlockage;
+                            //if the path would include a blocked cell (i.e. one which is occupied by another enemy), then the cost is much higher
+                        }
+                        else
+                        {
+                            newCost = MovesToReach[Current] + 1;
+                            //adds one to the total number of moves to reach that cell from the start (each move increases the path length by 1)
+                        }
 
                         if (!MovesToReach.ContainsKey(NextCell) || newCost < MovesToReach[NextCell])
                         {
@@ -1497,7 +1523,7 @@ namespace A_Level_Project__New_
             {
                 IMGSources[i] = new BitmapImage();
                 IMGSources[i].BeginInit();
-                IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/SP-" + i + ".png");
+                IMGSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/SP-" + i + ".png");
                 IMGSources[i].EndInit();
             }
 
@@ -1695,10 +1721,6 @@ namespace A_Level_Project__New_
         private int NextEnemyColourIndex = 0;
         private double RemainingPauseTime = -1;
 
-        private double PlayerSpeedEffect = 1;
-        private double EnemySpeedEffect = 1;
-        private double PointsEffect = 1;
-
         public Game(GameWindow thisWindow, int[] MazeDimensions, bool TwoPlayers, double EnemyDifficulty, int EnemyColourIndex, int NumOfEnemies)
         {
             CurrentWindow = thisWindow;
@@ -1715,13 +1737,11 @@ namespace A_Level_Project__New_
 
             int MazeArea = this.MazeDimensions[0] * this.MazeDimensions[1];
 
-            double div200 = MazeArea / 200;
-
-            if (MazeArea < 201)
+            if (MazeArea < 301)
             {
                 MaxPowerupsPerType = 1;
             }
-            else if (MazeArea < 401)
+            else if (MazeArea < 601)
             {
                 MaxPowerupsPerType = 2;
             }
@@ -1748,16 +1768,19 @@ namespace A_Level_Project__New_
             thisWindow.PowerupInfoBlock.Foreground = GameConstants.ForegroundColour;
             thisWindow.PowerupInfoBlock.Background = GameConstants.BackgroundColour;
             thisWindow.PowerupInfoBlock.Foreground = GameConstants.ForegroundColour;
+            thisWindow.MenuBtn.Background = GameConstants.BackgroundColour;
+            thisWindow.MenuBtn.Foreground = GameConstants.ForegroundColour;
 
             MazeOne.SetScorePointColour(1);
 
             //setting up life images so that users can see the number of lives they have left
             LifeIMGSource.BeginInit();
-            LifeIMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/Life.png");
+            LifeIMGSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Life.png");
             LifeIMGSource.EndInit();
 
             for (int i = 0; i < LifeImages.Length; i++)
             {
+                //creates and displays the hearts to represent lives
                 LifeImages[i] = new Image();
                 LifeImages[i].Source = LifeIMGSource;
                 CurrentWindow.GameCanvas.Children.Add(LifeImages[i]);
@@ -1768,8 +1791,6 @@ namespace A_Level_Project__New_
                 Canvas.SetLeft(LifeImages[i], 17 + i * 25);
                 Canvas.SetTop(LifeImages[i], 95);
             }
-
-            Pause(1);
         }
 
         public void CreateMaze(int[] MazeDim, int NumOfEnemies)
@@ -1808,6 +1829,8 @@ namespace A_Level_Project__New_
                 ActiveEnemies.Add(new Enemy(StartPoint, StartPointPixelPt, -i, Difficulty, NextEnemyColourIndex));
 
                 NextEnemyColourIndex = (NextEnemyColourIndex) % GameConstants.NumOfEnemyColours + 1;
+
+                FindShortestPath(ActiveEnemies[i - 1]);
             }
         }
 
@@ -1966,7 +1989,7 @@ namespace A_Level_Project__New_
                 CheckPlayerTouches(ActiveEnemies[i]);
                 CheckPowerupTouches(ActiveEnemies[i]);
 
-                if (!ActiveEnemies[i].IsMoving() && ActiveEnemies[i].GetSpeed() > 0)
+                if (!ActiveEnemies[i].IsMoving() && ActiveEnemies[i].GetSpeed() > 0 && currentTime > 0)
                 {
                     ActiveEnemies[i].UpdateDirection();
                     UpdatePlayerPosition(ActiveEnemies[i]);
@@ -2054,6 +2077,7 @@ namespace A_Level_Project__New_
 
                     if (Entity is Enemy && !CheckEnemyOccupying(newPoint) || !(Entity is Enemy))
                     {
+                        //only moves if the entity is a player OR the next point is not obstructed by an enemy
                         Entity.SetCurrentCellPt(newPoint);
 
                         newPixelPoint = MazeOne.GetPixelPoint(newPoint);
@@ -2064,14 +2088,22 @@ namespace A_Level_Project__New_
             }
         }
 
-        private bool CheckEnemyOccupying(Point toCheck)
+        private List<Point> GetAllEnemyPositions()
         {
-            List<Point> occupied = new List<Point>();
+            List<Point> EnemyPositions = new List<Point>();
 
             foreach (var enemy in ActiveEnemies)
             {
-                occupied.Add(enemy.GetCurrentMazePt());
+                EnemyPositions.Add(enemy.GetCurrentMazePt());
             }
+
+            return EnemyPositions;
+        }
+
+        private bool CheckEnemyOccupying(Point toCheck)
+        {
+            //determines if the specific location is shared by an enemy or not
+            List<Point> occupied = GetAllEnemyPositions();
 
             return occupied.Contains(toCheck);
         }
@@ -2080,7 +2112,6 @@ namespace A_Level_Project__New_
         {
             Queue<int> ShortestPath = new Queue<int>();
             Queue<int> AlternatePath = new Queue<int>();
-            Point target = new Point(0, 0);
 
             double directDistance = 0;
             double shortestDistance = 0;
@@ -2102,48 +2133,6 @@ namespace A_Level_Project__New_
                 //finds closest player to current location
             }
 
-            bool found = false;
-            Point chosenPoint = closestPlayerPoint;
-
-            if (shortestDistance > 3)
-            {
-                int direction = enemyParam.GetChangeToPlayerPosition();
-                int count = 0;
-
-                if (direction > -1 && direction < 4)
-                {
-                    do
-                    {
-                        count += 1;
-
-                        if (MazeOne.CheckEdgeInDirection(chosenPoint, direction))
-                        {
-                            chosenPoint = MazeOne.MoveFromPoint(chosenPoint, direction);
-
-                            if (MazeOne.IsValidCell(chosenPoint))
-                            {
-                                found = true;
-                                closestPlayerPoint = chosenPoint;
-                            }
-                            else
-                            {
-                                direction = (direction + 1) % 4;
-                            }
-                        }
-                        else
-                        {
-                            direction = (direction + 1) % 4;
-                        }
-
-                    } while (count < 4 && found == false);
-
-                    if (found == false)
-                    {
-                        chosenPoint = closestPlayerPoint;
-                    }
-                }
-            }
-
             shortestDistance = 0;
 
             foreach (var powerup in VisiblePowerups)
@@ -2159,26 +2148,27 @@ namespace A_Level_Project__New_
                 //finds the closest powerup to the current location
             }
 
-            if (MazeOne.IsValidCell(closestPlayerPoint) && closestPlayerPoint != enemyParam.GetTarget())
+            if (MazeOne.IsValidCell(closestPlayerPoint) && (closestPlayerPoint != enemyParam.GetTarget() || currentTime < 1))
             {
                 //only generates a path if the player is not in the same cell as the previous target
 
-                ShortestPath = MazeOne.GeneratePathToTarget(closestPlayerPoint, currentPoint);
+                ShortestPath = MazeOne.GeneratePathToTarget(closestPlayerPoint, currentPoint, GetAllEnemyPositions());
                 //targets the closest player by default
 
                 enemyParam.UpdatePath(ShortestPath);
                 enemyParam.SetTarget(closestPlayerPoint);
+
             }
 
             if (MazeOne.IsValidCell(closestPowerupPoint) && closestPowerupPoint != enemyParam.GetTarget())
             {
                 //only generates a path if the powerup is not in the same cell as the previous target
 
-                AlternatePath = MazeOne.GeneratePathToTarget(closestPowerupPoint, currentPoint);
+                AlternatePath = MazeOne.GeneratePathToTarget(closestPowerupPoint, currentPoint, GetAllEnemyPositions());
 
                 //if the path to the nearest powerup is sufficiently small, then it is preferred to the player
 
-                if ((AlternatePath.Count * 4 * enemyParam.GetPUpAffinity()) < ShortestPath.Count)
+                if ((AlternatePath.Count * 4 * enemyParam.GetPlayerAffinity()) < ShortestPath.Count)
                 {
                     enemyParam.UpdatePath(AlternatePath);
                     enemyParam.SetTarget(closestPowerupPoint);
@@ -2191,7 +2181,7 @@ namespace A_Level_Project__New_
             Point MazeLocation = GenerateRandomUnoccupiedLocation();        //gets a random cell that is a certain distance from all entites/powerups
             Point PixelPt = new Point();
 
-            int type = 2; // rand.Next(0, GameConstants.NumOfUniquePowerupTypes);
+            int type = rand.Next(0, GameConstants.NumOfUniquePowerupTypes);
 
             if (CountOfPowerupType[type] < MaxPowerupsPerType && MazeOne.IsValidCell(MazeLocation))
             {
@@ -2241,8 +2231,8 @@ namespace A_Level_Project__New_
                     }
                 }
 
-                ///breaks if tried more than 5 times
-            } while (TimesTried < 5 && validGen == false);
+                ///breaks if tried more than 2 times
+            } while (TimesTried < 2 && validGen == false);
 
             return GeneratedPt;
         }
@@ -2306,13 +2296,40 @@ namespace A_Level_Project__New_
         }
 
         private void ApplyPowerupEffect(Powerup thisPowerup, Player CollectedBy)
-        {
-            double[] Effects;
-
+        {   
             thisPowerup.Collect(CollectedBy);
             VisiblePowerups.Remove(thisPowerup);
 
-            Effects = thisPowerup.GetEffects();
+            double[] Effects = thisPowerup.GetEffects();
+
+            if (CollectedBy is Enemy)
+            {
+                //if the enemy collects a powerup, its duration is determined by the distance to the player(s)
+                double dist = 999;
+
+                foreach (var enemy in ActiveEnemies)
+                {
+                    foreach (var player in ActivePlayers)
+                    {
+                        Point enemypos = enemy.GetCurrentMazePt();
+                        Point playerpos = player.GetCurrentMazePt();
+
+                        double newDist = MazeOne.GetApproximateDistance(playerpos, enemypos);
+
+                        if (newDist < dist)
+                        {
+                            //finds closest player to any enemy
+                            dist = newDist;
+                        }
+                    }
+                }
+
+                if (dist < 999)
+                {
+                    //sets the duration of the powerup based on the distance to the nearest player to any enemy
+                    thisPowerup.SetDuration(dist);
+                }
+            }
 
             for (int i = 0; i < ActivePlayers.Count; i++)
             {
@@ -2569,6 +2586,20 @@ namespace A_Level_Project__New_
             GameTimer.Start();
             MovementTimer.Start();
         }
+
+        public void Destroy()
+        {
+            //Removes all dependencies of the game object so that it can be replaced with a new game
+
+            GameTimer.Stop();
+            MovementTimer.Stop();
+            VisiblePowerups.Clear();
+            AppliedPowerups.Clear();
+            ActivePlayers.Clear();
+            ActiveEnemies.Clear();
+            CurrentWindow.GameCanvas.Children.Clear();
+            MazeOne = null;
+        }
     }
 
     public partial class GameWindow : Window
@@ -2595,9 +2626,13 @@ namespace A_Level_Project__New_
             {
                 NumOfEnemies = 3;
             }
-            else
+            else if (MazeArea < 800)
             {
                 NumOfEnemies = 4;
+            }
+            else
+            {
+                NumOfEnemies = 5;
             }
 
             if (DisableEnemies)
@@ -2607,7 +2642,7 @@ namespace A_Level_Project__New_
 
             BitmapImage WindowIconSource = new BitmapImage();
             WindowIconSource.BeginInit();
-            WindowIconSource.UriSource = new Uri(Environment.CurrentDirectory + "/P1" + GameConstants.FileNameSuffixes[2]);
+            WindowIconSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/P1" + GameConstants.FileNameSuffixes[2]);
             WindowIconSource.EndInit();
 
             this.Icon = WindowIconSource;
@@ -2636,7 +2671,7 @@ namespace A_Level_Project__New_
 
             PowerupsKeyLbl.Foreground = GameConstants.ForegroundColour;
 
-            PowerupInfoBlock.Height = this.Height - (GameConstants.CellDimensions[1] + Canvas.GetTop(PowerupInfoBlock));
+            PowerupInfoBlock.Height = this.Height - (3 * GameConstants.CellDimensions[1] + Canvas.GetTop(PowerupInfoBlock));
 
             AddPowerupShapesToKey();
 
@@ -2664,7 +2699,7 @@ namespace A_Level_Project__New_
             {
                 PowerupSpriteSources[i] = new BitmapImage();
                 PowerupSpriteSources[i].BeginInit();
-                PowerupSpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Powerup-" + i + ".png");
+                PowerupSpriteSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Powerup-" + i + ".png");
                 PowerupSpriteSources[i].EndInit();
 
                 double SpriteSize = GameConstants.CellDimensions[0] / 2;
@@ -2676,6 +2711,15 @@ namespace A_Level_Project__New_
                 Canvas.SetLeft(PowerupSprites[i], 15);
                 Canvas.SetTop(PowerupSprites[i], 147 + i * 20);
             }
+        }
+
+        private void MenuBtn_Click(object sender, RoutedEventArgs e)
+        {
+            //newGame.PauseByUser();
+            newGame.Destroy();
+            SettingsWindow SW = new SettingsWindow();
+            Application.Current.Windows[0].Close();
+            SW.Show();
         }
     }
 }
