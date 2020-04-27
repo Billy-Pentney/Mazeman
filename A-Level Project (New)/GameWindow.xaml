@@ -7,12 +7,8 @@
         mc:Ignorable="d"
         Title="GameWindow" Height="450" Width="800">
     <Canvas Name="GameCanvas">
-        <Label Name="InfoTitleLbl" Content="GAME INFO" FontStyle="Italic" FontSize="15" Canvas.Left="10" Canvas.Top="10" Height="35"></Label>
-        <Label Name="TimeLbl" Content="Time: " FontStyle="Italic" Canvas.Left="15" Canvas.Top="44" Width="40"></Label>
-        <Label Name="ScoreLbl" Content="Score: " FontStyle="Italic"  Canvas.Left="15" Canvas.Top="70" Width="40"></Label>
-        <Label Name="TimeDisplayTXT" Height="23" Width="38" FontSize="11" Content ="0000" Canvas.Left="55" HorizontalContentAlignment="Center" Canvas.Top="45"></Label>
-        <Label Name="ScoreDisplayTXT" Height="23" Width="38" FontSize="11" Content ="0000" Canvas.Left="55" HorizontalContentAlignment="Center" Canvas.Top="71"/>
-
-        <TextBox Name="PowerupInfoBlock" Width="90" Canvas.Left="10" Canvas.Top="139" Height="270" BorderThickness="0" BorderBrush="White" TextWrapping="Wrap"/>
+        <Label Name="InfoTitleLbl" Content="GAME INFO" FontStyle="Italic" FontSize="15" Canvas.Left="10" Canvas.Top="15"></Label>
+        <Label Name="TimeLbl" Content="Time: " FontStyle="Italic" Canvas.Left="10" Canvas.Top="50" Width="40"></Label>
+        <Label Name="ScoreLbl" Content="Score: " FontStyle="Italic"  Canvas.Left="10" Canvas.Top="80" Width="40"></Label>
     </Canvas>
 </Window>
