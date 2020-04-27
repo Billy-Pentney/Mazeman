@@ -19,10 +19,11 @@ namespace Project_Practice
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     /// 
-
     class GameConstants
     {
         public const int indent = 80;
+
+        public const int NumOfDirections = 4;
         //indents map in from left of canvas
 
         public int[] MazeDimensions { get; set; } = new int[2];
@@ -33,7 +34,6 @@ namespace Project_Practice
         private int minCellDim = 20;
         //minimum values for maze and cells that is accepted by the program
 
-
         public int[] mDimensionsDefault { get; } = new int[2] { 10, 10 };
         //default values for maze size (number of cells in the grid) if inputted values are invalid
 
@@ -42,23 +42,6 @@ namespace Project_Practice
 
         public Brush BackgroundColour { get; } = Brushes.White;
         public Brush ForegroundColour { get; } = Brushes.Black;
-
-        //SetMDimensions - REDUNDANT AT THE MOMENT
-        //may be required if CheckDimensions is not used
-        //private void SetMDimensions(int[] mDimensions)
-        //{
-        //    for (int i = 0; i < mDimensions.Length; i++)
-        //    {
-        //        if (mDimensions[i] < 1)
-        //        {
-        //            mDimensions[i] = this.mDimensionsDefault[i];
-        //            //defaults to standard width if current dimensions are invalid
-        //        }
-        //        MazeDimensions[i] = mDimensions[i];
-        //        //stores the dimensions as a separate array in this class
-        //    }
-        //}
-
         public GameConstants(int[] mazeDim, int[] cellDim)
         {
             MazeDimensions = CheckDimensions(mazeDim, minMazeDim, mDimensionsDefault);
@@ -98,17 +81,40 @@ namespace Project_Practice
             Shape.Width = cellDimensions[0];
             Shape.Height = cellDimensions[1];
             GridPt = MazeLoc;
-
             ShapePt = CanvasLoc;
         }
 
-        public List<Edge> Edges = new List<Edge>();
+        public Dictionary<int, Edge> Edges = new Dictionary<int, Edge>();
+
+        public Point GetMazePt()
+        {
+            return GridPt;
+        }
+
+        public bool AddEdge(Edge newEdge, int Direction)
+        {
+            int numOfEdges = Edges.Count();
+
+            if (!Edges.ContainsKey(Direction))
+            {
+                Edges.Add(Direction, newEdge);
+                return true;
+            }
+
+            return false;
+        }
     }
 
     class Edge
     {
         public Point StartPoint { get; set; }
         public Point TargetPoint { get; set; }
+
+        public Edge(Point StartPt, Point EndPt)
+        {
+            StartPoint = StartPt;
+            TargetPoint = EndPt;
+        }
     }
 
     class Maze
@@ -117,10 +123,28 @@ namespace Project_Practice
         private int[] CellDimensions = new int[2];
         private int Thickness;
 
-        private WallHorizontal[,] AllWallsH;                    
+        private WallHorizontal[,] AllWallsH;
         private WallVertical[,] AllWallsV;
 
         private Cell[,] Cells;
+
+        ///Maze Generation Recursive Variables
+        private Cell thisCell;
+        private List<int> ValidMoves;
+        private int randMoveSelection;
+        private int thisMove;
+        private Point nextCellPt = new Point();
+        private Edge thisEdge;
+        private Edge reverseEdge;
+        private Random rand = new Random();
+        private Stack<Point> VisitedCells = new Stack<Point>();
+
+        private List<int> ValidDirections = new List<int>();
+        private List<int[]> AdjacentPositions;
+        private Point cell;
+        private int GetDirectionType = 0;
+        private int NumOfCellsInPath;
+        //
 
         public Maze(GameConstants Constants)
         {
@@ -131,16 +155,22 @@ namespace Project_Practice
             CellDimensions = Constants.CellDimensions;
             Thickness = Constants.WallThickness;
 
-            AllWallsH = new WallHorizontal[MazeDimensions[1] + 1, MazeDimensions[0]];
-            AllWallsV = new WallVertical[MazeDimensions[1], MazeDimensions[0] + 1];
-            ///add one on right/bottom edge for each array to "close" box
+            AllWallsH = new WallHorizontal[MazeDimensions[0], MazeDimensions[1] + 1];
+            AllWallsV = new WallVertical[MazeDimensions[0] + 1, MazeDimensions[1]];
+            ///adds one on right/bottom edge for each array to "close" box
 
             Cells = new Cell[MazeDimensions[0], MazeDimensions[1]];
 
             InitialiseMaze();
-            //creates instances of each wall/cell
-
+            //creates instances of each wall/cell and sets their x/y coordinates
             DrawGrid();
+
+            Point startPoint = new Point(0, 0);
+
+            NumOfCellsInPath = MazeDimensions[0] * MazeDimensions[1] - 1;
+
+            MazeGeneration(startPoint, GetDirectionType);
+
         }
 
         private void ClearWindow(int StartIndex)
@@ -148,22 +178,19 @@ namespace Project_Practice
             Game.MW.myCanvas.Children.RemoveRange(StartIndex, Game.MW.myCanvas.Children.Count);
         }
 
-        public bool CheckValidCell(int[] location)
+        public bool IsValidCell(int[] location)
         {
             //determines if the passed coordinates are a valid point in the maze
             //takes int[2], returns bool
 
-            bool valid = false;
+            bool valid = true;
 
             for (int i = 0; i < location.Count(); i++)
             {
-                if (location[i] > -1)
+                if (location[i] < 0 || location[i] >= MazeDimensions[i])
                 {
-                    if (location[i] < MazeDimensions[i])
-                    {
-                        valid = true;           
-                    }
-                }  
+                    valid = false;
+                }
             }
 
             return valid;
@@ -174,41 +201,41 @@ namespace Project_Practice
         {
             //creates individuals for each wall in the map
 
-            for (int i = 0; i < AllWallsH.GetLength(0); i++)
+            for (int y = 0; y < AllWallsH.GetLength(1); y++)
             {
-                for (int j = 0; j < AllWallsH.GetLength(1); j++)
+                for (int x = 0; x < AllWallsH.GetLength(0); x++)
                 {
-                    AllWallsH[i, j] = new WallHorizontal(i, j, CellDimensions, MazeDimensions, Thickness);
+                    AllWallsH[x, y] = new WallHorizontal(x, y, CellDimensions, MazeDimensions, Thickness);
                 }
             }
 
-            for (int i = 0; i < AllWallsV.GetLength(0); i++)
+            for (int y = 0; y < AllWallsV.GetLength(1); y++)
             {
-                for (int j = 0; j < AllWallsV.GetLength(1); j++)
+                for (int x = 0; x < AllWallsV.GetLength(0); x++)
                 {
-                    AllWallsV[i, j] = new WallVertical(i, j, CellDimensions, MazeDimensions, Thickness);
+                    AllWallsV[x, y] = new WallVertical(x, y, CellDimensions, MazeDimensions, Thickness);
                 }
             }
 
-            for (int i = 0; i < Cells.GetLength(0); i++)
+            for (int y = 0; y < Cells.GetLength(1); y++)
             {
-                for (int j = 0; j < Cells.GetLength(1); j++)
+                for (int x = 0; x < Cells.GetLength(0); x++)
                 {
-                    Point CanvasPoint = AllWallsH[i, j].GetCoordinates();
-                    Point MazePoint = new Point(j, i);
+                    Point CanvasPoint = AllWallsH[x, y].GetCoordinates();
+                    Point MazePoint = new Point(x, y);
 
                     CanvasPoint.X += Thickness;
                     CanvasPoint.Y += Thickness;
 
-                    Cells[i, j] = new Cell(MazePoint, CanvasPoint, CellDimensions);
+                    Cells[x, y] = new Cell(MazePoint, CanvasPoint, CellDimensions);
                 }
             }
         }
 
-        public void DrawGrid()
+        private void DrawGrid()
         {
             //displays all maze walls based on their unique x- and y-coordinates
-            
+
             foreach (var wall in AllWallsV)
             {
                 wall.Draw();
@@ -221,32 +248,190 @@ namespace Project_Practice
 
         }
 
-        public void MazeGeneration()
+        private void MazeGeneration(Point currentCellPt, int GetDirectionType)
         {
-            int[] currentMazeCell = new int[2] { 0, 0 };
-            Cell thisCell = Cells[currentMazeCell[0], currentMazeCell[1]];
+            ///RECURSIVE BACKRTRACKER
+            ///Depth First Maze Generation Algorithm which uses recursive calls to step through cells
+
+            //stores maze coordinates of maze cell currently being processed by algorithm
+            thisCell = Cells[(int)currentCellPt.X, (int)currentCellPt.Y];
+
+            ValidMoves = GetAdjacentDirections(thisCell.GetMazePt(), GetDirectionType);
+            //gets all possible moves from the current cell to adjacent ones
+
+            if (ValidMoves.Count > 0)
+            {
+                VisitedCells.Push(currentCellPt);
+
+                randMoveSelection = rand.Next(0, ValidMoves.Count);
+                thisMove = ValidMoves[randMoveSelection];
+                //gets a random valid move from the current cell
+
+                nextCellPt = MoveFromPoint(thisCell.GetMazePt(), thisMove);
+                thisEdge = new Edge(currentCellPt, nextCellPt);
+
+                Cells[(int)currentCellPt.X, (int)currentCellPt.Y].AddEdge(thisEdge, thisMove);
+                //adds edge to the current cell
+
+                reverseEdge = new Edge(thisEdge.TargetPoint, thisEdge.StartPoint);
+                //flips the edge so its inverse can be stored in the other cell
+
+                TurnOffWall(nextCellPt, thisMove);
+
+                Cells[(int)nextCellPt.X, (int)nextCellPt.Y].AddEdge(reverseEdge, ReverseMove(thisMove));
+                //adds opposite edge to the next cell
+
+                if (VisitedCells.Count < NumOfCellsInPath)
+                {
+                    GetDirectionType = 0;
+                    MazeGeneration(nextCellPt, GetDirectionType);
+                }
+            }
+            else if (VisitedCells.Count > 0)// && VisitedCells.Count < NumOfCellsInPath)
+            {
+                GetDirectionType = 1;
+                MazeGeneration(VisitedCells.Pop(), GetDirectionType);
+                //Gets the last cell to be visited and recursively calls algorithm from that cell
+            }
         }
 
-        public List<int> GetAdjacentDirections(Cell Current)
+        private void TurnOffWall(Point thisCell, int direction)
         {
-            List<int> ValidDirections = new List<int>();
-            //stores the directions 0, 1, 2, 3 representing possible movements from the current cell
+            switch (direction)
+            {
+                case 0:
+                    AllWallsH[(int)thisCell.X, (int)thisCell.Y + 1].Hide();
+                    break;
+                case 1:
+                    AllWallsV[(int)thisCell.X, (int)thisCell.Y].Hide();
+                    break;
+                case 2:
+                    AllWallsH[(int)thisCell.X, (int)thisCell.Y].Hide();
+                    break;
+                case 3:
+                    AllWallsV[(int)thisCell.X + 1, (int)thisCell.Y].Hide();
+                    break;
+                default:
+                    throw new Exception("Invalid direction when hiding wall");
+            }
+        }
+
+        public int ReverseMove(int OriginalMove)
+        {
+            //takes int representing move (0, 1, 2, 3), 
+            //0 = up, 1 = right, 2 = down, 3 = left
+
+            //reverses move as follows : 0 -> 2, 1 -> 3, 2 -> 0, 3 -> 1
+
+            return ((OriginalMove + 2) % GameConstants.NumOfDirections);
+
+            //numOfDirections = 4, so    (0 + 2) % 4 = 2,   (1 + 2) % 4 = 3, 
+            //                           (2 + 2) % 4 = 0,    (3 + 2) % 4 = 1,
+
+        }
+
+        private List<Point> GetAllUnvisitedCells()
+        {
+            List<Point> Unvisited = new List<Point>();
+            Point thisCellPt = new Point();
+
+            foreach (var cell in Cells)
+            {
+                thisCellPt = cell.GetMazePt();
+                if (cell.Edges.Count == 0)
+                {
+                    Unvisited.Add(thisCellPt);
+                }
+            }
+
+            return Unvisited;
+        }
+
+        private List<int> GetAdjacentDirections(Point CurrentLoc, int type)
+        {
+            //ValidDirections stores the directions 0, 1, 2, 3 representing possible movements from the current cell
             //ex. Cell[0,0] is top-left, so it has 1, 2 (right, down)
             //ex-2. Cell[0,1] is one right of [0,0], so it has 1, 2, 3 (right, down, left)
             //ex-3. Cell[1,1] is one below [0,1], so it has 0, 1, 2, 3 (all directions) 
 
+            AdjacentPositions = new List<int[]>()
+            {
+                new int[2]{(int)CurrentLoc.X, (int)CurrentLoc.Y - 1},
+                new int[2]{(int)CurrentLoc.X + 1, (int)CurrentLoc.Y},
+                new int[2]{(int)CurrentLoc.X, (int)CurrentLoc.Y + 1},
+                new int[2]{(int)CurrentLoc.X - 1, (int)CurrentLoc.Y},
+            };
 
+            ValidDirections.Clear();
 
+            if (type == 0)
+            {
+                for (int i = 0; i < AdjacentPositions.Count; i++)
+                {
+                    cell = new Point(AdjacentPositions[i][0], AdjacentPositions[i][1]);
+
+                    if (IsValidCell(AdjacentPositions[i]) && !VisitedCells.Contains(cell) && Cells[(int)CurrentLoc.X, (int)CurrentLoc.Y].Edges.Count < 2)
+                    {
+                        ValidDirections.Add(i);
+                        //determines which adjacent cells have not already been explored
+                        //creates list of valid directions from current cell
+                    }
+                }
+            }
+            else if (type == 1)
+            {
+                for (int i = 0; i < AdjacentPositions.Count; i++)
+                {
+                    cell = new Point(AdjacentPositions[i][0], AdjacentPositions[i][1]);
+
+                    if (IsValidCell(AdjacentPositions[i]) && Cells[(int)cell.X, (int)cell.Y].Edges.Count == 0 && Cells[(int)CurrentLoc.X, (int)CurrentLoc.Y].Edges.Count < 3)
+                    {
+                        ValidDirections.Add(i);
+                        //determines which 
+                    }
+                }
+            }
 
             return ValidDirections;
         }
 
+        public Point MoveFromPoint(Point startPt, int direction)
+        {
+            switch (direction)
+            {
+                case 0:
+                    startPt.Y -= 1;
+                    break;
+                case 1:
+                    startPt.X += 1;
+                    break;
+                case 2:
+                    startPt.Y += 1;
+                    break;
+                case 3:
+                    startPt.X -= 1;
+                    break;
+                default:
+                    throw new Exception("Attempted to move in invalid direction");
+            }
+
+            bool validMove = IsValidCell(new int[2] { (int)startPt.X, (int)startPt.Y });
+
+            if (validMove)
+            {
+                return startPt;
+            }
+            else
+            {
+                throw new Exception("Attempt to move to invalid point");
+            }
+        }
     }
 
     class Wall
     {
         //protected allows use in derived Horizontal and Vertical Wall classes
-        protected int width;                                                                        
+        protected int width;
         protected int height;
         protected Rectangle Shape = new Rectangle { Fill = Brushes.Black, };
         protected int XCoord;
@@ -284,7 +469,7 @@ namespace Project_Practice
                 }
             }
         }
-                                                                                                                                         
+
         public void Hide()
         {
             if (hideable)
@@ -317,10 +502,10 @@ namespace Project_Practice
 
             //sets location of wall based on location in array
 
-            XCoord = GameConstants.indent + (j + 1) * cellDimensions[0] + thickness;
-            YCoord = (i + 1) * cellDimensions[1];
+            XCoord = GameConstants.indent + (i + 1) * cellDimensions[0] + thickness;
+            YCoord = (j + 1) * cellDimensions[1];
 
-            if (i == 0 || i == mazeDimensions[0])
+            if (j == 0 || j == mazeDimensions[1])
             {
                 //walls can be hidden unless they are on the outer edge of the maze
                 hideable = false;
@@ -341,10 +526,10 @@ namespace Project_Practice
 
             //sets location of wall based on location in array
 
-            XCoord = GameConstants.indent + (j + 1) * cellDimensions[0] + thickness;
-            YCoord = (i + 1) * cellDimensions[1];
+            XCoord = GameConstants.indent + (i + 1) * cellDimensions[0] + thickness;
+            YCoord = (j + 1) * cellDimensions[1];
 
-            if (j == 0 || j == mazeDimensions[1])
+            if (i == 0 || i == mazeDimensions[1])
             {
                 //walls can be hidden unless they are on the outer edge of the maze
                 hideable = false;

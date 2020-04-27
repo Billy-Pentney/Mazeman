@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace Project_Practice
+namespace Maze_Game_0._4
 {
     /// <summary>
     /// Interaction logic for App.xaml
