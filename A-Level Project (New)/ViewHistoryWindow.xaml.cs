@@ -70,12 +70,6 @@ namespace A_Level_Project__New_
             VisualGraph.thisCanvas.MouseLeftButtonDown += ThisWindow_MouseLeftButtonDown;
         }
 
-        public static void SetColours()
-        {
-            //Colours[0] = GameConstants.SecondaryColours[0];
-            //Colours[1] = GameConstants.SecondaryColours[1];
-        }
-
         private void ThisWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             foreach (var item in shapes)
@@ -288,8 +282,6 @@ namespace A_Level_Project__New_
             TotalScoreRadioBtn.Foreground = frg;
             LeaderboardBtn.Background = bkg;
             LeaderboardBtn.Foreground = frg;
-
-            BarLine.SetColours();
         }
 
         private void SearchBtn_Click(object sender, RoutedEventArgs e)

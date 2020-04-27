@@ -24,10 +24,10 @@ namespace A_Level_Project__New_
         //these can be changed to affect the way the game looks/plays
 
         public static int[] CellDimensions { get; } = new int[2] { 25, 25 };
-        public static double WallThicknessProportion = 0.1;
+        public static double WallThicknessProportion = 0.15;
 
-        public static int[] WinIndent { get; } = new int[2] { 90, 20 };
-        public static int[] MazeIndent { get; } = new int[2] { 80, 0 };
+        public static int[] WinIndent { get; } = new int[2] { 85, 20 };
+        public static int[] MazeIndent { get; } = new int[2] { 85, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
         public const string FileName = "History.txt";
@@ -160,7 +160,7 @@ namespace A_Level_Project__New_
             {
                 //if the enemy collected the powerup, the effect is "flipped"
                 Effects[2] = 0;
-                TypeName = "Points have no value for " + maxDuration + "seconds!";
+                TypeName = "Points have no value for " + maxDuration + " seconds!";
             }
         }
     }
@@ -742,8 +742,6 @@ namespace A_Level_Project__New_
         private Cell[,] Cells;
         private int NumOfActivePoints;
         //the number of visible ScorePoints in the maze
-        private int NumOfBoards = 0;
-        //the number of times the ScorePoints have been displayed in the game;
 
         #region Maze Generation/Recursive Backtracker Variables
         private List<int> ValidMoves = new List<int>();
@@ -1193,7 +1191,7 @@ namespace A_Level_Project__New_
             return DirectionsToFollow;
         }
 
-        private double GetApproximateDistance(Point current, Point target)
+        public double GetApproximateDistance(Point current, Point target)
         {
             //finds manhattan (direct) distance from current point to target
 
@@ -1256,7 +1254,6 @@ namespace A_Level_Project__New_
             }
 
             NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
-            NumOfBoards += 1;
         }
 
         public void SetScorePointColour(double effectVal)
@@ -1275,11 +1272,6 @@ namespace A_Level_Project__New_
                     cell.DrawScorePoint();
                 }
             }
-        }
-
-        public int GetNumOfBoards()
-        {
-            return NumOfBoards;
         }
     }
 
@@ -1473,8 +1465,6 @@ namespace A_Level_Project__New_
 
         private List<Player> ActivePlayers = new List<Player>();
         private List<Enemy> ActiveEnemies = new List<Enemy>();
-        private TextBlock TimeDisplayTXT = new TextBlock();
-        private TextBlock ScoreDisplayTXT = new TextBlock();
 
         private Player[] RemovedPlayers;
         private GameConstants Constants;
@@ -1515,18 +1505,10 @@ namespace A_Level_Project__New_
             GameTimer.Tick += GameTimer_Tick;
             MovementTimer.Tick += MovementTimer_Tick;
 
-            TimeDisplayTXT.Width = 30;
-            TimeDisplayTXT.Foreground = GameConstants.ForegroundColour;
-            MW.GameCanvas.Children.Add(TimeDisplayTXT);
-            Canvas.SetLeft(TimeDisplayTXT, 55);
-            Canvas.SetTop(TimeDisplayTXT, 55);
-
-            ScoreDisplayTXT.Width = 30;
-            ScoreDisplayTXT.Foreground = GameConstants.ForegroundColour;
-            MW.GameCanvas.Children.Add(ScoreDisplayTXT);
-            ScoreDisplayTXT.Text = Convert.ToString(0);
-            Canvas.SetLeft(ScoreDisplayTXT, 55);
-            Canvas.SetTop(ScoreDisplayTXT, 85);
+            thisWindow.TimeDisplayTXT.Foreground = GameConstants.ForegroundColour;
+            thisWindow.ScoreDisplayTXT.Foreground = GameConstants.ForegroundColour;
+            thisWindow.PowerupInfoBlock.Background = GameConstants.BackgroundColour;
+            thisWindow.PowerupInfoBlock.Foreground = GameConstants.ForegroundColour;
 
             MazeOne.SetScorePointColour(1);
         }
@@ -1645,8 +1627,24 @@ namespace A_Level_Project__New_
                 ActiveEnemies[i].SetSpeed(currentSpeed / effects[1]);
             }
 
-            MazeOne.SetScorePointColour(1);
+            if (effects[2] != 1)
+            {
+                MazeOne.SetScorePointColour(1);
+            }
 
+            RemoveFromPowerupTextBlock(thisPowerup.GetTypeOfPowerup());
+            //removes the effect text from the side panel
+        }
+
+        private void RemoveFromPowerupTextBlock(string ToRemove)
+        {
+            string Contents = MW.PowerupInfoBlock.Text;
+
+            int index = Contents.IndexOf(ToRemove);
+
+            Contents = Contents.Remove(index, ToRemove.Length + Environment.NewLine.Length);
+
+            MW.PowerupInfoBlock.Text = Contents;
         }
 
         private void CheckTouches(Player EnemyToCheck)
@@ -1776,7 +1774,8 @@ namespace A_Level_Project__New_
             {
                 //if neither entity is frozen
                 AppliedPowerUpEffects.Enqueue(thisPowerup, thisPowerup.GetMaxDuration());
-
+                //enqueues powerup based on how long they last -> shortest will be checked/removed earlier
+            
                 foreach (var player in ActivePlayers)
                 {
                     if (Effects[0] != 1)
@@ -1809,11 +1808,7 @@ namespace A_Level_Project__New_
 
                 }
 
-                GameTimer.Stop();
-
-                MessageBox.Show("Applied effect: " + Convert.ToString(thisPowerup.GetTypeOfPowerup()));
-
-                GameTimer.Start();
+                MW.PowerupInfoBlock.Text += thisPowerup.GetTypeOfPowerup() + Environment.NewLine;
             }
 
         }
@@ -1906,6 +1901,7 @@ namespace A_Level_Project__New_
         }
 
         #endregion
+
 
         private void EndGame()
         {
@@ -2005,8 +2001,8 @@ namespace A_Level_Project__New_
 
         private void UpdateScoreAndTime()
         {
-            TimeDisplayTXT.Text = Convert.ToString(currentTime);
-            ScoreDisplayTXT.Text = Convert.ToString(TotalScore);
+            MW.TimeDisplayTXT.Content = Convert.ToString(currentTime);
+            MW.ScoreDisplayTXT.Content = Convert.ToString(TotalScore);
         }
 
         public void CreateMaze(int[] MazeDim)
@@ -2049,39 +2045,97 @@ namespace A_Level_Project__New_
 
         private void FindShortestPath(Enemy enemyParam)
         {
-            Queue<int> ShortestPath;
-            Queue<int> AlternatePath;
+            Queue<int> ShortestPath = new Queue<int>();
+            Queue<int> AlternatePath = new Queue<int>();
             Point target = new Point(0, 0);
+
+            double directDistance = 0;
+            double shortestDistance = 0;
+
+            int closestPowerupIndex = 0;
+            int closestPlayerIndex = 0;
+
+            foreach (var player in ActivePlayers)
+            {
+                directDistance = MazeOne.GetApproximateDistance(enemyParam.GetCurrentMazePt(), player.GetCurrentMazePt());
+
+                if (directDistance < shortestDistance || shortestDistance == 0)
+                {
+                    shortestDistance = directDistance;
+                    closestPlayerIndex = ActivePlayers.IndexOf(player);
+                }
+
+                //finds closest player to current location
+            }
+
+            shortestDistance = 0;
+            directDistance = 0;
+
+            foreach (var powerup in VisiblePowerups)
+            {
+                directDistance = MazeOne.GetApproximateDistance(enemyParam.GetCurrentMazePt(), powerup.GetCurrentMazePt());
+
+                if (directDistance < shortestDistance || shortestDistance == 0)
+                {
+                    shortestDistance = directDistance;
+                    closestPowerupIndex = VisiblePowerups.IndexOf(powerup);
+                }
+
+                //finds the closest powerup to the current location
+            }
 
             if (ActivePlayers.Count > 0)
             {
-                ShortestPath = MazeOne.GeneratePathToTarget(ActivePlayers[0].GetCurrentMazePt(), enemyParam.GetCurrentMazePt());
+                ShortestPath = MazeOne.GeneratePathToTarget(ActivePlayers[closestPlayerIndex].GetCurrentMazePt(), enemyParam.GetCurrentMazePt());
 
-                for (int i = 1; i < ActivePlayers.Count; i++)
+                if (VisiblePowerups.Count > 0)
                 {
-                    AlternatePath = MazeOne.GeneratePathToTarget(ActivePlayers[i].GetCurrentMazePt(), enemyParam.GetCurrentMazePt());
-
-                    if (AlternatePath.Count() < ShortestPath.Count())
-                    {
-                        ShortestPath = AlternatePath;
-                        target = ActivePlayers[i].GetCurrentMazePt();
-                    }
+                    AlternatePath = MazeOne.GeneratePathToTarget(VisiblePowerups[closestPowerupIndex].GetCurrentMazePt(), enemyParam.GetCurrentMazePt());
                 }
 
-                foreach (var powerup in VisiblePowerups)
+                if (ShortestPath.Count > 0 && AlternatePath.Count == 0 || ShortestPath.Count < AlternatePath.Count * (4 - Difficulty))
                 {
-                    AlternatePath = MazeOne.GeneratePathToTarget(powerup.GetCurrentMazePt(), enemyParam.GetCurrentMazePt());
-
-                    if (AlternatePath.Count() * 4 < ShortestPath.Count())
-                    {
-                        ShortestPath = AlternatePath;
-                        target = powerup.GetCurrentMazePt();
-                    }
+                    target = ActivePlayers[closestPlayerIndex].GetCurrentMazePt();
+                    enemyParam.UpdatePath(ShortestPath);
+                    enemyParam.SetTarget(target);
                 }
-
-                enemyParam.UpdatePath(ShortestPath);
-                enemyParam.SetTarget(target);
+                else if (AlternatePath.Count > 0)
+                {
+                    target = VisiblePowerups[closestPowerupIndex].GetCurrentMazePt();
+                    enemyParam.UpdatePath(AlternatePath);
+                    enemyParam.SetTarget(target);
+                }
             }
+
+            #region OldPathFinding - generate paths for each player/powerup and compare
+
+            //if (ActivePlayers.Count > 0)
+            //{
+            //    ShortestPath = MazeOne.GeneratePathToTarget(ActivePlayers[0].GetCurrentMazePt(), enemyParam.GetCurrentMazePt());
+
+            //    for (int i = 1; i < ActivePlayers.Count; i++)
+            //    {
+            //        AlternatePath = MazeOne.GeneratePathToTarget(ActivePlayers[i].GetCurrentMazePt(), enemyParam.GetCurrentMazePt());
+
+            //        if (AlternatePath.Count() < ShortestPath.Count())
+            //        {
+            //            ShortestPath = AlternatePath;
+            //            target = ActivePlayers[i].GetCurrentMazePt();
+            //        }
+            //    }
+
+            //    foreach (var powerup in VisiblePowerups)
+            //    {
+            //        AlternatePath = MazeOne.GeneratePathToTarget(powerup.GetCurrentMazePt(), enemyParam.GetCurrentMazePt());
+
+            //        if (AlternatePath.Count() * 4 < ShortestPath.Count())
+            //        {
+            //            ShortestPath = AlternatePath;
+            //            target = powerup.GetCurrentMazePt();
+            //        }
+            //    }
+
+            #endregion
         }
     }
 
@@ -2096,7 +2150,7 @@ namespace A_Level_Project__New_
 
             UseClassicControls = ClassicControls;
 
-            this.Width = GameConstants.WinIndent[0] + (MazeDimensions[0] + 2) * GameConstants.CellDimensions[0];
+            this.Width = GameConstants.WinIndent[0] + (MazeDimensions[0] + 3) * GameConstants.CellDimensions[0];
             this.Height = GameConstants.WinIndent[1] + (MazeDimensions[1] + 3) * GameConstants.CellDimensions[1];
 
             this.ResizeMode = ResizeMode.NoResize;
