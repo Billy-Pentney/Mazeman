@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:A_Level_Project__New_"
         mc:Ignorable="d"
+        ResizeMode="NoResize"
         Title="NamePlayers" Height="120" Width="250">
     <Canvas Name="myCanvas">
-        <TextBlock Name="ExplainTxt" Text="Input a nickname to save your score" Canvas.Left="10" Canvas.Top="19"></TextBlock>
-        <Button Name="DoneBtn" Content="Done" Canvas.Left="199" Canvas.Top="51" Click="DoneBtn_Click"></Button>
+        <TextBlock Name="ExplainTxt" Text="Input a name for player 1" Canvas.Left="10" Canvas.Top="20"></TextBlock>
+        <Button Name="DoneBtn" Content="Done" Canvas.Right="10" Canvas.Bottom="10" Width="40" Height="25" Click="DoneBtn_Click"></Button>
     </Canvas>
 </Window>

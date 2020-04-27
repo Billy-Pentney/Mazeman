@@ -19,36 +19,56 @@ namespace A_Level_Project__New_
     /// </summary>
     public partial class NamePlayers : Window
     {
-        static TextBox InputTxt = new TextBox() { Width = 50, };
+        static TextBox InputTxt = new TextBox() { Width = 150, Height = 25 };
 
         public NamePlayers(int PlayerNum)
         {
             InitializeComponent();
             Title = "Player " + Convert.ToString(PlayerNum);
-            ExplainTxt.Text = "Input a name for player " + PlayerNum;
-            myCanvas.Children.Add(InputTxt);
+            ExplainTxt.Text = "Input a name for player " + PlayerNum;    
+
+            if (!myCanvas.Children.Contains(InputTxt))
+            {
+                myCanvas.Children.Add(InputTxt);
+            }
+
             Canvas.SetLeft(InputTxt, 10);
-            Canvas.SetTop(InputTxt, 50);
+            Canvas.SetTop(InputTxt, 45);
         }
 
-        public static string GetName(int PlayerNum)
+        public static string GetName(int PlayerNum, List<string> PreviousNames)
         {
             NamePlayers NameWindow = new NamePlayers(PlayerNum);
             NameWindow.ShowDialog();
-            return InputTxt.Text;
+
+            string name;
+            bool valid = false;
+
+            do
+            {
+                name = InputTxt.Text;
+                valid = true;
+
+                if (name.Length < 1 || name.ToLower() == "anonymous")
+                {
+                    name = "Anonymous";
+                    valid = true;
+                }
+                else if (PreviousNames.Contains(name))
+                {
+                    valid = false;
+                    MessageBox.Show("Name already used by other player for this game. Please try again with a different name.");
+                }
+
+            } while (valid == false);
+
+            NameWindow.myCanvas.Children.Remove(InputTxt);
+            return name;
         }
 
         private void DoneBtn_Click(object sender, RoutedEventArgs e)
         {
-            if (InputTxt.Text.Length > 0)
-            {
-                myCanvas.Children.Remove(InputTxt);
-                Close();
-            }
-            else
-            {
-                MessageBox.Show("Please input a name to proceed");
-            }
+            Close();
         }
     }
 }

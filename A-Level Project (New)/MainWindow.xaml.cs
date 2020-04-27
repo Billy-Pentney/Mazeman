@@ -31,5 +31,11 @@ namespace A_Level_Project__New_
             new SettingsWindow().Show();
             Close();
         }
+
+        private void ViewHistoryBtn_Click(object sender, RoutedEventArgs e)
+        {
+            new ViewHistoryWindow().Show();
+
+        }
     }
 }
