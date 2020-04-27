@@ -44,7 +44,7 @@ namespace A_Level_Project__New_
         public static Brush BackgroundColour = Brushes.White;
         public static Brush ForegroundColour = Brushes.Black;
         public static Brush[] WallColours = new Brush[] { Brushes.Black, Brushes.Blue };
-        public static Brush[] SecondaryColours = new Brush[] { Brushes.Blue, Brushes.DarkBlue, Brushes.DarkViolet };
+        public static Brush[] SecondaryColours = new Brush[] { Brushes.Blue, Brushes.Purple, Brushes.Cyan, Brushes.Lime };
 
         public static void SwapColours()
         {
@@ -57,9 +57,13 @@ namespace A_Level_Project__New_
             WallColours[0] = WallColours[1];
             WallColours[1] = temporary;
 
-            temporary = SecondaryColours[1];
-            SecondaryColours[1] = SecondaryColours[2];
+            temporary = SecondaryColours[0];
+            SecondaryColours[0] = SecondaryColours[2];
             SecondaryColours[2] = temporary;
+
+            temporary = SecondaryColours[1];
+            SecondaryColours[1] = SecondaryColours[3];
+            SecondaryColours[3] = temporary;
         }
     }
 
@@ -67,9 +71,9 @@ namespace A_Level_Project__New_
 
     class SpeedUpPowerup : Powerup
     {
-        private double multiplier = 1.5;
+        private double multiplier = 1.5;            ///speed increased by 50%
 
-        public SpeedUpPowerup(GameConstants constants, Point MazePt, Point PixelPt) : base(constants, MazePt, PixelPt)
+        public SpeedUpPowerup(GameConstants constants, Point MazePt, Point PixelPt): base(constants, MazePt, PixelPt)
         {
             TypeName = "Player Speed is increased for " + maxDuration + " seconds!";
             Effects[0] = multiplier;
@@ -90,7 +94,7 @@ namespace A_Level_Project__New_
 
     class SpeedDownPowerup : Powerup
     {
-        private double multiplier = 0.5;
+        private double multiplier = 0.5;            ///speed decreased by 50%
 
         public SpeedDownPowerup(GameConstants constants, Point MazePt, Point PixelPt) : base(constants, MazePt, PixelPt)
         {
@@ -119,7 +123,7 @@ namespace A_Level_Project__New_
             TypeName = "Enemy is frozen for " + Convert.ToString(maxDuration) + " seconds!";
             TypeNumber = 2;
             shape.Fill = GameConstants.PowerUpColours[TypeNumber];
-            Effects[1] = -1;
+            Effects[1] = -1;            //sets speed to -1 to prevent movement
         }
 
         public override void Collect(Player collector)
@@ -152,6 +156,7 @@ namespace A_Level_Project__New_
 
             if (ReverseEffects)
             {
+                //if the enemy collected the powerup, the effect is "flipped"
                 Effects[2] = 0;
                 TypeName = "Points have no value for " + maxDuration + "seconds!";
             }
@@ -165,7 +170,7 @@ namespace A_Level_Project__New_
         protected double[] Effects = new double[3] { 1, 1, 1 };
         //effects[0] = friendly speed multiplier
         //effects[1] = enemy speed multiplier
-        //effects[2] = the value of the points in the game, as the player collects them
+        //effects[2] = the multiplier for the points in the game, as the player collects them
 
         protected Point MazePt;
         protected Point PixelPt;
@@ -194,7 +199,6 @@ namespace A_Level_Project__New_
 
             maxDuration = rand.Next(5, 10);
         }
-
 
         public int GetTypeNumber()
         {
@@ -269,8 +273,6 @@ namespace A_Level_Project__New_
         public void RemoveFromMap()
         {
             Game.MW.GameCanvas.Children.Remove(shape);
-            //PixelPt.X = -1;
-            //PixelPt.Y = -1;
         }
 
         public int GetMaxDuration()
@@ -1786,7 +1788,7 @@ namespace A_Level_Project__New_
             {
                 //if the file was empty
                 ID = 1;
-                FileEntries.Clear();
+                FileEntries = new List<DataEntry>();
             }
 
             thisEntry.SetOtherGameVariables(ID, (int)Difficulty, currentTime, MazeOne.GetMazeDimensions());
@@ -1801,20 +1803,43 @@ namespace A_Level_Project__New_
                     //stores the list of all entries back in the file
                 }
             }
+
+            MessageBox.Show("Game Saved");
         }
 
         private DataEntry AddPlayersToEntry(DataEntry thisEntry)
         {
             List<string> ChosenNames = new List<string>();
             string thisName;
+            bool valid = false;
 
-            for (int i = 1; i < RemovedPlayers.Count() + 1; i++)
+            for (int i = 0; i < RemovedPlayers.Count(); i++)
             {
-                thisName = NamePlayers.GetName(i, ChosenNames);
-                ChosenNames.Add(thisName);
-                MessageBox.Show("Saving Player " + i + " as '" + thisName + "'");
+                do
+                {
+                    thisName = NamePlayers.GetName(i+1, ChosenNames);
 
-                thisEntry.AddPlayer(thisName, RemovedPlayers[i - 1].GetScore());
+                    if (thisName.Length < 1 || thisName.ToLower() == "anonymous")
+                    {
+                        thisName = "anonymous";
+                        valid = true;
+                    }
+                    else if (ChosenNames.Contains(thisName))
+                    {
+                        valid = false;
+                        MessageBox.Show("Name already used by other player for this game. Please try again with a different name.");
+                    }
+                    else
+                    {
+                        valid = true;
+                    }
+
+                } while (valid == false);
+
+                ChosenNames.Add(thisName);
+                MessageBox.Show("Saving Player " + (i+1) + " as '" + thisName + "'");
+
+                thisEntry.AddPlayer(thisName, RemovedPlayers[i].GetScore());
             }
 
             return thisEntry;

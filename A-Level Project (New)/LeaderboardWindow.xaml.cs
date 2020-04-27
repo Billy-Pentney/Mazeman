@@ -32,12 +32,15 @@ namespace A_Level_Project__New_
             PositionLbl.Foreground = GameConstants.ForegroundColour;
             NameLbl.Foreground = GameConstants.ForegroundColour;
             ScoreLbl.Foreground = GameConstants.ForegroundColour;
+            TimeLbl.Foreground = GameConstants.ForegroundColour;
             PositionTxtBlock.Foreground = GameConstants.ForegroundColour;
             PositionTxtBlock.Background = GameConstants.BackgroundColour;
             NameTxtBlock.Foreground = GameConstants.ForegroundColour;
             NameTxtBlock.Background = GameConstants.BackgroundColour;
             ScoreTxtBlock.Foreground = GameConstants.ForegroundColour;
             ScoreTxtBlock.Background = GameConstants.BackgroundColour;
+            TimeTxtBlock.Foreground = GameConstants.ForegroundColour;
+            TimeTxtBlock.Background = GameConstants.BackgroundColour;
 
             UpdateTextblock(TopSinglePlayerEntries);
         }
@@ -61,6 +64,7 @@ namespace A_Level_Project__New_
                 PositionTxtBlock.Inlines.Add(Convert.ToString(i+1) + gap);
                 NameTxtBlock.Inlines.Add(EntriesToDisplay[i].GetNameofHighestScore() + gap);
                 ScoreTxtBlock.Inlines.Add(Convert.ToString(EntriesToDisplay[i].GetHighestScore()) + gap);
+                TimeTxtBlock.Inlines.Add(Convert.ToString(EntriesToDisplay[i].SurvivedFor) + gap);
             }
 
         }

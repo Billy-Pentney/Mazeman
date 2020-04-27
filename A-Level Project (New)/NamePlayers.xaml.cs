@@ -25,7 +25,8 @@ namespace A_Level_Project__New_
         {
             InitializeComponent();
             Title = "Player " + Convert.ToString(PlayerNum);
-            ExplainTxt.Text = "Input a name for player " + PlayerNum;    
+            ExplainTxt.Text = "Input a name for player " + PlayerNum;
+            InputTxt.Text = "";
 
             if (!myCanvas.Children.Contains(InputTxt))
             {
@@ -41,26 +42,7 @@ namespace A_Level_Project__New_
             NamePlayers NameWindow = new NamePlayers(PlayerNum);
             NameWindow.ShowDialog();
 
-            string name;
-            bool valid = false;
-
-            do
-            {
-                name = InputTxt.Text;
-                valid = true;
-
-                if (name.Length < 1 || name.ToLower() == "anonymous")
-                {
-                    name = "Anonymous";
-                    valid = true;
-                }
-                else if (PreviousNames.Contains(name))
-                {
-                    valid = false;
-                    MessageBox.Show("Name already used by other player for this game. Please try again with a different name.");
-                }
-
-            } while (valid == false);
+            string name = InputTxt.Text;
 
             NameWindow.myCanvas.Children.Remove(InputTxt);
             return name;

@@ -25,7 +25,7 @@ namespace A_Level_Project__New_
         private List<Rectangle> shapes = new List<Rectangle>();
         public static double Width = 20;
         private string GameStatsText;
-        private static Brush[] Colours = new Brush[] { Brushes.Blue, Brushes.LightBlue };
+        private static Brush[] Colours = new Brush[] { Brushes.Green, Brushes.Yellow, Brushes.Red };
 
         public BarLine(DataEntry thisEntry, double heightScale)
         {
@@ -35,7 +35,7 @@ namespace A_Level_Project__New_
             for (int i = 0; i < thisEntry.PlayerNames.Count; i++)
             {
                 Rectangle thisLine = new Rectangle();
-                thisLine.Fill = Colours[i % Colours.Count()];
+                thisLine.Fill = Colours[thisEntry.difficulty - 1];
                 thisLine.Width = Width;
                 thisLine.Height = thisEntry.PlayerScores[i] * heightScale;
                 shapes.Add(thisLine);
@@ -72,8 +72,8 @@ namespace A_Level_Project__New_
 
         public static void SetColours()
         {
-            Colours[0] = GameConstants.SecondaryColours[0];
-            Colours[1] = GameConstants.SecondaryColours[1];
+            //Colours[0] = GameConstants.SecondaryColours[0];
+            //Colours[1] = GameConstants.SecondaryColours[1];
         }
 
         private void ThisWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -265,7 +265,6 @@ namespace A_Level_Project__New_
 
             DeserialiseFile();
             Determine1PLeaderboard();
-
         }
 
         private void SetColours()
@@ -289,6 +288,7 @@ namespace A_Level_Project__New_
             DateRadioBtn.Foreground = frg;
             TimeSurvivedRadioBtn.Foreground = frg;
             PScoreRadioBtn.Foreground = frg;
+            DiffRadioBtn.Foreground = frg;
             TotalScoreRadioBtn.Foreground = frg;
             LeaderboardBtn.Background = bkg;
             LeaderboardBtn.Foreground = frg;
@@ -312,15 +312,14 @@ namespace A_Level_Project__New_
                 BarChart.ClearCanvas();
 
                 GraphInfoBlock.Inlines.Clear();
-                SearchInfoBlock.Inlines.Clear();
 
                 if (EntriesToDisplay.Count > 0)
                 {
-
                     SearchInfoBlock.Inlines.Add(Environment.NewLine + "Number Of Games Displayed: " + Convert.ToString(EntriesToDisplay.Count()));
                     BarChart.DisplayGraph(EntriesToDisplay, FindGreatestScore(EntriesToDisplay));
                     GraphInfoBlock.Inlines.Add("Click on a bar to see more information about that game!" + Environment.NewLine + Environment.NewLine);
                     GraphInfoBlock.Inlines.Add("The height of each bar represents the score of the player in that game. ");
+                    GraphInfoBlock.Inlines.Add("The colour of each bar represents the difficulty of the game (red = hard, yellow = medium, green = easy)" + Environment.NewLine + Environment.NewLine);
 
                     if (IncludeTwoPlayers)
                     {
@@ -360,7 +359,7 @@ namespace A_Level_Project__New_
             switch (SortType)
             {
                 case 0:
-                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.Timestamp).ToList();
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.GameID).ToList();
                     //Orders by the date when the game was played
                     break;
                 case 1:
@@ -377,6 +376,9 @@ namespace A_Level_Project__New_
                     SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetScoreFromName(SearchName, IncludeCapitals)).ToList();
                     // Orders entries by the score of the player with the searched name
                     //e.g if Bob got 12, and Bill got 15, and you search for Bill, it returns 15; if you search for Bob, it returns 12;
+                    break;
+                case 4:
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.difficulty).ToList();
                     break;
                 default:
                     SortedList = ToSort;
@@ -405,6 +407,7 @@ namespace A_Level_Project__New_
             List<DataEntry> SortedByScore = AllFileEntries.OrderBy(DataEntry => DataEntry.GetHighestScore()).ToList();
 
             SortedByScore.Reverse();
+            //highest to lowest
 
             foreach (var item in SortedByScore)
             {
@@ -444,7 +447,7 @@ namespace A_Level_Project__New_
 
             if (Rank != "0th")
             {
-                SearchInfoBlock.Inlines.Add(Environment.NewLine + "'" + NameToSearch + "' is " + Rank + " on the Leaderboard");
+                SearchInfoBlock.Inlines.Add(Environment.NewLine + "'" + NameToSearch + "' is " + Rank + " on the Leaderboard" + Environment.NewLine);
             }
 
             return ChosenEntries;
@@ -453,44 +456,56 @@ namespace A_Level_Project__New_
 
         private string GetRank(string name, bool IncludeCapitals)
         {
-            int position = -1;
+            int position = 0;
+            bool nameFound = false;
 
-            for (int i = TopSinglePlayerEntries.Count - 1; i >= 0; i--)
+            do
             {
-                if (TopSinglePlayerEntries[i].GetNameofHighestScore() == name)
+                if (TopSinglePlayerEntries[position].GetNameofHighestScore() == name)
                 {
-                    position = i;
+                    nameFound = true;
                 }
-                else if (IncludeCapitals && TopSinglePlayerEntries[i].GetNameofHighestScore().ToLower() == name.ToLower())
+                else if (TopSinglePlayerEntries[position].GetNameofHighestScore() == "anonymous" && name.ToLower() == "anonymous")
                 {
-                    position = i;
+                    nameFound = true;
                 }
-            }
 
-            position += 1;
+                position += 1;
+                //if found, this makes it an ordinal number (e.g. 0 goes to 1st, 1 goes to 2nd...)
+                //if not found, this increments position to try the next entry
+
+            } while (nameFound != true && position < TopSinglePlayerEntries.Count - 1);
+
             //index is 0...count, but a position is given from 1...count + 1
 
             string Rank = Convert.ToString(position);
 
-            if (Rank == "0")
+            if (nameFound)
             {
-                Rank = "best";
-            }
-            else if (Rank.Last() == '1')
-            {
-                Rank += "st best";
-            }
-            else if (Rank.Last() == '2')
-            {
-                Rank += "nd best";
-            }
-            else if (Rank.Last() == '3')
-            {
-                Rank += "rd best";
+                if (Rank == "1")
+                {
+                    Rank = "best";
+                }
+                else if (Rank.Last() == '1')
+                {
+                    Rank += "st best";
+                }
+                else if (Rank.Last() == '2')
+                {
+                    Rank += "nd best";
+                }
+                else if (Rank.Last() == '3')
+                {
+                    Rank += "rd best";
+                }
+                else
+                {
+                    Rank += "th best";
+                }
             }
             else
             {
-                Rank += "th best";
+                Rank = "unranked";
             }
 
             return Rank;
@@ -535,9 +550,13 @@ namespace A_Level_Project__New_
             SortByType = 3;
         }
 
+        private void DiffRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            SortByType = 4;
+        }
+
         private void LeaderboardBtn_Click(object sender, RoutedEventArgs e)
         {
-            Determine1PLeaderboard();
             LeaderboardWindow LW = new LeaderboardWindow(TopSinglePlayerEntries);
             LW.Show();
         }

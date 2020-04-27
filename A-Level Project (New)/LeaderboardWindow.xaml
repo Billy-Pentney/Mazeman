@@ -6,13 +6,15 @@
         xmlns:local="clr-namespace:A_Level_Project__New_"
         mc:Ignorable="d"
         ResizeMode="NoResize"
-        Title="Leaderboard" Height="400" Width="400">
+        Title="Leaderboard (Single Player Only)" Height="400" Width="400">
     <Canvas Name="LeaderboardCanvas">
-        <Label Name="PositionLbl" Content="Position" Canvas.Left="10" Canvas.Top="10" HorizontalContentAlignment="Center"></Label>
-        <Label Name="NameLbl" Content="Name" Canvas.Left="90" Canvas.Top="10" HorizontalContentAlignment="Center" Width="107"></Label>
-        <Label Name="ScoreLbl" Content="Score" Canvas.Left="222" Canvas.Top="10" HorizontalContentAlignment="Center" Width="50"></Label>
+        <Label Name="PositionLbl" FontStyle="Italic" FontWeight="Bold" Content="Position" Canvas.Left="10" Canvas.Top="10" HorizontalContentAlignment="Center" Width="65"></Label>
+        <Label Name="NameLbl" FontStyle="Italic" FontWeight="Bold" Content="Username" Canvas.Left="80" Canvas.Top="10" HorizontalContentAlignment="Center" Width="91"></Label>
+        <Label Name="ScoreLbl" FontStyle="Italic" FontWeight="Bold" Content="Score (pts)" Canvas.Left="186" Canvas.Top="10" HorizontalContentAlignment="Center" Width="75"></Label>
+        <Label Name="TimeLbl" FontStyle="Italic" FontWeight="Bold" Content="Survival Time (s)" Canvas.Left="266" Canvas.Top="10" HorizontalContentAlignment="Center" Width="110"/>
         <TextBlock Name="PositionTxtBlock" Width="52" Height="318" Canvas.Left="10" Canvas.Top="41" TextAlignment="Center"></TextBlock>
-        <TextBlock Name="NameTxtBlock" Width="107" Height="318" Canvas.Left="90" Canvas.Top="41" TextAlignment="Center"></TextBlock>
-        <TextBlock Name="ScoreTxtBlock" Width="50" Height="318" Canvas.Left="222" Canvas.Top="41" TextAlignment="Center"></TextBlock>
+        <TextBlock Name="NameTxtBlock" Width="114" Height="318" Canvas.Left="67" Canvas.Top="41" TextAlignment="Center"></TextBlock>
+        <TextBlock Name="ScoreTxtBlock" Width="56" Height="318" Canvas.Left="196" Canvas.Top="43" TextAlignment="Center"></TextBlock>
+        <TextBlock Name="TimeTxtBlock" Width="110" Height="318" Canvas.Left="266" Canvas.Top="41" TextAlignment="Center"/>
     </Canvas>
 </Window>
