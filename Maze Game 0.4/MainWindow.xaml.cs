@@ -75,6 +75,45 @@ namespace Project_Practice
 
     }
 
+    class ScorePt
+    {
+        private Rectangle Shape = new Rectangle();
+        private Point PixelPt = new Point();
+
+        public ScorePt(Point PointParam, int[] cellDimensions)
+        {
+            Shape.Width = (int)cellDimensions[0] / 7;
+            Shape.Height = (int)cellDimensions[1] / 7;
+            Shape.Fill = Brushes.Orange;
+
+            Game.MW.myCanvas.Children.Add(Shape);
+
+            PixelPt = new Point(PointParam.X + 0.5 * (cellDimensions[0] - Shape.Width), PointParam.Y + 0.5 * (cellDimensions[1] - Shape.Height));
+            Draw();
+        }
+
+        public void Hide()
+        {
+            Shape.Opacity = 0;
+        }
+
+        public void Draw()
+        {
+            Shape.Opacity = 255;
+            Canvas.SetLeft(Shape, PixelPt.X);
+            Canvas.SetTop(Shape, PixelPt.Y);
+        }
+
+        public bool GetVisible()
+        {
+            if (Shape.Opacity < 255)
+            {
+                return false;
+            }
+            return true;
+        }
+    }
+
     class Player
     {
         protected double CurrentMovementSpeed;
@@ -83,6 +122,7 @@ namespace Project_Practice
         protected Point CurrentMazePt = new Point();
         protected Point PixelPt = new Point();
         protected int CurrentDirection;
+        private int Score = 0;
 
         public Player(Point StartMazePt, Point StartPixelPt, int[] cellDimensions, int Thickness, Brush colour)
         {
@@ -99,6 +139,24 @@ namespace Project_Practice
 
             Game.MW.myCanvas.Children.Add(Shape);
             Draw();
+        }
+
+        public void IncrementScore(int increment)
+        {
+            Score += increment;
+        }
+
+        public int GetScore()
+        {
+            return Score;
+        }
+
+        public void SetScore(int newScore)
+        {
+            if (newScore > -1)
+            {
+                Score = newScore;
+            }
         }
 
         public double GetSpeed()
@@ -147,11 +205,13 @@ namespace Project_Practice
         private Point GridPt;
         private Point ShapePt;
         private Dictionary<int, Edge> Edges = new Dictionary<int, Edge>();
+        private ScorePt thisPoint;
 
         public Cell(Point MazeLoc, Point CanvasLoc, int[] cellDimensions)
         {
             GridPt = MazeLoc;
             ShapePt = CanvasLoc;
+            thisPoint = new ScorePt(ShapePt, cellDimensions);
         }
 
         public Edge GetEdgeFromDirection(int key)
@@ -192,6 +252,28 @@ namespace Project_Practice
             }
 
             return false;
+        }
+
+        public bool TogglePoint()
+        {
+            if (thisPoint.GetVisible())
+            {
+                thisPoint.Hide();
+                return true;
+                //returns true if the point was hidden
+            }
+            //returns false if it was already hidden
+            return false;
+        }
+
+        public void RedrawPoint()
+        {
+            thisPoint.Draw();
+        }
+
+        public bool IsPointVisible()
+        {
+            return thisPoint.GetVisible();
         }
     }
 
@@ -318,6 +400,7 @@ namespace Project_Practice
         private Wall[,] AllWallsV;
 
         private Cell[,] Cells;
+        private int NumOfActivePoints;
 
         #region Maze Generation/Recursive Backtracker Variables
         private List<int> ValidMoves;
@@ -357,8 +440,9 @@ namespace Project_Practice
             # endregion
 
             //Generates recursive maze starting at point 0,0 and continuing until all cells have been visited
-            NumOfCellsInPath = MazeDimensions[0] * MazeDimensions[1] - 1;
+            NumOfCellsInPath = MazeDimensions[0] * MazeDimensions[1];
             MazeGeneration(GetFirstCellInMaze(0), GetDirectionType);
+            NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
         }
 
         public Point GetLastCellInMaze(int PtType)
@@ -847,6 +931,27 @@ namespace Project_Practice
 
             throw new Exception("Attempt to convert two invalid points to a movement");
         }
+
+        public void PointCrossed(Point newPoint)
+        {
+            if (Cells[(int)newPoint.X, (int)newPoint.Y].TogglePoint())
+            {
+                NumOfActivePoints -= 1;
+            }
+
+            if (NumOfActivePoints == 0)
+            {
+                RedrawAllPoints();
+            }
+        }
+
+        private void RedrawAllPoints()
+        {
+            foreach (var cell in Cells)
+            {
+                cell.RedrawPoint();
+            }
+        }
     }
 
     class Wall
@@ -961,13 +1066,15 @@ namespace Project_Practice
         private int currentTime = 0;
         private int MovementCount = 0;
         private GameConstants Constants;
+        private int PointValue = 1;
+
         //private List<Entity> ActiveEntities = new List<Entity>();
 
         public Game(Canvas myCanvas)
         {
             MW = (MainWindow)Application.Current.MainWindow;
 
-            NumOfPlayers = 2;
+            //NumOfPlayers = 2;
 
             GameTimer.Tick += GameTimer_Tick;
             MovementTimer.Tick += MovementTimer_Tick;
@@ -1035,6 +1142,7 @@ namespace Project_Practice
 
             MovementCount += 1;
 
+            #region Attempt with ActiveEntities List
             //foreach (var Entity in ActiveEntities)
             //{
             //    currentPoint = Entity.GetCurrentLoc();
@@ -1068,11 +1176,14 @@ namespace Project_Practice
             //        }
             //    }
             //}
+            # endregion
 
             foreach (var Player in ActivePlayers)
             {
                 currentPoint = Player.GetCurrentLoc();
                 direction = Player.GetDirection();
+                MazeOne.PointCrossed(currentPoint);
+                Player.IncrementScore(PointValue);
 
                 if (MazeOne.CheckEdgeInDirection(currentPoint, direction) && MovementCount % (1 / Player.GetSpeed()) == 0)
                 {
@@ -1095,6 +1206,10 @@ namespace Project_Practice
                 if (Enemy.GetPathLength() < 1 && Enemy.GetCurrentLoc() != Enemy.GetTarget())
                 {
                     UpdateEnemyPath(Enemy);
+                }
+                else if (Enemy.GetCurrentLoc() == Enemy.GetTarget())
+                {
+                    MW.Close();
                 }
 
                 currentPoint = Enemy.GetCurrentLoc();
