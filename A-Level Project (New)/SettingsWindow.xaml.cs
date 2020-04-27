@@ -325,6 +325,7 @@ namespace A_Level_Project__New_
             }
             else
             {
+                //new MessageWindow("Please input two whole numbers between 10 and 30").ShowDialog();
                 MessageBox.Show("Please input two whole numbers between 10 and 30");
             }
         }
@@ -333,12 +334,6 @@ namespace A_Level_Project__New_
         {
             WidthTxt.Text = Convert.ToString(defMazeDimensions[0]);
             HeightTxt.Text = Convert.ToString(defMazeDimensions[1]);
-        }
-
-        private void DefaultCheck_Unchecked(object sender, RoutedEventArgs e)
-        {
-            WidthTxt.Text = "";
-            HeightTxt.Text = "";
         }
 
         #region DifficultyButtons
