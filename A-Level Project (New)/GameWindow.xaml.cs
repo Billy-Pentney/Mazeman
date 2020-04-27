@@ -32,7 +32,7 @@ namespace A_Level_Project__New_
         public static int[] MazeIndent { get; } = new int[2] { 85, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
-        public const string FileName = "History - Copy.txt";
+        public const string FileName = "History - New.txt";
         //the name/address of the file where scores should be written to/read from
 
         public static double[] difficulties = new double[] { 1, 2, 3 };
@@ -40,13 +40,13 @@ namespace A_Level_Project__New_
 
         public static int ClearPointsValue { get; } = 50;
 
-        public static Brush[] ScorePointColours { get; } = new Brush[] { Brushes.Gray, Brushes.Orange, Brushes.HotPink };
-
         public static Brush BackgroundColour = Brushes.Black;
         public static Brush ForegroundColour = Brushes.White;
         public static Brush[] WallColours = new Brush[] { Brushes.DodgerBlue, Brushes.Black };
 
         public static string[] FileNameSuffixes = new string[] { "-U.png", "-R.png", "-D.png", "-L.png" };
+
+        public const int NumOfEnemyColours = 5;
 
         public static void SwapColours()
         {
@@ -132,15 +132,17 @@ namespace A_Level_Project__New_
 
         public void UpdateOpacity()
         {
+            //fades powerups in and out when generating/removing from the map
+
             double opacity = Sprite.Opacity;
 
             if (maxDuration - currentActiveTime <= 1)
             {
-                Sprite.Opacity *= 0.7;
+                Sprite.Opacity *= 0.65;
             }
             else if (currentActiveTime < 1)
             {
-                Sprite.Opacity /= 0.7;
+                Sprite.Opacity /= 0.75;
             }
         }
 
@@ -631,7 +633,7 @@ namespace A_Level_Project__New_
         private Queue<int> DirectionsToFollow = new Queue<int>();
         //a list of movements for the enemy to follow to reach the target
 
-        public Enemy(Point StartMazePt, Point StartPixelPt, int PNumber, double Difficulty) : base(StartMazePt, StartPixelPt, PNumber)
+        public Enemy(Point StartMazePt, Point StartPixelPt, int PNumber, double Difficulty, int ColourIndex) : base(StartMazePt, StartPixelPt, PNumber)
         {
             //speed of the enemy is directly proportional to the difficulty i.e. 1 on Easy, 2 on Medium, 3 on hard
             //larger values for speed increase how many pixels the enemy moves per frame
@@ -643,7 +645,7 @@ namespace A_Level_Project__New_
             {
                 IMGSources[i] = new BitmapImage();
                 IMGSources[i].BeginInit();
-                IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost" + (-1 * PNumber) + GameConstants.FileNameSuffixes[i]);
+                IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost" + (ColourIndex + 1) + GameConstants.FileNameSuffixes[i]);
                 IMGSources[i].EndInit();
             }
 
@@ -1612,7 +1614,7 @@ namespace A_Level_Project__New_
         private Image[] LifeImages = new Image[3];
         private BitmapImage LifeIMGSource = new BitmapImage();
 
-        public Game(GameWindow thisWindow, int[] MazeDimensions, int[] CellDimensions, bool TwoPlayers, double EnemyDifficulty)
+        public Game(GameWindow thisWindow, int[] MazeDimensions, int[] CellDimensions, bool TwoPlayers, double EnemyDifficulty, int EnemyColourIndex)
         {
             MW = thisWindow;
             MW.GameCanvas.Background = GameConstants.BackgroundColour;
@@ -1633,7 +1635,7 @@ namespace A_Level_Project__New_
 
             RemovedPlayers = new Player[NumOfPlayers];
 
-            CreateMaze(MazeDimensions);
+            CreateMaze(MazeDimensions, EnemyColourIndex);
 
             GameTimer.Tick += GameTimer_Tick;
             MovementTimer.Tick += MovementTimer_Tick;
@@ -1661,8 +1663,8 @@ namespace A_Level_Project__New_
                 LifeImages[i].Width = 22;
                 LifeImages[i].Height = 22;
 
-                Canvas.SetLeft(LifeImages[i], 20 + i * 25 );
-                Canvas.SetTop(LifeImages[i], 100);
+                Canvas.SetLeft(LifeImages[i], 17 + i * 25 );
+                Canvas.SetTop(LifeImages[i], 110);
             }
         }
 
@@ -1905,7 +1907,15 @@ namespace A_Level_Project__New_
                 currentSpeed = ActivePlayers[i].GetSpeed();
 
                 ActivePlayers[i].SetSpeed(currentSpeed / effects[0]);
-                ActivePlayers[i].SetScorePointValue((int)(ActivePlayers[i].GetScorePointValue() / effects[2]));
+
+                if (effects[2] == 0)
+                {       
+                    ActivePlayers[i].SetScorePointValue(1);
+                }
+                else if (effects[2] != 1 && ActivePlayers[i].GetScorePointValue() != 1)
+                {
+                    ActivePlayers[i].SetScorePointValue((int)(ActivePlayers[i].GetScorePointValue() / effects[2]));
+                }
             }
 
             for (int i = 0; i < ActiveEnemies.Count; i++)
@@ -2270,18 +2280,18 @@ namespace A_Level_Project__New_
             MW.ScoreDisplayTXT.Content = Convert.ToString(TotalScore);
         }
 
-        public void CreateMaze(int[] MazeDim)
+        public void CreateMaze(int[] MazeDim, int EnemyColourIndex)
         {
             currentTime = 0;
 
             MazeOne = new Maze(MazeDim);
 
-            AddEntities();
+            AddEntities(EnemyColourIndex);
             GameTimer.Start();
             MovementTimer.Start();
         }
 
-        private void AddEntities()
+        private void AddEntities(int EnemyColourIndex)
         {
             Point StartPoint = MazeOne.GetFirstCellInMaze();
             Point StartPointPixelPt = MazeOne.GetPixelPoint(StartPoint);
@@ -2300,27 +2310,31 @@ namespace A_Level_Project__New_
             int area = MazeDimensions[0] * MazeDimensions[1];
 
             //ENEMY 1 - By default
-            ActiveEnemies.Add(new Enemy(LastPoint, LastPointPixelPt, -1, Difficulty));
+            ActiveEnemies.Add(new Enemy(LastPoint, LastPointPixelPt, -1, Difficulty, EnemyColourIndex));
 
             if (area > 400)
             {
                 //ENEMY 2 - Mazes equivalent to/larger than 20x20
 
+                EnemyColourIndex = (EnemyColourIndex + 1) % GameConstants.NumOfEnemyColours;
+
                 StartPoint = MazeOne.GetTopRightCell();
                 StartPointPixelPt = MazeOne.GetPixelPoint(StartPoint);
 
-                ActiveEnemies.Add(new Enemy(StartPoint, StartPointPixelPt, -2, Difficulty));
+                ActiveEnemies.Add(new Enemy(StartPoint, StartPointPixelPt, -2, Difficulty, EnemyColourIndex));
 
                 if (area > 700)
                 {
                     //ENEMY 3 - Mazes larger than 25x25
+
+                    EnemyColourIndex = (EnemyColourIndex + 1) % GameConstants.NumOfEnemyColours;
 
                     StartPoint = MazeOne.GetTopRightCell();
                     StartPoint.X -= MazeDimensions[0] / 4;
                     StartPoint.Y += MazeDimensions[1] / 2;
 
                     StartPointPixelPt = MazeOne.GetPixelPoint(StartPoint);
-                    ActiveEnemies.Add(new Enemy(StartPoint, StartPointPixelPt, -3, Difficulty));
+                    ActiveEnemies.Add(new Enemy(StartPoint, StartPointPixelPt, -3, Difficulty, EnemyColourIndex));
                 }
             }
         }
@@ -2394,9 +2408,8 @@ namespace A_Level_Project__New_
     public partial class GameWindow : Window
     {
         Game newGame;
-        bool UseClassicControls = true;
 
-        public GameWindow(int[] MazeDimensions, bool TwoPlayers, double EnemyDifficulty)
+        public GameWindow(int[] MazeDimensions, bool TwoPlayers, double EnemyDifficulty, int EnemyColourIndex)
         {
             InitializeComponent();
 
@@ -2409,23 +2422,15 @@ namespace A_Level_Project__New_
             InfoTitleLbl.Foreground = GameConstants.ForegroundColour;
             ScoreLbl.Foreground = GameConstants.ForegroundColour;
             TimeLbl.Foreground = GameConstants.ForegroundColour;
+            PowerupsBoxLbl.Foreground = GameConstants.ForegroundColour;
             GameCanvas.Background = GameConstants.BackgroundColour;
 
-            newGame = new Game(this, MazeDimensions, GameConstants.CellDimensions, TwoPlayers, EnemyDifficulty);
+            newGame = new Game(this, MazeDimensions, GameConstants.CellDimensions, TwoPlayers, EnemyDifficulty, EnemyColourIndex);
         }
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
             newGame.UpdatePlayerMovement(e.Key, 0);
-        }
-
-        protected override void OnKeyUp(KeyEventArgs e)
-        {
-            if (UseClassicControls)
-            {
-                newGame.UpdatePlayerMovement(e.Key, 1);
-            }
-
         }
     }
 }

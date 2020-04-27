@@ -1,9 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Shapes;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Shapes;
+using System.Windows.Threading;
+
 
 
 namespace A_Level_Project__New_
@@ -24,6 +30,13 @@ namespace A_Level_Project__New_
         double EnemyDifficulty;
         //used to set the speed of the enemy
 
+        Image[] EntitySpriteImages = new Image[3];
+        BitmapImage[] EntitySpriteSources = new BitmapImage[3];
+        Label[] EntityLabels = new Label[3];
+
+        BitmapImage[] EnemyIMGSources = new BitmapImage[GameConstants.NumOfEnemyColours];
+        int EnemyColourIndex = 0;
+
         public SettingsWindow()
         {
             InitializeComponent();
@@ -34,6 +47,18 @@ namespace A_Level_Project__New_
             DefaultCheck.IsChecked = true;
             MedRBtn.IsChecked = true;
             //sets the default values for ease (simply press start)
+
+            for (int i = 0; i < EnemyIMGSources.Length; i++)
+            {
+                EnemyIMGSources[i] = new BitmapImage();
+                EnemyIMGSources[i].BeginInit();
+
+                EnemyIMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost" + (i + 1) + "-R.png");
+
+                EnemyIMGSources[i].EndInit();
+            }
+
+            EntitySpriteImages.Last().Source = EnemyIMGSources[EnemyColourIndex];
         }
 
         private void SetColours()
@@ -81,17 +106,14 @@ namespace A_Level_Project__New_
             PowerupsLbl.Foreground = foregroundColour;
             PlayersLbl.Foreground = foregroundColour;
             PointsLbl.Foreground = foregroundColour;
+            ControlsLbl.Foreground = foregroundColour;
         }
 
         private void AddObjectsToWindow()
         {
-            #region Entity Shapes + Labels
+            #region Player Shapes + Labels
 
             int NumOfEntitySprites = 3;
-
-            Image[] EntitySpriteImages = new Image[NumOfEntitySprites];
-            BitmapImage[] EntitySpriteSources = new BitmapImage[NumOfEntitySprites];
-            Label[] EntityLabels = new Label[NumOfEntitySprites];
 
             for (int i = 0; i < NumOfEntitySprites; i++)
             {
@@ -123,11 +145,11 @@ namespace A_Level_Project__New_
 
                 SettingsCanvas.Children.Add(EntitySpriteImages[i]);
                 Canvas.SetRight(EntitySpriteImages[i], 240);
-                Canvas.SetTop(EntitySpriteImages[i], 65 + i * 50);
+                Canvas.SetTop(EntitySpriteImages[i], 52 + i * 50);
 
                 SettingsCanvas.Children.Add(EntityLabels[i]);
                 Canvas.SetRight(EntityLabels[i], 170);
-                Canvas.SetTop(EntityLabels[i], 65 + i * 50);
+                Canvas.SetTop(EntityLabels[i], 52 + i * 50);
             }
 
             EntityLabels[0].Content = "= Player 1";
@@ -158,17 +180,17 @@ namespace A_Level_Project__New_
                 PowerupLabels[i] = new Label()
                 {
                     Width = 110,
-                    Height = 40,
+                    Height = 30,
                     Foreground = GameConstants.ForegroundColour,
                 };
 
                 SettingsCanvas.Children.Add(PowerupSpriteImages[i]);
                 Canvas.SetRight(PowerupSpriteImages[i], 125);
-                Canvas.SetTop(PowerupSpriteImages[i], 70 + i * 35);
+                Canvas.SetTop(PowerupSpriteImages[i], 55 + i * 35);
 
                 SettingsCanvas.Children.Add(PowerupLabels[i]);
                 Canvas.SetRight(PowerupLabels[i], 15);
-                Canvas.SetTop(PowerupLabels[i], 65 + i * 35);
+                Canvas.SetTop(PowerupLabels[i], 50 + i * 35);
                 
             }
 
@@ -212,11 +234,11 @@ namespace A_Level_Project__New_
 
                 SettingsCanvas.Children.Add(PointSpriteImages[i]);
                 Canvas.SetRight(PointSpriteImages[i], 240);
-                Canvas.SetTop(PointSpriteImages[i], 255 + i * 40);
+                Canvas.SetTop(PointSpriteImages[i], 245 + i * 40);
 
                 SettingsCanvas.Children.Add(PointLabels[i]);
                 Canvas.SetRight(PointLabels[i], 170);
-                Canvas.SetTop(PointLabels[i], 250 + i * 40);
+                Canvas.SetTop(PointLabels[i], 240 + i * 40);
                 
             }
 
@@ -225,6 +247,37 @@ namespace A_Level_Project__New_
             PointLabels[2].Content = "= 2 Points";
 
             #endregion
+
+            Image ControlsIMG = new Image();
+            BitmapImage ControlsIMGSource = new BitmapImage();
+
+            ControlsIMGSource.BeginInit();
+            ControlsIMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/ControlsIMG.png");
+            ControlsIMGSource.EndInit();
+
+            ControlsIMG.Source = ControlsIMGSource;
+
+            ControlsIMG.Width = 130;
+            ControlsIMG.Height = 130;
+
+            SettingsCanvas.Children.Add(ControlsIMG);
+            Canvas.SetRight(ControlsIMG, 10);
+            Canvas.SetTop(ControlsIMG, 230);
+        }
+
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            if (e.Source == EntitySpriteImages.Last())
+            {
+                ChangeEnemyColour();
+            }
+        }
+
+        private void ChangeEnemyColour()
+        {
+            EnemyColourIndex++;
+            EnemyColourIndex = EnemyColourIndex % EnemyIMGSources.Length;
+            EntitySpriteImages.Last().Source = EnemyIMGSources[EnemyColourIndex];
         }
 
         private bool CheckText(string TextToCheck, int axis)
@@ -253,7 +306,7 @@ namespace A_Level_Project__New_
             if (CheckText(WidthTxt.Text, 0) && CheckText(HeightTxt.Text, 1))
             {
                 TwoPlayers = (bool)TwoPlayersCheck.IsChecked;
-                new GameWindow(MazeDimensions, TwoPlayers, EnemyDifficulty).Show();
+                new GameWindow(MazeDimensions, TwoPlayers, EnemyDifficulty, EnemyColourIndex).Show();
                 Close();
             }
             else

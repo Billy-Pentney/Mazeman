@@ -22,7 +22,7 @@
 
         <Button Name="LeaderboardBtn" Content="Leaderboard"  FontSize="13" Canvas.Right="50" Canvas.Bottom="50" Height="35" Width="170" Click="LeaderboardBtn_Click" Canvas.Top="558"></Button>
 
-        <TextBlock Name="GraphInfoBlock" Height="203" Width="200" Canvas.Right="35" Canvas.Top="209" TextWrapping="Wrap" Canvas.Left="1259"></TextBlock>
+        <TextBlock Name="GraphInfoBlock" Height="203" Width="200" Canvas.Right="35" Canvas.Top="209" TextWrapping="Wrap"></TextBlock>
         <TextBlock Name="SearchInfoBlock" Height="100" Width="200" Canvas.Right="35" Canvas.Bottom="50" TextWrapping="Wrap" Canvas.Top="439" ></TextBlock>
 
         <Button Name="ScrollLBtn" Height="25" Content="Scroll Left" FontSize="12" Width="83" Click="ScrollBtn_Click" Canvas.Right="137" Canvas.Top="598"></Button>
