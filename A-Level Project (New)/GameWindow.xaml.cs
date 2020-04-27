@@ -27,7 +27,7 @@ namespace A_Level_Project__New_
         //24 used because it is divisible by 1, 2, 3 (the movement speeds)
         public int WallThickness { get; }
 
-        public static int[] indent { get; } = new int[2] { 40, 0 };
+        public static int[] indent { get; } = new int[2] { 90, 20 };
         //the pixel values used to indent the maze from the left/top of the window
 
         public const string FileName = "History.txt";
@@ -557,7 +557,7 @@ namespace A_Level_Project__New_
                     CurrentMazePt = NextPoint;
                 }
             }
-            
+
         }
 
         public double GetSpeed()
@@ -966,6 +966,22 @@ namespace A_Level_Project__New_
         public Point GetPixelPoint(Point location)
         {
             return Cells[(int)location.X, (int)location.Y].GetPixelPt();
+        }
+
+        public Point ConvertPixelPtToMazePt(Point PixelPt)
+        {
+            Point MazeTopLeft = new Point(GameConstants.indent[0] + Thickness, GameConstants.indent[1] + Thickness);
+
+            PixelPt.X -= MazeTopLeft.X;
+            PixelPt.Y -= MazeTopLeft.Y;
+
+            PixelPt.X /= (CellDimensions[0] + Thickness);
+            PixelPt.Y /= (CellDimensions[1] + Thickness);
+
+            PixelPt.X = (int)Math.Round(PixelPt.X);
+            PixelPt.Y = (int)Math.Round(PixelPt.Y);
+
+            return PixelPt;
         }
 
         private void InitialiseMaze()
@@ -1378,6 +1394,7 @@ namespace A_Level_Project__New_
                 cell.DrawScorePoint();
             }
         }
+
         public void SetScorePointColour(double effectVal)
         {
             int ColourIndex = (int)Math.Truncate(effectVal);
@@ -1402,9 +1419,8 @@ namespace A_Level_Project__New_
         private int width;
         private int height;
         private Rectangle Shape = new Rectangle { Fill = GameConstants.ForegroundColour, };
-        private Point PixelPt;                  
+        private Point PixelPt;
         private bool hideable = true;                 //used to prevent hiding outer edge walls
-        private char type;
 
         public Wall(char typeParam, int i, int j, int[] cellDimensions, int[] mazeDimensions, int thickness)
         {
@@ -1531,7 +1547,7 @@ namespace A_Level_Project__New_
                 return PlayerScores[Index];
             }
 
-            return 0;
+            return -1;
         }
 
         public int SearchPlayers(string toFind, bool IncludeLowercase, bool IncludeUppercase)
@@ -1569,7 +1585,7 @@ namespace A_Level_Project__New_
         public static GameWindow MW { get; set; }                 ////allows access to canvas outside of main window
         private Maze MazeOne;
         private int[] MazeDimensions;
-        private const int DisplayRefreshConstant = 16;          /// refresh rate for the entities
+        private const int DisplayRefreshConstant = 20;          /// refresh rate for the entities
         private DispatcherTimer GameTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 1), };
         private DispatcherTimer MovementTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 0, 0, DisplayRefreshConstant), };
         private List<Player> ActivePlayers = new List<Player>();
@@ -1643,54 +1659,9 @@ namespace A_Level_Project__New_
             //generates a random location to place the powerup
             Random rand = new Random();
             Point GeneratedPt = new Point();
-            //List<Point> AdjacentPoints = new List<Point>();
-            //bool invalidPoint = false;
-            //int attempts = 0;
-            //int maxAttempts = 10;
 
-            //do
-            //{
             GeneratedPt.X = rand.Next(0, MazeDimensions[0]);
             GeneratedPt.Y = rand.Next(0, MazeDimensions[1]);
-            //    AdjacentPoints = MazeOne.GetAdjacentPoints(GeneratedPt);
-
-            //    attempts += 1;
-
-            //    foreach (var Point in AdjacentPoints)
-            //    {
-            //        foreach (var Player in ActivePlayers)
-            //        {
-            //            if (Player.GetCurrentMazePt() == Point)
-            //            {
-            //                invalidPoint = true;
-            //            }
-            //        }
-
-            //        foreach (var Enemy in ActiveEnemies)
-            //        {
-            //            if (Enemy.GetCurrentMazePt() == Point)
-            //            {
-            //                invalidPoint = true;
-            //            }
-            //        }
-
-            //        foreach (var Powerup in VisiblePowerups)
-            //        {
-            //            if (Powerup.GetCurrentMazePt() == Point)
-            //            {
-            //                invalidPoint = true;
-            //            }
-            //        }
-            //    }
-
-            //    if (attempts > maxAttempts)
-            //    {
-            //        GeneratedPt.X = 0;
-            //        GeneratedPt.Y = 0;
-            //        invalidPoint = false;
-            //    }
-
-            //} while (invalidPoint);
 
             return GeneratedPt;
         }
@@ -1798,8 +1769,7 @@ namespace A_Level_Project__New_
             Point EnemyPixel = EnemyToCheck.GetPixelPt();
             double dx = 0;
             double dy = 0;
-            int toRemove = -1;
-            int playerNum;
+            int playerNum = -1;
 
             for (int i = 0; i < ActivePlayers.Count(); i++)
             {
@@ -1812,8 +1782,7 @@ namespace A_Level_Project__New_
                 //if (*EnemyToCheck.GetCurrentMazePt() == ActivePlayers[i].GetCurrentMazePt() || 
                 if ((dx < GameConstants.CellDimensions[0] / 2 && dy < GameConstants.CellDimensions[1] / 2))
                 {
-                    toRemove = i;
-                    //if the enemy is within half a cell of the player, it marks that player to be removed
+                    //if the enemy is within half a cell of the player, they are "touching"
 
                     ActivePlayers[i].RemoveFromMap();
                     //removes the visual aspect of the player
@@ -1826,10 +1795,11 @@ namespace A_Level_Project__New_
                 }
             }
 
-            //has to be removed after it checks through all players
-            if (toRemove > -1 && toRemove < ActivePlayers.Count())
+            //has to be removed from the list after it checks through all players
+
+            if (playerNum > -1 && playerNum < RemovedPlayers.Length)
             {
-                ActivePlayers.RemoveAt(toRemove);
+                ActivePlayers.Remove(RemovedPlayers[playerNum]);
                 //removes that player from the game so it cannot be tracked by enemy
 
             }
@@ -1925,7 +1895,7 @@ namespace A_Level_Project__New_
                     if (Effects[0] != 1)
                     {
                         currentSpeed = player.GetSpeed();
-                        player.SetSpeed(Effects[0] * currentSpeed);         
+                        player.SetSpeed(Effects[0] * currentSpeed);
                     }
 
                     if (Effects[2] >= 0 && Effects[2] != 1)
@@ -1958,7 +1928,7 @@ namespace A_Level_Project__New_
 
                 GameTimer.Start();
             }
-           
+
         }
 
         #region Saving Results To File
@@ -2216,8 +2186,8 @@ namespace A_Level_Project__New_
 
             UseClassicControls = ClassicControls;
 
-            this.Width = GameConstants.indent[0] + (MazeDimensions[0] + 4) * GameConstants.CellDimensions[0];
-            this.Height = GameConstants.indent[1] + (MazeDimensions[1] + 4) * GameConstants.CellDimensions[1];
+            this.Width = GameConstants.indent[0] + (MazeDimensions[0] + 3) * GameConstants.CellDimensions[0];
+            this.Height = GameConstants.indent[1] + (MazeDimensions[1] + 3) * GameConstants.CellDimensions[1];
 
             this.ResizeMode = ResizeMode.NoResize;
 

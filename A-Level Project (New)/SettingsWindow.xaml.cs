@@ -19,7 +19,7 @@ namespace A_Level_Project__New_
 
         int[] MazeDimensions = new int[2];
         bool TwoPlayers = false;
-        bool ClassicControls = true;
+        bool ClassicControls = false;
 
         double[] difficulties = new double[3] { 1, 2, 3 };
 
@@ -34,7 +34,6 @@ namespace A_Level_Project__New_
 
             DefaultCheck.IsChecked = true;
             MedRBtn.IsChecked = true;
-            ClassicControlsCheckBox.IsChecked = true;
             //sets the default values for ease (simply press start)
         }
 
