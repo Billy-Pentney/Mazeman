@@ -23,11 +23,14 @@ namespace A_Level_Project__New_
     class BarLine
     {
         private List<Rectangle> shapes = new List<Rectangle>();
-        public static double Width = 20;
+        private static double WidthScale = 20;
+        private static double HeightScale = 1;
         private string GameStatsText;
-        private static Brush[] Colours = new Brush[] { Brushes.Green, Brushes.Orange, Brushes.Red };
+        private Brush[] Colours = new Brush[] { Brushes.Green, Brushes.Orange, Brushes.Red };
+        private Brush ClickColour = Brushes.LightBlue;           //colour when the user clicks on/selects a bar
+        private Brush ShapeColour;  // ordinary colour for the shapes
 
-        public BarLine(DataEntry thisEntry, double heightScale)
+        public BarLine(DataEntry thisEntry)
         {
             GameStatsText = "GameID: " + thisEntry.GameID + Environment.NewLine + "Timestamp: " + thisEntry.Timestamp + Environment.NewLine;
             GameStatsText += Environment.NewLine + "Total Score For All Players: " + Convert.ToString(thisEntry.GetTotalScore()) + " pts" + Environment.NewLine;
@@ -35,9 +38,10 @@ namespace A_Level_Project__New_
             for (int i = 0; i < thisEntry.PlayerNames.Count; i++)
             {
                 Rectangle thisLine = new Rectangle();
-                thisLine.Fill = Colours[thisEntry.difficulty - 1];
-                thisLine.Width = Width;
-                thisLine.Height = thisEntry.PlayerScores[i] * heightScale;
+                ShapeColour = Colours[thisEntry.difficulty - 1];
+                thisLine.Fill = ShapeColour;
+                thisLine.Width = WidthScale;
+                thisLine.Height = thisEntry.PlayerScores[i] * HeightScale;
                 shapes.Add(thisLine);
                 GameStatsText += Environment.NewLine + "Player " + Convert.ToString(i + 1) + " (" + thisEntry.PlayerNames[i] + ") scored " + thisEntry.PlayerScores[i] + " pt";
 
@@ -70,20 +74,33 @@ namespace A_Level_Project__New_
             VisualGraph.thisCanvas.MouseLeftButtonDown += ThisWindow_MouseLeftButtonDown;
         }
 
-        public static void SetColours()
+        public static void SetBarScales(double w, double h)
         {
-            //Colours[0] = GameConstants.SecondaryColours[0];
-            //Colours[1] = GameConstants.SecondaryColours[1];
+            WidthScale = w;
+            HeightScale = h;
+        }
+
+        public static double GetWidth()
+        {
+            return WidthScale;
         }
 
         private void ThisWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            if (shapes.Contains(e.Source))
+            {
+                SetColour(ClickColour);
+                MessageBox.Show(GameStatsText);
+                SetColour(ShapeColour);
+            }
+            
+        }
+
+        private void SetColour(Brush ColourToSet)
+        {
             foreach (var item in shapes)
             {
-                if (e.Source == item)
-                {
-                    MessageBox.Show(GameStatsText);
-                }
+                item.Fill = ColourToSet;
             }
         }
 
@@ -107,7 +124,13 @@ namespace A_Level_Project__New_
         public static Canvas thisCanvas;
         private List<BarLine> GraphLines = new List<BarLine>();
         private Line[] GraphSides = new Line[2];
-        
+
+        private double[] BottomLeftIndent = new double[2];    //[0] = from left, [1] = from bottom
+        private double[] TopRightIndent = new double[2];      //[0] = from right, [1] = from top
+        private double[] AvailableArea = new double[2];       //[0] = width of graph, [1] = height of graph
+
+        private int[] DisplayRange = new int[2];
+
         private List<DataEntry> DisplayedEntries = new List<DataEntry>();
         private int HighestScoreForGraph = 0;
 
@@ -117,28 +140,29 @@ namespace A_Level_Project__New_
             //prevents the first objects from being removed from the canvas
         }
 
-        public void DrawAxes(double[] availableArea, double leftIndent, double topIndent, double currentLeft)
+        public void DrawAxes(double currentLeft)
         {
-            double fractionFromGraph = 0.05;
-            double difference = topIndent - leftIndent;
+            double fractionFromGraph = 0.01;
 
-            GraphSides[0] = new Line() { Stroke = Brushes.DarkGray, StrokeThickness = 2 };
+            for (int i = 0; i < GraphSides.Length; i++)
+            {
+                if (!thisCanvas.Children.Contains(GraphSides[i]))
+                {
+                    GraphSides[i] = new Line() { Stroke = Brushes.DarkGray, StrokeThickness = 2 };
+                    thisCanvas.Children.Add(GraphSides[i]);
+                    //initialises lines for the first time only
+                }
+            }
+            
+            GraphSides[0].X1 = BottomLeftIndent[0] * (1 - fractionFromGraph);     //bottom left point
+            GraphSides[0].Y1 = TopRightIndent[1] * (1 + fractionFromGraph) + AvailableArea[1];
+            GraphSides[0].X2 = currentLeft;                           //bottom right point
+            GraphSides[0].Y2 = TopRightIndent[1] * (1 + fractionFromGraph) + AvailableArea[1];
 
-            thisCanvas.Children.Add(GraphSides[0]);
-
-            GraphSides[0].X1 = leftIndent * (1 - fractionFromGraph);     //bottom left point
-            GraphSides[0].Y1 = leftIndent * (1 + fractionFromGraph) + difference + availableArea[1];
-            GraphSides[0].X2 = currentLeft;                             //bottom right point
-            GraphSides[0].Y2 = leftIndent * (1 + fractionFromGraph) + difference + availableArea[1];
-
-            GraphSides[1] = new Line() { Stroke = Brushes.DarkGray, StrokeThickness = 2 };
-
-            thisCanvas.Children.Add(GraphSides[1]);
-
-            GraphSides[1].X1 = leftIndent * (1 - fractionFromGraph);     //top left point
-            GraphSides[1].Y1 = leftIndent * (1 - fractionFromGraph)+ difference;
-            GraphSides[1].X2 = leftIndent * (1 - fractionFromGraph);     //bottom left point
-            GraphSides[1].Y2 = leftIndent * (1 + fractionFromGraph) + difference + availableArea[1];
+            GraphSides[1].X1 = BottomLeftIndent[0] * (1 - fractionFromGraph);     //top left point
+            GraphSides[1].Y1 = TopRightIndent[1] * (1 - fractionFromGraph);
+            GraphSides[1].X2 = BottomLeftIndent[0] * (1 - fractionFromGraph);     //bottom left point
+            GraphSides[1].Y2 = TopRightIndent[1] * (1 + fractionFromGraph) + AvailableArea[1];
         }
 
         public void ClearCanvas()
@@ -156,6 +180,31 @@ namespace A_Level_Project__New_
 
         }
 
+        public void ShiftBars(double difference)
+        { 
+            int UndisplayedRight = GraphLines.Count - 1 - DisplayRange[1];            // number of bars after the last one on the graph
+            int UndisplayedLeft = DisplayRange[0];  // number of bars before the first one on the graph
+
+            if (UndisplayedLeft > 0 && difference < 0)
+            {
+                GraphLines[DisplayRange[1]].RemoveAllFromCanvas();
+
+                DisplayRange[0] += -1;
+                DisplayRange[1] += -1;
+
+                DrawGraph();
+            }
+            else if (UndisplayedRight > 0 && difference > 0)
+            {
+                GraphLines[DisplayRange[0]].RemoveAllFromCanvas();
+
+                DisplayRange[0] += 1;
+                DisplayRange[1] += 1;
+
+                DrawGraph();
+            }
+        }
+
         private int GetNumOfBars(List<DataEntry> EntriesToSearch)
         {
             int count = 0;
@@ -171,12 +220,8 @@ namespace A_Level_Project__New_
             return count;
         }
 
-        public void DisplayGraph(List<DataEntry> ChosenEntries, int GreatestScore)
+        public void CreateGraph(List<DataEntry> ChosenEntries, int GreatestScore)
         {
-            double[] AvailableSpace = new double[2];
-            double[] TopRightIndent = new double[2];        //[0] = from right, [1] = from top
-            double[] BottomLeftIndent = new double[2];      //[0] = from left, [1] = from bottom
-
             ClearCanvas();
 
             HighestScoreForGraph = GreatestScore;
@@ -190,47 +235,89 @@ namespace A_Level_Project__New_
             TopRightIndent[0] += BottomLeftIndent[0];
             TopRightIndent[1] += BottomLeftIndent[1];
 
-            AvailableSpace[0] = thisCanvas.ActualWidth - (BottomLeftIndent[0] + TopRightIndent[0]);
-            AvailableSpace[1] = thisCanvas.ActualHeight - (BottomLeftIndent[1] + TopRightIndent[1]);
+            AvailableArea[0] = thisCanvas.ActualWidth - (BottomLeftIndent[0] + TopRightIndent[0]);
+            AvailableArea[1] = thisCanvas.ActualHeight - (BottomLeftIndent[1] + TopRightIndent[1]);
 
-            double newHeightScale = AvailableSpace[1] / HighestScoreForGraph;
+            double HeightScale = AvailableArea[1] / HighestScoreForGraph;
+            int NumOfBars = GetNumOfBars(ChosenEntries);
 
-            double shapeWidth = 10;
-
-            shapeWidth = Math.Round(AvailableSpace[0] / (1.5 * GetNumOfBars(ChosenEntries)), 1);
+            double shapeWidth = Math.Round(AvailableArea[0] / (2 * NumOfBars), 1);       
+            //1.5 is the multiplier because the graph is half of the width, then a bar
 
             if (shapeWidth > 150)
             {
                 shapeWidth = 150;
             }
-            else if (shapeWidth < 3)
+            else if (shapeWidth < 5)
             {
-                shapeWidth = 3;
+                shapeWidth = 5;
             }
 
-            BarLine.Width = shapeWidth;
+            BarLine.SetBarScales(shapeWidth, HeightScale);
 
-            double CurrentLeft = BottomLeftIndent[0] + shapeWidth * 0.5;
+            DisplayedEntries = ChosenEntries;
 
-            for (int i = 0; i < ChosenEntries.Count; i++)
+            foreach (var entry in ChosenEntries)
             {
-                BarLine thisBar = new BarLine(ChosenEntries[i], newHeightScale);
-
+                BarLine thisBar = new BarLine(entry);
                 GraphLines.Add(thisBar);
-
-                foreach (var bar in thisBar.GetShapes())
-                {
-                    thisCanvas.Children.Add(bar);
-                    Canvas.SetLeft(bar, CurrentLeft);
-                    Canvas.SetBottom(bar, BottomLeftIndent[1]);
-                    CurrentLeft += shapeWidth;
-                }
-
-                CurrentLeft += shapeWidth / 2;
+                //converts all entries into bars
             }
 
-            DrawAxes(AvailableSpace, BottomLeftIndent[0], TopRightIndent[1], CurrentLeft);
+            DisplayRange[0] = 0;
+            DisplayRange[1] = DetermineDisplayRange(shapeWidth, AvailableArea[0]);
+            //determines the range of bars which need to be displayed based on their width e.g. 0-10 of 20 bars
 
+            DrawGraph();
+
+        }
+
+        public int DetermineDisplayRange(double width, double availableWidth)
+        {
+            double currentLeft = width / 2;
+            int DisplayUpTo = 0;
+
+            for (int i = 0; i < GraphLines.Count; i++)
+            {
+                foreach (var shape in GraphLines[i].GetShapes())
+                {
+                    currentLeft += width;
+                }
+                currentLeft += width / 2;
+
+                DisplayUpTo = i;
+
+                if (currentLeft >= availableWidth)
+                {
+                    i = GraphLines.Count;
+                    //early exit of for loop
+                }
+            }
+
+            return DisplayUpTo;
+        }
+
+        public void DrawGraph()
+        {
+            double shapeWidth = BarLine.GetWidth();
+            double currentLeft = BottomLeftIndent[0] + shapeWidth / 2;
+
+            for (int i = DisplayRange[0]; i < DisplayRange[1] + 1; i++)
+            {
+                foreach (var bar in GraphLines[i].GetShapes())
+                {
+                    if (!thisCanvas.Children.Contains(bar))
+                    {
+                        thisCanvas.Children.Add(bar);
+                    }
+                    Canvas.SetLeft(bar, currentLeft);
+                    Canvas.SetBottom(bar, BottomLeftIndent[1]);
+                    currentLeft += shapeWidth;
+                }
+                currentLeft += shapeWidth / 2;
+            }
+
+            DrawAxes(currentLeft);
         }
     }
 
@@ -246,7 +333,7 @@ namespace A_Level_Project__New_
         private List<DataEntry> AllFileEntries = new List<DataEntry>();     
         //stores all the entries taken from the file
 
-        private List<DataEntry> TopSinglePlayerEntries = new List<DataEntry>();
+        private List<DataEntry> SortedSinglePlayerEntries = new List<DataEntry>();
         //stores the single-player games sorted by score
 
         public ViewHistoryWindow()
@@ -288,8 +375,6 @@ namespace A_Level_Project__New_
             TotalScoreRadioBtn.Foreground = frg;
             LeaderboardBtn.Background = bkg;
             LeaderboardBtn.Foreground = frg;
-
-            BarLine.SetColours();
         }
 
         private void SearchBtn_Click(object sender, RoutedEventArgs e)
@@ -312,7 +397,7 @@ namespace A_Level_Project__New_
                 if (EntriesToDisplay.Count > 0)
                 {
                     SearchInfoBlock.Inlines.Add(Environment.NewLine + "Number Of Games Displayed: " + Convert.ToString(EntriesToDisplay.Count()));
-                    BarChart.DisplayGraph(EntriesToDisplay, FindGreatestScore(EntriesToDisplay));
+                    BarChart.CreateGraph(EntriesToDisplay, FindGreatestScore(EntriesToDisplay));
                     GraphInfoBlock.Inlines.Add("Click on a bar to see more information about that game!" + Environment.NewLine + Environment.NewLine);
                     GraphInfoBlock.Inlines.Add("The height of each bar represents the score of the player in that game. ");
                     GraphInfoBlock.Inlines.Add("The colour of each bar represents the difficulty of the game (red = hard, yellow = medium, green = easy)" + Environment.NewLine + Environment.NewLine);
@@ -409,7 +494,7 @@ namespace A_Level_Project__New_
             {
                 if (item.GetNumberOfPlayers() == 1)
                 {
-                    TopSinglePlayerEntries.Add(item);
+                    SortedSinglePlayerEntries.Add(item);
                 }
             }
 
@@ -457,11 +542,7 @@ namespace A_Level_Project__New_
 
             do
             {
-                if (TopSinglePlayerEntries[position].GetNameofHighestScore() == name)
-                {
-                    nameFound = true;
-                }
-                else if (TopSinglePlayerEntries[position].GetNameofHighestScore() == "anonymous" && name.ToLower() == "anonymous")
+                if (SortedSinglePlayerEntries[position].GetNameofHighestScore() == name || IncludeCapitals && SortedSinglePlayerEntries[position].GetNameofHighestScore().ToLower() == name.ToLower())
                 {
                     nameFound = true;
                 }
@@ -470,7 +551,7 @@ namespace A_Level_Project__New_
                 //if found, this makes it an ordinal number (e.g. 0 goes to 1st, 1 goes to 2nd...)
                 //if not found, this increments position to try the next entry
 
-            } while (nameFound != true && position < TopSinglePlayerEntries.Count - 1);
+            } while (nameFound != true && position < SortedSinglePlayerEntries.Count - 1);
 
             //index is 0...count, but a position is given from 1...count + 1
 
@@ -478,25 +559,21 @@ namespace A_Level_Project__New_
 
             if (nameFound)
             {
-                if (Rank == "1")
+                if (!Rank.EndsWith("11") && Rank.Last() == '1')
                 {
-                    Rank = "best";
+                    Rank += "st";
                 }
-                else if (Rank.Last() == '1')
+                else if (!Rank.EndsWith("12") && Rank.Last() == '2')
                 {
-                    Rank += "st best";
+                    Rank += "nd";
                 }
-                else if (Rank.Last() == '2')
+                else if (!Rank.EndsWith("13") && Rank.Last() == '3')
                 {
-                    Rank += "nd best";
-                }
-                else if (Rank.Last() == '3')
-                {
-                    Rank += "rd best";
+                    Rank += "rd";
                 }
                 else
                 {
-                    Rank += "th best";
+                    Rank += "th";
                 }
             }
             else
@@ -553,8 +630,20 @@ namespace A_Level_Project__New_
 
         private void LeaderboardBtn_Click(object sender, RoutedEventArgs e)
         {
-            LeaderboardWindow LW = new LeaderboardWindow(TopSinglePlayerEntries);
+            LeaderboardWindow LW = new LeaderboardWindow(SortedSinglePlayerEntries);
             LW.Show();
+        }
+
+        private void ScrollBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (e.Source == ScrollLBtn)
+            {
+                BarChart.ShiftBars(-1);
+            }
+            else if (e.Source == ScrollRBtn)
+            {
+                BarChart.ShiftBars(1);
+            }
         }
     }    
 }
