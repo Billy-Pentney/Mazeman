@@ -5,20 +5,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Project_Practice"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="800" Width="1000">
     <Canvas Name="myCanvas">
-        <Button Name="startBtn" Content="Start" Canvas.Left="10" Canvas.Top="10" Click="StartBtn_Click" Width="70"></Button>
+        <Button Name="startBtn" Content="Start" Canvas.Left="10" Canvas.Top="10" Click="StartBtn_Click" Width="70"/>
 
-        <Label Name="MazeLbl" Content="Maze:" Canvas.Top="36" HorizontalContentAlignment="Center" Width="80"></Label>
-        <TextBox Name="MwidthTXT" Width="30" Canvas.Left="50" Canvas.Top="62" Height="26"></TextBox>
-        <Label Name="mWidthLbl" Content="Width:" Canvas.Top="62"></Label>
-        <TextBox Name="MheightTXT" Width="30" Canvas.Left="50" Canvas.Top="92" Height="26"></TextBox>
+        <Label Name="MazeLbl" Content="Maze:" Canvas.Top="36" HorizontalContentAlignment="Center" Width="80"/>
+        <TextBox Name="MwidthTXT" Width="30" Canvas.Left="50" Canvas.Top="62" Height="26"/>
+        <Label Name="mWidthLbl" Content="Width:" Canvas.Top="62"/>
+        <TextBox Name="MheightTXT" Width="30" Canvas.Left="50" Canvas.Top="92" Height="26"/>
         <Label Name="mHeightLbl" Content="Height:" Canvas.Top="92"/>
 
-        <Label Name="CellsLbl" Content="Cells:" Canvas.Top="121" HorizontalContentAlignment="Center" Width="80"></Label>
-        <TextBox Name="CwidthTXT" Width="30" Canvas.Left="50" Canvas.Top="152" Height="26"></TextBox>
-        <Label Name="cWidthLbl" Content="Width:" Canvas.Top="152"></Label>
-        <TextBox Name="CheightTXT" Width="30" Canvas.Left="50" Canvas.Top="182" Height="26"></TextBox>
+        <Label Name="CellsLbl" Content="Cells:" Canvas.Top="121" HorizontalContentAlignment="Center" Width="80"/>
+        <TextBox Name="CwidthTXT" Width="30" Canvas.Left="50" Canvas.Top="152" Height="26"/>
+        <Label Name="cWidthLbl" Content="Width:" Canvas.Top="152"/>
+        <TextBox Name="CheightTXT" Width="30" Canvas.Left="50" Canvas.Top="182" Height="26"/>
         <Label Name="cHeightLbl" Content="Height:" Canvas.Top="182"/>
+
+        <Label Name="TimeTXT" Content="Time:" Canvas.Left="4" Canvas.Top="220" />
+        <TextBlock Name="TimeDisplayTxt" Width="30" Canvas.Left="50" Canvas.Top="225"/>
     </Canvas>
 </Window>
