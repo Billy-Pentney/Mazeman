@@ -8,13 +8,14 @@
         Title="GameWindow" Height="450" Width="800">
     <Canvas Name="GameCanvas">
         <Label Name="InfoTitleLbl" Content="GAME INFO" FontStyle="Italic" FontSize="15" Canvas.Left="10" Canvas.Top="10" Height="35"></Label>
+
         <Label Name="TimeLbl" Content="Time: " FontStyle="Italic" Canvas.Left="15" Canvas.Top="44" Width="40"></Label>
         <Label Name="ScoreLbl" Content="Score: " FontStyle="Italic"  Canvas.Left="15" Canvas.Top="70" Width="40"></Label>
         <Label Name="TimeDisplayTXT" Height="23" Width="38" FontSize="11" Content ="0000" Canvas.Left="55" HorizontalContentAlignment="Center" Canvas.Top="45"></Label>
         <Label Name="ScoreDisplayTXT" Height="23" Width="38" FontSize="11" Content ="0000" Canvas.Left="55" HorizontalContentAlignment="Center" Canvas.Top="71"/>
 
-        <Label Name="P1LivesTxt" Content="P1 Lives:    " Canvas.Left="15" FontSize="11" Canvas.Top="101" Width="78"></Label>
-        <Label Name="P2LivesTxt" Content="" Canvas.Left="15" Canvas.Top="127" FontSize="11" Width="78"></Label>
+        <Label Name="LivesLbl" Content="Lives:    " Canvas.Left="15" FontSize="12" FontStyle="Italic" Canvas.Top="110" Width="78"></Label>
+        <Label Name="LivesDisplayTXT" Content="3" Canvas.Left="59" FontWeight="Bold" FontSize="12" HorizontalContentAlignment="Center" Canvas.Top="110" Width="30"></Label>
 
         <TextBox Name="PowerupInfoBlock" Width="90" Canvas.Left="10" Canvas.Top="157" Height="252" BorderThickness="0" BorderBrush="White" TextWrapping="Wrap"/>
     </Canvas>

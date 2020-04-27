@@ -466,7 +466,7 @@ namespace A_Level_Project__New_
         public void RemoveFromMap()
         {
             Game.MW.GameCanvas.Children.Remove(Shape);
-            IncrementLives(-1);
+            //IncrementLives(-1);
         }
 
         public int GetScore()
@@ -1507,6 +1507,8 @@ namespace A_Level_Project__New_
         private double Difficulty = GameConstants.difficulties.Last();
         //this is set just in case it is not passed by the Settings Window (default = 2 is normal speed)
 
+        private int PlayerLives = 3;
+
         public Game(GameWindow thisWindow, int[] MazeDimensions, int[] CellDimensions, bool TwoPlayers, double EnemyDifficulty)
         {
             MW = thisWindow;
@@ -1531,8 +1533,8 @@ namespace A_Level_Project__New_
 
             thisWindow.TimeDisplayTXT.Foreground = GameConstants.ForegroundColour;
             thisWindow.ScoreDisplayTXT.Foreground = GameConstants.ForegroundColour;
-            thisWindow.P1LivesTxt.Foreground = GameConstants.ForegroundColour;
-            thisWindow.P2LivesTxt.Foreground = GameConstants.ForegroundColour;
+            thisWindow.LivesDisplayTXT.Foreground = GameConstants.ForegroundColour;
+
             thisWindow.PowerupInfoBlock.Foreground = GameConstants.ForegroundColour;
             thisWindow.PowerupInfoBlock.Background = GameConstants.BackgroundColour;
             thisWindow.PowerupInfoBlock.Foreground = GameConstants.ForegroundColour;
@@ -1562,15 +1564,12 @@ namespace A_Level_Project__New_
 
         public void CollectPoint(Player thisPlayer)
         {
+            //controls incrementing the score when a player moves over a point
+
             int IncrementScore = MazeOne.PointCrossed(thisPlayer.GetCurrentMazePt(), thisPlayer.GetScorePointValue());
 
             thisPlayer.IncrementScore(IncrementScore);
             TotalScore += IncrementScore;
-
-            if (IncrementScore > 10)
-            {
-                //if the board was cleared
-            }
         }
 
         private void MovementTimer_Tick(object sender, EventArgs e)
@@ -1580,7 +1579,7 @@ namespace A_Level_Project__New_
             foreach (Player player in ActivePlayers)
             {
                 player.IncrementDisplayNumber();
-                CheckTouchingPowerup(player);
+                CheckPowerupTouches(player);
 
                 if (!player.IsMoving())
                 {
@@ -1594,8 +1593,9 @@ namespace A_Level_Project__New_
             foreach (Enemy enemy in ActiveEnemies)
             {
                 enemy.IncrementDisplayNumber();
-                CheckTouches(enemy);
-                CheckTouchingPowerup(enemy);
+
+                CheckPlayerTouches(enemy);
+                CheckPowerupTouches(enemy);
 
                 if (!enemy.IsMoving())
                 {
@@ -1631,32 +1631,30 @@ namespace A_Level_Project__New_
 
             #endregion
 
-            UpdateScoreAndTime();  
+            UpdateScoreAndTime();
 
             //if no players left in the map
+
             if (ActivePlayers.Count() < 1)
             {
-                int TotalLives = 0;
+                PlayerLives -= 1;
 
-                for (int i = 0; i < RemovedPlayers.Length; i++)
-                {
-                    TotalLives += RemovedPlayers[i].GetLives();
-                }
+                MW.LivesDisplayTXT.Content = Convert.ToString(PlayerLives);
 
-                if (TotalLives < 1)
+                if (PlayerLives > 0)
                 {
-                    EndGame();
+                    ResetGame();
                 }
                 else
                 {
-                    ResetGame();
+                    EndGame();
                 }
             }
         }
 
         private void ResetGame()
         {
-            //resets game after a player is caught
+            //resets game after all players are caught, and at least one still has lives
 
             GameTimer.Stop();
             MovementTimer.Stop();
@@ -1672,20 +1670,8 @@ namespace A_Level_Project__New_
 
             for (int i = 0; i < RemovedPlayers.Length; i++)
             {
-                if (RemovedPlayers[i].GetLives() > 0)
-                {
-                    ActivePlayers.Add(RemovedPlayers[i]);
-                    ActivePlayers[i].RESET();
-
-                    if (i == 0)
-                    {
-                        MW.P1LivesTxt.Content = Convert.ToString("P1 Lives:    " + ActivePlayers[i].GetLives());
-                    }
-                    else if (i == 1)
-                    {
-                        MW.P2LivesTxt.Content = Convert.ToString("P2 Lives:    " + ActivePlayers[1].GetLives());
-                    }
-                }
+                ActivePlayers.Add(RemovedPlayers[i]);
+                ActivePlayers[i].RESET();    
             }
 
             ActivePlayers = ActivePlayers.OrderBy(player => player.GetPlayerNum()).ToList();
@@ -1695,31 +1681,8 @@ namespace A_Level_Project__New_
                 enemy.RESET();
             }
 
-
-
             GameTimer.Start();
             MovementTimer.Start();
-        }
-
-        private void SetEntityLocations()
-        {
-            Point StartPoint = MazeOne.GetFirstCellInMaze();
-            Point StartPointPixelPt = MazeOne.GetPixelPoint(StartPoint);
-            Point LastPoint = MazeOne.GetLastCellInMaze();
-            Point LastPointPixelPt = MazeOne.GetPixelPoint(LastPoint);
-
-            ActivePlayers[0].SetCurrentCellPt(StartPoint);
-            ActivePlayers[0].SetPixelPt(StartPointPixelPt);
-            ActiveEnemies[0].SetCurrentCellPt(LastPoint);
-            ActiveEnemies[0].SetPixelPt(LastPointPixelPt);
-
-            if (NumOfPlayers == 2)
-            {
-                StartPoint = MazeOne.GetBottomLeftCell();
-                StartPointPixelPt = MazeOne.GetPixelPoint(StartPoint);
-                ActivePlayers[1].SetCurrentCellPt(StartPoint);
-                ActivePlayers[1].SetPixelPt(StartPointPixelPt);
-            }
         }
 
         private void RemovePowerupEffect(Powerup thisPowerup)
@@ -1754,6 +1717,9 @@ namespace A_Level_Project__New_
 
         private void RemoveFromPowerupTextBlock(string ToRemove)
         {
+            //removes the powerup text from the information bar at the left
+            //this stops the effect being displayed after it has been stopped
+
             string Contents = MW.PowerupInfoBlock.Text;
 
             int index = Contents.IndexOf(ToRemove);
@@ -1763,7 +1729,7 @@ namespace A_Level_Project__New_
             MW.PowerupInfoBlock.Text = Contents;
         }
 
-        private void CheckTouches(Player EnemyToCheck)
+        private void CheckPlayerTouches(Player EnemyToCheck)
         {
             Point EnemyPixel = EnemyToCheck.GetPixelPt();
             double dx = 0;
@@ -1778,20 +1744,19 @@ namespace A_Level_Project__New_
                 dx = Math.Abs(EnemyPixel.X - ActivePlayers[i].GetPixelPt().X);
                 dy = Math.Abs(EnemyPixel.Y - ActivePlayers[i].GetPixelPt().Y);
 
-                //if (*EnemyToCheck.GetCurrentMazePt() == ActivePlayers[i].GetCurrentMazePt() || 
                 if ((dx < GameConstants.CellDimensions[0] / 2 && dy < GameConstants.CellDimensions[1] / 2))
                 {
                     //if the enemy is within half a cell of the player, they are "touching"
 
                     ActivePlayers[i].RemoveFromMap();
-                    //removes the visual aspect of the player
+                    //removes the visual aspect of the player and decreases the number of lives they have
 
                     playerNum = ActivePlayers[i].GetPlayerNum();
 
                     RemovedPlayers[playerNum] = ActivePlayers[i];
+
                     //stores the player in another data structure so that its score can be retrieved later
                     //the players are stored by player number, so they can be retrieved in the correct order
-
                 }
             }
 
@@ -1805,7 +1770,7 @@ namespace A_Level_Project__New_
             }
         }
 
-        private void CheckTouchingPowerup(Player EntityToCheck)
+        private void CheckPowerupTouches(Player EntityToCheck)
         {
             Point currentPixelPt = EntityToCheck.GetPixelPt();
 
@@ -2144,14 +2109,13 @@ namespace A_Level_Project__New_
             ActivePlayers.Add(new Player(StartPoint, StartPointPixelPt, 0));
             ActiveEnemies.Add(new Enemy(LastPoint, LastPointPixelPt, 2, Difficulty));
 
-            MW.P1LivesTxt.Content = Convert.ToString("P1 Lives:    " + ActivePlayers[0].GetLives());
+            MW.LivesDisplayTXT.Content = Convert.ToString(PlayerLives);
 
             if (NumOfPlayers == 2)
             {
                 StartPoint = MazeOne.GetBottomLeftCell();
                 StartPointPixelPt = MazeOne.GetPixelPoint(StartPoint);
                 ActivePlayers.Add(new Player(StartPoint, StartPointPixelPt, 1));
-                MW.P2LivesTxt.Content = Convert.ToString("P2 Lives:    " + ActivePlayers[1].GetLives());
             }
         }
 
@@ -2270,6 +2234,7 @@ namespace A_Level_Project__New_
             InfoTitleLbl.Foreground = GameConstants.ForegroundColour;
             ScoreLbl.Foreground = GameConstants.ForegroundColour;
             TimeLbl.Foreground = GameConstants.ForegroundColour;
+            LivesLbl.Foreground = GameConstants.ForegroundColour;
             GameCanvas.Background = GameConstants.BackgroundColour;
 
             newGame = new Game(this, MazeDimensions, GameConstants.CellDimensions, TwoPlayers, EnemyDifficulty);

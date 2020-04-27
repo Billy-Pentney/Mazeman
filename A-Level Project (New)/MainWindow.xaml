@@ -10,8 +10,9 @@
     <Canvas Name="MainCanvas">
         <Button Name="NewGameBtn" Content="PLAY GAME" FontSize="24" Height="80" Width="200" Canvas.Left="70" Canvas.Top="45" Click="NewGameBtn_Click"></Button>
         <Button Name="ViewHistoryBtn" Content="View Previous Scores" Canvas.Left="85" Canvas.Top="140" Height="60" Width="170" Click="ViewHistoryBtn_Click"></Button>
-        <Button Name="SwapColoursBtn" Content="Switch Colours" FontSize="8" Width ="60" HorizontalAlignment="Center" Click="SwapColoursBtn_Click" Canvas.Top="215" Canvas.Left="135"></Button>
+        <Button Name="SwapColoursBtn" Content="Switch Colours" FontSize="8" Width ="60" HorizontalAlignment="Center" Click="SwapColoursBtn_Click" Canvas.Top="210" Canvas.Left="140"></Button>
+
         <Label Name="IdentifierLbl" Content="A-Level Project &#x0a;Billy Pentney &#x0a;Candidate Number: 5081" FontSize="8" Opacity="0.5" Canvas.Top="219"/>
-        <Label Name="VersionNumLbl" Content="V.2.0.0" Canvas.Left="298" Canvas.Top="239" FontSize="9" Opacity="0.5"></Label>
+        <Label Name="VersionNumLbl" Content="V.2.0.1" Canvas.Left="298" Canvas.Top="239" FontSize="9" Opacity="0.5"></Label>
     </Canvas>
 </Window>
