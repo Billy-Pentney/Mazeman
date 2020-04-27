@@ -77,13 +77,13 @@ namespace Project_Practice
 
     class ScorePt
     {
-        private Rectangle Shape = new Rectangle();
+        private Ellipse Shape = new Ellipse();
         private Point PixelPt = new Point();
 
         public ScorePt(Point PointParam, int[] cellDimensions)
         {
-            Shape.Width = (int)cellDimensions[0] / 7;
-            Shape.Height = (int)cellDimensions[1] / 7;
+            Shape.Width = (int)cellDimensions[0] / 6;
+            Shape.Height = (int)cellDimensions[1] / 6;
             Shape.Fill = Brushes.Orange;
 
             Game.MW.myCanvas.Children.Add(Shape);
@@ -260,7 +260,7 @@ namespace Project_Practice
             {
                 thisPoint.Hide();
                 return true;
-                //returns true if the point was hidden
+                //returns true if the point had not been collected before
             }
             //returns false if it was already hidden
             return false;
@@ -284,7 +284,7 @@ namespace Project_Practice
 
         public Enemy(Point StartMazePt, Point StartPixelPt, int[] cellDimensions, int Thickness, Brush colour): base(StartMazePt, StartPixelPt, cellDimensions, Thickness, colour)
         {
-            CurrentMovementSpeed = 0.5;
+            CurrentMovementSpeed = 2;
         }
 
         public int GetNextDirection(int StartIndex)
@@ -651,8 +651,7 @@ namespace Project_Practice
 
             return (OriginalMove + 2) % 4;
 
-            //numOfDirections = 4, so    (0 + 2) % 4 = 2,    (1 + 2) % 4 = 3, 
-            //                           (2 + 2) % 4 = 0,    (3 + 2) % 4 = 1,
+            //numOfDirections = 4, so    (0 + 2) % 4 = 2,    (1 + 2) % 4 = 3,     (2 + 2) % 4 = 0,    (3 + 2) % 4 = 1,
 
         }
 
@@ -692,7 +691,7 @@ namespace Project_Practice
                 new Point(Current.X - 1, Current.Y),
             };
 
-            ValidDirections.Clear();
+            ValidDirections = new List<int>();
 
             if (type == 0)
             {
@@ -803,7 +802,7 @@ namespace Project_Practice
             return false;
         }
 
-        public List<int> GeneratePathToPlayer(Point Target, Point Current)
+        public List<int> GeneratePathToTarget(Point Target, Point Current)
         {
             SimplePriorityQueue<Point, double> SearchCells = new SimplePriorityQueue<Point, double>();
             //search cells is the list of cells to be checked by the algorithm
@@ -932,17 +931,22 @@ namespace Project_Practice
             throw new Exception("Attempt to convert two invalid points to a movement");
         }
 
-        public void PointCrossed(Point newPoint)
+        public bool PointCrossed(Point newPoint)
         {
-            if (Cells[(int)newPoint.X, (int)newPoint.Y].TogglePoint())
+            bool Unvisited = Cells[(int)newPoint.X, (int)newPoint.Y].TogglePoint();
+
+            if (Unvisited)
             {
                 NumOfActivePoints -= 1;
             }
 
-            if (NumOfActivePoints == 0)
+            if (NumOfActivePoints <= 0)
             {
                 RedrawAllPoints();
+                NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
             }
+
+            return Unvisited;
         }
 
         private void RedrawAllPoints()
@@ -1067,10 +1071,12 @@ namespace Project_Practice
         private int MovementCount = 0;
         private GameConstants Constants;
         private int PointValue = 1;
+        private TextBlock TimeDisplayTXT = new TextBlock();
+        private TextBlock ScoreDisplayTXT = new TextBlock();
 
         //private List<Entity> ActiveEntities = new List<Entity>();
 
-        public Game(Canvas myCanvas)
+        public Game()
         {
             MW = (MainWindow)Application.Current.MainWindow;
 
@@ -1078,18 +1084,16 @@ namespace Project_Practice
 
             GameTimer.Tick += GameTimer_Tick;
             MovementTimer.Tick += MovementTimer_Tick;
-        }
 
-        public void EnableTwoPlayers()
-        {
-            if (NumOfPlayers == 1)
-            {
-                NumOfPlayers = 2;
-            }
-            else
-            {
-                NumOfPlayers = 1;
-            }
+            TimeDisplayTXT.Width = 30;
+            MW.myCanvas.Children.Add(TimeDisplayTXT);
+            Canvas.SetLeft(TimeDisplayTXT, 55);
+            Canvas.SetTop(TimeDisplayTXT, 225);
+
+            ScoreDisplayTXT.Width = 30;
+            MW.myCanvas.Children.Add(ScoreDisplayTXT);
+            Canvas.SetLeft(ScoreDisplayTXT, 55);
+            Canvas.SetTop(ScoreDisplayTXT, 250);
         }
 
         public void UpdatePlayerMovement(Key key)
@@ -1136,10 +1140,6 @@ namespace Project_Practice
 
         private void MovementTimer_Tick(object sender, EventArgs e)
         {
-            Point newPoint = new Point();
-            Point currentPoint = new Point();
-            int direction = 0;
-
             MovementCount += 1;
 
             #region Attempt with ActiveEntities List
@@ -1180,70 +1180,71 @@ namespace Project_Practice
 
             foreach (var Player in ActivePlayers)
             {
-                currentPoint = Player.GetCurrentLoc();
-                direction = Player.GetDirection();
-                MazeOne.PointCrossed(currentPoint);
-                Player.IncrementScore(PointValue);
-
-                if (MazeOne.CheckEdgeInDirection(currentPoint, direction) && MovementCount % (1 / Player.GetSpeed()) == 0)
+                //cycles through each player and "collects"/hides the point that they are on
+                if (MazeOne.PointCrossed(Player.GetCurrentLoc()))
                 {
-                    //checks that move is valid
-                    newPoint = MazeOne.MoveFromPoint(currentPoint, direction);
-                    Player.SetCurrentCellPt(newPoint);
-                    //updates position of player within maze
-
-                    newPoint = MazeOne.GetPixelPoint(newPoint);
-                    Player.SetPixelPt(newPoint);
-                    //updates position of player in window
-                    Player.Draw();
+                    Player.IncrementScore(PointValue);
                 }
+
+                UpdatePlayerPosition(Player);
             }
 
             foreach (var Enemy in ActiveEnemies)
             {
                 //cycles through all enemies -- potential for extra enemies to be added later
 
-                if (Enemy.GetPathLength() < 1 && Enemy.GetCurrentLoc() != Enemy.GetTarget())
-                {
-                    UpdateEnemyPath(Enemy);
-                }
-                else if (Enemy.GetCurrentLoc() == Enemy.GetTarget())
-                {
-                    MW.Close();
-                }
-
-                currentPoint = Enemy.GetCurrentLoc();
                 Enemy.UpdateDirection();
-                direction = Enemy.GetDirection();
+                UpdatePlayerPosition(Enemy);
+                FindShortestPath(Enemy);
+            }
 
-                if (MazeOne.CheckEdgeInDirection(currentPoint, direction) && MovementCount % (1 / Enemy.GetSpeed()) == 0)
-                {
-                    //checks that there is an edge between those cells
-                    newPoint = MazeOne.MoveFromPoint(currentPoint, direction);
-                    Enemy.SetCurrentCellPt(newPoint);
-                    //moves in that direction
+            //CheckTouches();
+            UpdateScoreAndTime();
+        }
 
-                    newPoint = MazeOne.GetPixelPoint(newPoint);
-                    Enemy.SetPixelPt(newPoint);
-                    //gets the new position in the window
+        //private void CheckTouches()
+        //{
+        //    Point[] PlayerPoints = new Point[ActivePlayers.Count() - 1]();
 
-                    Enemy.Draw();
-                }
+        //    for (int i = 0; i < PlayerPoints.Count(); i++)
+        //    {
+        //        PlayerPoints[i] = ActivePlayers[i].GetCurrentLoc();
+        //    }
+        //}
 
-                UpdateEnemyPath(Enemy);
+        private void UpdatePlayerPosition(Player Entity)
+        {
+            Point currentPoint = Entity.GetCurrentLoc();
+            int direction = Entity.GetDirection();
+
+            int ChanceOfMoving = MovementCount % (int)Entity.GetSpeed();
+
+            if (MazeOne.CheckEdgeInDirection(currentPoint, direction) && ChanceOfMoving == 0)
+            {
+                //checks that there is an edge between those cells
+                Point newPoint = MazeOne.MoveFromPoint(currentPoint, direction);
+                Entity.SetCurrentCellPt(newPoint);
+                //moves in that direction
+
+                newPoint = MazeOne.GetPixelPoint(newPoint);
+                Entity.SetPixelPt(newPoint);
+                //gets the new position in the window
+
+                Entity.Draw();
             }
         }
 
         private void GameTimer_Tick(object sender, EventArgs e)
         {
-            UpdateGameTime();
+            currentTime += 1;   
             //updates the length of time the game has been open, once per second
         }
 
-        private void UpdateGameTime()
+        private void UpdateScoreAndTime()
         {
-            currentTime += 1;
-            //thisCanvas.TimeDisplayTxt.Text = Convert.ToString(currentTime);
+            TimeDisplayTXT.Text = Convert.ToString(currentTime);
+            ScoreDisplayTXT.Text = Convert.ToString(ActivePlayers[0].GetScore());
+            //redisplays the time and score
         }
 
         public void CreateMaze(string[] mazeDimText, string[] cellDimText)
@@ -1252,7 +1253,10 @@ namespace Project_Practice
             int[] cDimensions = ConvertDimensionsToInt(cellDimText);
             //gets size of maze/cells from textboxes
 
-            ClearWindow(13);
+            ClearWindow(15);
+            currentTime = 0;
+            TimeDisplayTXT.Text = Convert.ToString(0);
+
             Constants = new GameConstants(mDimensions, cDimensions);
             MazeOne = new Maze(Constants);
 
@@ -1271,13 +1275,8 @@ namespace Project_Practice
             ActivePlayers.Clear();
             ActiveEnemies.Clear();
 
-            //ActiveEntities.Clear();
-
             ActivePlayers.Add(new Player(StartPoint, StartPointPixelPt, MazeOne.GetCellDimensions(), MazeOne.GetWallThickness(), Brushes.Yellow));
             ActiveEnemies.Add(new Enemy(LastPoint, LastPointPixelPt, MazeOne.GetCellDimensions(), MazeOne.GetWallThickness(), Brushes.Red));
-
-            //ActiveEntities.Add(new Player(StartPoint, StartPointPixelPt, MazeOne.GetCellDimensions(), MazeOne.GetWallThickness(), Brushes.Yellow));
-            //ActiveEntities.Add(new Enemy(LastPoint, LastPointPixelPt, MazeOne.GetCellDimensions(), MazeOne.GetWallThickness(), Brushes.Red));
 
             if (NumOfPlayers == 2)
             {
@@ -1287,62 +1286,30 @@ namespace Project_Practice
                 //ActiveEntities.Add(new Player(StartPoint, StartPointPixelPt, MazeOne.GetCellDimensions(), MazeOne.GetWallThickness(), Brushes.Blue));
             }
 
-            UpdateEnemyPath(ActiveEnemies[0]);
+            FindShortestPath(ActiveEnemies[0]);
         }
 
-        private void UpdateEnemyPath(Enemy enemyParam)
+        private void FindShortestPath(Enemy enemyParam)
         {
-            List<int> PathToP1 = MazeOne.GeneratePathToPlayer(ActivePlayers[0].GetCurrentLoc(), enemyParam.GetCurrentLoc());
+            List<int> ShortestPath = MazeOne.GeneratePathToTarget(ActivePlayers[0].GetCurrentLoc(), enemyParam.GetCurrentLoc());
+            List<int> AlternatePath;
+            Point target = new Point(0, 0);
 
-            if (ActivePlayers.Count() == 2)
+            for (int i = 1; i < ActivePlayers.Count; i++)
             {
-                List<int> PathToP2 = MazeOne.GeneratePathToPlayer(ActivePlayers[1].GetCurrentLoc(), enemyParam.GetCurrentLoc());
+                AlternatePath = MazeOne.GeneratePathToTarget(ActivePlayers[i].GetCurrentLoc(), enemyParam.GetCurrentLoc());
 
-                //selects the shortest path to player 1 or player 2 depending on the number of moves to get there
-                if (PathToP1.Count() < PathToP2.Count())
+                if (AlternatePath.Count() < ShortestPath.Count())
                 {
-                    enemyParam.UpdatePath(PathToP1);
-                    enemyParam.SetTarget(ActivePlayers[0].GetCurrentLoc());
-                }
-                else
-                {
-                    enemyParam.UpdatePath(PathToP2);
-                    enemyParam.SetTarget(ActivePlayers[1].GetCurrentLoc());
+                    ShortestPath = AlternatePath;
+                    target = ActivePlayers[i].GetCurrentLoc();
                 }
             }
-            else
-            {
-                enemyParam.UpdatePath(PathToP1);
-                enemyParam.SetTarget(ActivePlayers[0].GetCurrentLoc());
-            }
+
+            enemyParam.UpdatePath(ShortestPath);
+            enemyParam.SetTarget(target);
 
         }
-
-        //private int CompareTwoPaths(List<int> NewPath, List<int> OldPath)
-        //{
-        //    int index = 0;
-        //    bool endOfList = false;
-        //    bool mismatch = false;
-
-        //    do
-        //    {
-        //        if (index >= NewPath.Count() || index >= OldPath.Count())
-        //        {
-        //            endOfList = true;
-        //        }
-        //        else if (NewPath[index] != OldPath[index])
-        //        {
-        //            mismatch = true;
-        //        }
-        //        else
-        //        {
-        //            index += 1;
-        //        }
-
-        //    } while (!endOfList || !mismatch);
-                
-        //    return index;
-        //}
 
         public int[] ConvertDimensionsToInt(string[] inputTxtArray)
         {
@@ -1391,7 +1358,7 @@ namespace Project_Practice
         public MainWindow()
         {
             InitializeComponent();
-            gameOne = new Game(myCanvas);
+            gameOne = new Game();
         }
     }
 }

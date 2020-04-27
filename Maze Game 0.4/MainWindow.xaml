@@ -22,6 +22,6 @@
         <Label Name="cHeightLbl" Content="Height:" Canvas.Top="182"/>
 
         <Label Name="TimeTXT" Content="Time:" Canvas.Left="4" Canvas.Top="220" />
-        <TextBlock Name="TimeDisplayTxt" Width="30" Canvas.Left="50" Canvas.Top="225"/>
+        <Label Name="ScoreTXT" Content="Score:" Canvas.Left="4" Canvas.Top="246" />
     </Canvas>
 </Window>
