@@ -17,7 +17,9 @@ namespace A_Level_Project__New_
         int[] MazeDimensions = new int[2];
         bool TwoPlayers = false;
 
-        int EnemyDifficulty;               
+        double[] difficulties = new double[3] { 1, 2, 3 };
+
+        double EnemyDifficulty;               
         //used to set the speed of the enemy
 
         public SettingsWindow()
@@ -90,17 +92,17 @@ namespace A_Level_Project__New_
 
         private void EasyRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = 1;
+            EnemyDifficulty = difficulties[0];
         }
 
         private void MedRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = 2;
+            EnemyDifficulty = difficulties[1];
         }
 
         private void HardRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = 3;
+            EnemyDifficulty = difficulties[2];
         }
 
         #endregion
