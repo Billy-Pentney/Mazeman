@@ -21,8 +21,6 @@ namespace A_Level_Project__New_
         bool TwoPlayers = false;
         bool ClassicControls = true;
 
-        double[] difficulties = new double[3] { 1, 2, 3 };
-
         double EnemyDifficulty;
         //used to set the speed of the enemy
 
@@ -182,17 +180,17 @@ namespace A_Level_Project__New_
 
         private void EasyRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = difficulties[0];
+            EnemyDifficulty = GameConstants.Difficulties[0];
         }
 
         private void MedRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = difficulties[1];
+            EnemyDifficulty = GameConstants.Difficulties[1];
         }
 
         private void HardRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = difficulties[2];
+            EnemyDifficulty = GameConstants.Difficulties[2];
         }
 
         #endregion

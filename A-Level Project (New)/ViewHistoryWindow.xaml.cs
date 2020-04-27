@@ -167,11 +167,11 @@ namespace A_Level_Project__New_
 
         public void ClearCanvas()
         {
-            thisCanvas.Children.RemoveRange(9, thisCanvas.Children.Count);
+            thisCanvas.Children.RemoveRange(14, thisCanvas.Children.Count);
             //keeps the user input and labels, but removes the graph
         }
 
-        public void GetAllResultsWithName(string NameToSearch, bool FindLowercase, bool FindUppercase)
+        public void GetAllResultsWithName(string NameToSearch, bool FindCaseVariations, int SortByType)
         {
             JsonSerializer JS = new JsonSerializer();
             List<DataEntry> FileEntries = new List<DataEntry>();
@@ -193,7 +193,7 @@ namespace A_Level_Project__New_
 
             foreach (var entry in FileEntries)
             {
-                 if (entry.SearchPlayers(NameToSearch, FindLowercase, FindUppercase) != -1)
+                 if (entry.SearchPlayers(NameToSearch, FindCaseVariations) != -1)
                  {
                      ChosenEntries.Add(entry);
                      //isolates the data entries which contain the name we are searching for
@@ -205,8 +205,10 @@ namespace A_Level_Project__New_
 
             if (ChosenEntries.Count > 0)
             {
-                List<DataEntry> OrderedEntries = ChosenEntries.OrderBy(DataEntry => DataEntry.GetScoreFromName(NameToSearch, FindLowercase, FindUppercase)).ToList<DataEntry>();
+                //List<DataEntry> OrderedEntries = ChosenEntries.OrderBy(DataEntry => DataEntry.GetScoreFromName(NameToSearch, FindCaseVariations)).ToList<DataEntry>();
                 //orders the selected entries by the score which corresponds to the name to be found
+
+                List<DataEntry> OrderedEntries = SortBySpecifiedType(ChosenEntries, SortByType, NameToSearch, FindCaseVariations);
 
                 ClearCanvas();
                 DisplayGraph(OrderedEntries);
@@ -215,20 +217,40 @@ namespace A_Level_Project__New_
             {
                 string MessageToShow = "'" + NameToSearch + "'";
 
-                if (FindLowercase && NameToSearch.ToLower() != NameToSearch)
+                if (FindCaseVariations && NameToSearch.ToLower() != NameToSearch)
                 {
                     MessageToShow += ", " + "'" + NameToSearch.ToLower() + "'";
-                }
-
-                if (FindUppercase && NameToSearch.ToUpper() != NameToSearch)
-                {
-                    MessageToShow += ", " + "'" + NameToSearch.ToUpper() + "'";
                 }
 
                 MessageToShow += " not found in file history";
                 MessageBox.Show(MessageToShow);
             }
 
+        }
+
+        private List<DataEntry> SortBySpecifiedType(List<DataEntry> ToSort, int SortType, string thisName, bool includeCapitals)
+        {
+            List<DataEntry> SortedList = new List<DataEntry>();
+
+            switch (SortType)
+            {
+                case 0:
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.Timestamp).ToList();
+                    break;
+                case 1:
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.SurvivedFor).ToList();
+                    break;
+                case 2:
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetTotalScore()).ToList();
+                    break;
+                case 3:
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetScoreFromName(thisName, includeCapitals)).ToList();
+                    break;
+                default:
+                    break;
+            }
+
+            return SortedList;
         }
 
         private int FindGreatestScore(List<DataEntry> EntriesToSearch)
@@ -334,15 +356,13 @@ namespace A_Level_Project__New_
     public partial class ViewHistoryWindow : Window
     {
         private VisualGraph GraphDisplay;
-        string LastSearch;
-        bool IncludeLowerCase;
-        bool IncludeUpperCase;
+        string SearchName;
+        int SortByType = 0;
 
         public ViewHistoryWindow()
         {
             InitializeComponent();
-            LowercaseCheckBox.IsChecked = true;
-            UppercaseCheckBox.IsChecked = true;
+            LowerUpperCheckBox.IsChecked = true;
 
             GraphDisplay = new VisualGraph(myCanvas);
         }
@@ -350,21 +370,28 @@ namespace A_Level_Project__New_
         private void SearchBtn_Click(object sender, RoutedEventArgs e)
         {
             string NameToSearch = InputNameTxtBox.Text;
+            
+            GraphDisplay.GetAllResultsWithName(NameToSearch, (bool)LowerUpperCheckBox.IsChecked, SortByType);
+        }
 
-            if (NameToSearch.Length > 0)
-            {
-                bool NewIncludeUpperCase = (bool)UppercaseCheckBox.IsChecked;
-                bool NewIncludeLowerCase = (bool)LowercaseCheckBox.IsChecked;
+        private void DateRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            SortByType = 0;
+        }
 
-                if (LastSearch != NameToSearch || IncludeLowerCase != NewIncludeLowerCase || IncludeUpperCase != NewIncludeUpperCase)
-                {
-                    //only searches for results if a checkbox is different or the name is different to the last search
-                    IncludeUpperCase = NewIncludeUpperCase;
-                    IncludeLowerCase = NewIncludeLowerCase;
-                    GraphDisplay.GetAllResultsWithName(NameToSearch, IncludeLowerCase, IncludeUpperCase);
-                    LastSearch = NameToSearch;
-                }
-            }
+        private void TimeSurvivedRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            SortByType = 1;
+        }
+
+        private void TotalScoreRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            SortByType = 2;
+        }
+
+        private void PScoreRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            SortByType = 3;
         }
     }
 }
