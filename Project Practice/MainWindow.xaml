@@ -7,8 +7,18 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Canvas Name="myCanvas">
-        <Button Name="startBtn" Content="Start" Canvas.Left="10" Canvas.Top="56" Click="startBtn_Click" Width="30"></Button>
-        <TextBox Name="widthTXT" Width="30" Canvas.Left="10" Canvas.Top="10"></TextBox>
-        <TextBox Name="heightTXT" Width="30" Canvas.Left="10" Canvas.Top="33"></TextBox>
+        <Button Name="startBtn" Content="Start" Canvas.Left="10" Canvas.Top="10" Click="StartBtn_Click" Width="70"></Button>
+
+        <Label Name="MazeLbl" Content="Maze:" Canvas.Top="36" HorizontalContentAlignment="Center" Width="80"></Label>
+        <TextBox Name="MwidthTXT" Width="30" Canvas.Left="50" Canvas.Top="62" Height="26"></TextBox>
+        <Label Name="mWidthLbl" Content="Width:" Canvas.Top="62"></Label>
+        <TextBox Name="MheightTXT" Width="30" Canvas.Left="50" Canvas.Top="92" Height="26"></TextBox>
+        <Label Name="mHeightLbl" Content="Height:" Canvas.Top="92"/>
+        
+        <Label Name="CellsLbl" Content="Cells:" Canvas.Top="121" HorizontalContentAlignment="Center" Width="80"></Label>
+        <TextBox Name="CwidthTXT" Width="30" Canvas.Left="50" Canvas.Top="152" Height="26"></TextBox>
+        <Label Name="cWidthLbl" Content="Width:" Canvas.Top="152"></Label>
+        <TextBox Name="CheightTXT" Width="30" Canvas.Left="50" Canvas.Top="182" Height="26"></TextBox>
+        <Label Name="cHeightLbl" Content="Height:" Canvas.Top="182"/>
     </Canvas>
 </Window>

@@ -22,9 +22,17 @@ namespace Project_Practice
 
     class GameConstants
     {
+        public const int indent = 80;
+        //indents map in from left of canvas
+
         public int[] MazeDimensions { get; set; } = new int[2];
         public int[] CellDimensions { get; set; } = new int[2];
         public int WallThickness { get; set; }
+
+        private int minMazeDim = 10;
+        private int minCellDim = 20;
+        //minimum values for maze and cells that is accepted by the program
+
 
         public int[] mDimensionsDefault { get; } = new int[2] { 10, 10 };
         //default values for maze size (number of cells in the grid) if inputted values are invalid
@@ -32,8 +40,8 @@ namespace Project_Practice
         public int[] cDimensionsDefault { get; } = new int[2] { 20, 20 };
         //default values for cell size (in pixels) if inputted values are invalid
 
-        public Brush BackgroundColour { get; } = Brushes.Black;
-        public Brush ForegroundColour { get; } = Brushes.White;
+        public Brush BackgroundColour { get; } = Brushes.White;
+        public Brush ForegroundColour { get; } = Brushes.Black;
 
         //SetMDimensions - REDUNDANT AT THE MOMENT
         //may be required if CheckDimensions is not used
@@ -53,11 +61,11 @@ namespace Project_Practice
 
         public GameConstants(int[] mazeDim, int[] cellDim)
         {
-            MazeDimensions = CheckDimensions(mazeDim, 1, mDimensionsDefault);
-            CellDimensions = CheckDimensions(cellDim, 11, cDimensionsDefault);
+            MazeDimensions = CheckDimensions(mazeDim, minMazeDim, mDimensionsDefault);
+            CellDimensions = CheckDimensions(cellDim, minCellDim, cDimensionsDefault);
             //ensures that maze and cell dimensions are valid (i.e. int above 5)
 
-            WallThickness = (int)(CellDimensions[0] / 10);
+            WallThickness = Convert.ToInt32(CellDimensions[0] / 10);
             //sets thickness of walls based on width of cells
         }
 
@@ -80,42 +88,43 @@ namespace Project_Practice
 
     class Cell
     {
-        public Point GridPt { get; set; }
+        private Point GridPt;
+        private Point ShapePt;
 
-        private Rectangle shape = new Rectangle();
+        private Rectangle Shape = new Rectangle();
 
-        public Cell(Point currentCell, int[] cellDimensions)
+        public Cell(Point MazeLoc, Point CanvasLoc, int[] cellDimensions)
         {
-            shape.Width = cellDimensions[0];
-            shape.Height = cellDimensions[1];
-            GridPt = currentCell;
+            Shape.Width = cellDimensions[0];
+            Shape.Height = cellDimensions[1];
+            GridPt = MazeLoc;
+
+            ShapePt = CanvasLoc;
         }
 
-        //public List<Edge> Edges = new List<Edge>();
-
+        public List<Edge> Edges = new List<Edge>();
     }
 
-    //class Edge
-    //{
-    //    Cell targetVertex;
-    //}
+    class Edge
+    {
+        public Point StartPoint { get; set; }
+        public Point TargetPoint { get; set; }
+    }
 
     class Maze
     {
-        /// <summary>
-        /// GAME CONSTANTS
-        /// </summary>
+        private int[] MazeDimensions = new int[2];
+        private int[] CellDimensions = new int[2];
+        private int Thickness;
 
-        public int[] MazeDimensions = new int[2];
-        public int[] CellDimensions = new int[2];
-        public int Thickness;
-
-        private WallHorizontal[,] AllWallsH;                    ///additional walls on edge for each array to "close" box
+        private WallHorizontal[,] AllWallsH;                    
         private WallVertical[,] AllWallsV;
+
+        private Cell[,] Cells;
 
         public Maze(GameConstants Constants)
         {
-            ClearWindow(3);
+            ClearWindow(11);
 
             ///number of grid spaces in the maze
             MazeDimensions = Constants.MazeDimensions;
@@ -124,18 +133,44 @@ namespace Project_Practice
 
             AllWallsH = new WallHorizontal[MazeDimensions[1] + 1, MazeDimensions[0]];
             AllWallsV = new WallVertical[MazeDimensions[1], MazeDimensions[0] + 1];
+            ///add one on right/bottom edge for each array to "close" box
 
-            initialiseWalls();
-            drawGrid();
+            Cells = new Cell[MazeDimensions[0], MazeDimensions[1]];
+
+            InitialiseMaze();
+            //creates instances of each wall/cell
+
+            DrawGrid();
         }
 
         private void ClearWindow(int StartIndex)
         {
-            Game.mw.myCanvas.Children.RemoveRange(StartIndex, Game.mw.myCanvas.Children.Count);
+            Game.MW.myCanvas.Children.RemoveRange(StartIndex, Game.MW.myCanvas.Children.Count);
+        }
+
+        public bool CheckValidCell(int[] location)
+        {
+            //determines if the passed coordinates are a valid point in the maze
+            //takes int[2], returns bool
+
+            bool valid = false;
+
+            for (int i = 0; i < location.Count(); i++)
+            {
+                if (location[i] > -1)
+                {
+                    if (location[i] < MazeDimensions[i])
+                    {
+                        valid = true;           
+                    }
+                }  
+            }
+
+            return valid;
 
         }
 
-        private void initialiseWalls()
+        private void InitialiseMaze()
         {
             //creates individuals for each wall in the map
 
@@ -154,33 +189,56 @@ namespace Project_Practice
                     AllWallsV[i, j] = new WallVertical(i, j, CellDimensions, MazeDimensions, Thickness);
                 }
             }
+
+            for (int i = 0; i < Cells.GetLength(0); i++)
+            {
+                for (int j = 0; j < Cells.GetLength(1); j++)
+                {
+                    Point CanvasPoint = AllWallsH[i, j].GetCoordinates();
+                    Point MazePoint = new Point(j, i);
+
+                    CanvasPoint.X += Thickness;
+                    CanvasPoint.Y += Thickness;
+
+                    Cells[i, j] = new Cell(MazePoint, CanvasPoint, CellDimensions);
+                }
+            }
         }
 
-        public void drawGrid()
+        public void DrawGrid()
         {
             //displays all maze walls based on their unique x- and y-coordinates
             
             foreach (var wall in AllWallsV)
             {
-                wall.draw();
+                wall.Draw();
             }
 
             foreach (var wall in AllWallsH)
             {
-                wall.draw();
+                wall.Draw();
             }
 
         }
 
         public void MazeGeneration()
         {
-            Point currentCell = new Point(0,0);
-            Cell thisCell = new Cell(currentCell, CellDimensions);
+            int[] currentMazeCell = new int[2] { 0, 0 };
+            Cell thisCell = Cells[currentMazeCell[0], currentMazeCell[1]];
         }
 
         public List<int> GetAdjacentDirections(Cell Current)
         {
-            return new List<int>();
+            List<int> ValidDirections = new List<int>();
+            //stores the directions 0, 1, 2, 3 representing possible movements from the current cell
+            //ex. Cell[0,0] is top-left, so it has 1, 2 (right, down)
+            //ex-2. Cell[0,1] is one right of [0,0], so it has 1, 2, 3 (right, down, left)
+            //ex-3. Cell[1,1] is one below [0,1], so it has 0, 1, 2, 3 (all directions) 
+
+
+
+
+            return ValidDirections;
         }
 
     }
@@ -190,37 +248,44 @@ namespace Project_Practice
         //protected allows use in derived Horizontal and Vertical Wall classes
         protected int width;                                                                        
         protected int height;
-        protected Rectangle Shape = new Rectangle { Fill = Brushes.LightYellow, };
-        protected int XCoord { get; set; }
-        protected int YCoord { get; set; }
-        protected bool hidden = false;
-        protected bool hideable = true;
+        protected Rectangle Shape = new Rectangle { Fill = Brushes.Black, };
+        protected int XCoord;
+        protected int YCoord;
+        protected bool hidden = false;                  //used to hide walls
+        protected bool hideable = true;                 //used to prevent hiding outer edge walls
 
         public Wall()
         {
-            Game.mw.myCanvas.Children.Add(Shape);
-            Game.mw.myCanvas.MouseLeftButtonDown += MyCanvas_MouseLeftButtonDown;
+            Game.MW.myCanvas.Children.Add(Shape);
+            Game.MW.myCanvas.MouseLeftButtonDown += MyCanvas_MouseLeftButtonDown;
         }
 
-        private void MyCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        public Point GetCoordinates()
+        {
+            return new Point(XCoord, YCoord);
+        }
+
+        protected void MyCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             ///TESTING ability to remove particular walls
             //gets object that the user clicks on
-            //hides the wall underneath click
+            //hides the wall underneath the click
             //if already hidden, makes it visible again
 
-            if (e.Source == this.Shape && this.hidden == false)
+            if (e.Source == this.Shape)
             {
-                this.hide();
-                //MessageBox.Show("Clicked");           //testing click
-            }
-            else if (e.Source == this.Shape && this.hidden)
-            {
-                this.draw();
+                if (!this.hidden)
+                {
+                    this.Hide();
+                }
+                else
+                {
+                    this.Draw();
+                }
             }
         }
                                                                                                                                          
-        public void hide()
+        public void Hide()
         {
             if (hideable)
             {
@@ -229,7 +294,7 @@ namespace Project_Practice
             }
         }
 
-        public void draw()
+        public void Draw()
         {
             Shape.Opacity = 1;
             Canvas.SetLeft(Shape, XCoord);
@@ -243,6 +308,8 @@ namespace Project_Practice
     {
         public WallHorizontal(int i, int j, int[] cellDimensions, int[] mazeDimensions, int thickness) : base()
         {
+            //parameters i and j represent location of wall in AllWallsH or AllWallsV
+
             width = cellDimensions[0] + thickness;
             height = thickness;
             Shape.Width = this.width;
@@ -250,7 +317,7 @@ namespace Project_Practice
 
             //sets location of wall based on location in array
 
-            XCoord = 40 + (j + 1) * cellDimensions[0] + thickness;
+            XCoord = GameConstants.indent + (j + 1) * cellDimensions[0] + thickness;
             YCoord = (i + 1) * cellDimensions[1];
 
             if (i == 0 || i == mazeDimensions[0])
@@ -265,6 +332,8 @@ namespace Project_Practice
     {
         public WallVertical(int i, int j, int[] cellDimensions, int[] mazeDimensions, int thickness) : base()
         {
+            //parameters i and j represent location of wall in AllWallsH or AllWallsV
+
             width = thickness;
             height = cellDimensions[1];
             Shape.Width = this.width;
@@ -272,7 +341,7 @@ namespace Project_Practice
 
             //sets location of wall based on location in array
 
-            XCoord = 40 + (j + 1) * cellDimensions[0] + thickness;
+            XCoord = GameConstants.indent + (j + 1) * cellDimensions[0] + thickness;
             YCoord = (i + 1) * cellDimensions[1];
 
             if (j == 0 || j == mazeDimensions[1])
@@ -285,25 +354,22 @@ namespace Project_Practice
 
     class Game
     {
-        public static MainWindow mw { get; set; }                 ////allows access to canvas outside of main window
+        public static MainWindow MW { get; set; }                 ////allows access to canvas outside of main window
         private Maze MazeOne;
         private GameConstants Constants;
 
         public Game()
         {
-            mw = (MainWindow)Application.Current.MainWindow;
-            mw.myCanvas.Background = Brushes.Black;
+            MW = (MainWindow)Application.Current.MainWindow;
+            //MW.myCanvas.Background = Brushes.Black;
         }
 
         public void CreateMaze(string[] mazeDimText, string[] cellDimText)
         {
-            int[] mDimensions = new int[2];
-            int[] cDimensions = new int[2];
-
-            mDimensions = ConvertDimensionsToInt(mazeDimText);
+            int[] mDimensions = ConvertDimensionsToInt(mazeDimText);
             //gets size of maze from textboxes
 
-            cDimensions = ConvertDimensionsToInt(cellDimText);
+            int[] cDimensions = ConvertDimensionsToInt(cellDimText);
             //gets size of cell from text (can be amended to be from textboxes later)
 
             Constants = new GameConstants(mDimensions, cDimensions);
@@ -320,11 +386,9 @@ namespace Project_Practice
 
             for (int i = 0; i < inputTxtArray.Length; i++)
             {
-                int.TryParse(inputTxtArray[i], out outputArray[i]);
-
-                if (outputArray[i] < 1)
+                if (!int.TryParse(inputTxtArray[i], out outputArray[i]))
                 {
-                    //if the text converts to a negative, or doesn't convert to an integer
+                    //if the input text doesn't convert to an integer
                     outputArray[i] = -1;
                 }
             }
@@ -338,10 +402,10 @@ namespace Project_Practice
     {
         Game gameOne;
 
-        private void startBtn_Click(object sender, RoutedEventArgs e)
+        private void StartBtn_Click(object sender, RoutedEventArgs e)
         {
-            string[] mazeSizeTXT = new string[2] { widthTXT.Text, heightTXT.Text };
-            string[] cellSizeTXT = new string[2] { "-1", "-1" };
+            string[] mazeSizeTXT = new string[2] { MwidthTXT.Text, MheightTXT.Text };
+            string[] cellSizeTXT = new string[2] { CwidthTXT.Text, CheightTXT.Text };
             //default values - can be appended at later date to add text boxes for cell sizes
 
             gameOne.CreateMaze(mazeSizeTXT, cellSizeTXT);
