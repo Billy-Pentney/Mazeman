@@ -26,7 +26,7 @@ namespace A_Level_Project__New_
         public static double Width = 20;
         private Label IDLabel = new Label();
         private string GameStatsText;
-        private static Brush[] Colours = new Brush[]{ Brushes.Blue, Brushes.LightBlue };
+        private static Brush[] Colours = new Brush[] { Brushes.Blue, Brushes.LightBlue };
 
         public BarLine(DataEntry thisEntry, double heightScale)
         {
@@ -127,19 +127,13 @@ namespace A_Level_Project__New_
         public static Canvas thisCanvas;
         private List<BarLine> GraphLines = new List<BarLine>();
         private Line[] GraphSides = new Line[2];
-        private Label HighestScoreLbl = new Label() { Width = 200, Height = 30 };
-        private Label NumOfRecordsLbl = new Label() { Width = 200, Height = 30 };
+
+        private List<DataEntry> DisplayedEntries = new List<DataEntry>();
+        private int HighestScoreForGraph = 0;
 
         public VisualGraph(Canvas myCanvas)
         {
             thisCanvas = myCanvas;
-
-            thisCanvas.Children.Add(HighestScoreLbl);
-            Canvas.SetRight(HighestScoreLbl, 40);
-            Canvas.SetTop(HighestScoreLbl, 100);
-            thisCanvas.Children.Add(NumOfRecordsLbl);
-            Canvas.SetRight(NumOfRecordsLbl, 40);
-            Canvas.SetTop(NumOfRecordsLbl, 130);
         }
 
         public void DrawAxes(double[] availableArea, double[] indent, double currentLeft)
@@ -167,108 +161,8 @@ namespace A_Level_Project__New_
 
         public void ClearCanvas()
         {
-            thisCanvas.Children.RemoveRange(14, thisCanvas.Children.Count);
+            thisCanvas.Children.RemoveRange(9, thisCanvas.Children.Count);
             //keeps the user input and labels, but removes the graph
-        }
-
-        public void GetAllResultsWithName(string NameToSearch, bool FindCaseVariations, int SortByType)
-        {
-            JsonSerializer JS = new JsonSerializer();
-            List<DataEntry> FileEntries = new List<DataEntry>();
-            List<DataEntry> ChosenEntries = new List<DataEntry>();
-
-            int LastHighestScoreForALL = 0;
-
-            using (StreamReader reader = new StreamReader(GameConstants.FileName))
-            {
-                using (JsonTextReader jreader = new JsonTextReader(reader))
-                {
-                    FileEntries = (List<DataEntry>)JS.Deserialize(jreader, FileEntries.GetType());
-                    //gets all entries from the file and stores in a list of data entries
-                }
-            }
-
-            LastHighestScoreForALL = FindGreatestScore(FileEntries); 
-            //gets the highest score in the file for all players 
-
-            foreach (var entry in FileEntries)
-            {
-                 if (entry.SearchPlayers(NameToSearch, FindCaseVariations) != -1)
-                 {
-                     ChosenEntries.Add(entry);
-                     //isolates the data entries which contain the name we are searching for
-                 }
-            }
-
-            HighestScoreLbl.Content = "High Score For All Players: " + Convert.ToString(LastHighestScoreForALL);
-            NumOfRecordsLbl.Content = "Number Of Games Displayed: " + Convert.ToString(ChosenEntries.Count());
-
-            if (ChosenEntries.Count > 0)
-            {
-                //List<DataEntry> OrderedEntries = ChosenEntries.OrderBy(DataEntry => DataEntry.GetScoreFromName(NameToSearch, FindCaseVariations)).ToList<DataEntry>();
-                //orders the selected entries by the score which corresponds to the name to be found
-
-                List<DataEntry> OrderedEntries = SortBySpecifiedType(ChosenEntries, SortByType, NameToSearch, FindCaseVariations);
-
-                ClearCanvas();
-                DisplayGraph(OrderedEntries);
-            }
-            else
-            {
-                string MessageToShow = "'" + NameToSearch + "'";
-
-                if (FindCaseVariations && NameToSearch.ToLower() != NameToSearch)
-                {
-                    MessageToShow += ", " + "'" + NameToSearch.ToLower() + "'";
-                }
-
-                MessageToShow += " not found in file history";
-                MessageBox.Show(MessageToShow);
-            }
-
-        }
-
-        private List<DataEntry> SortBySpecifiedType(List<DataEntry> ToSort, int SortType, string thisName, bool includeCapitals)
-        {
-            List<DataEntry> SortedList = new List<DataEntry>();
-
-            switch (SortType)
-            {
-                case 0:
-                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.Timestamp).ToList();
-                    break;
-                case 1:
-                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.SurvivedFor).ToList();
-                    break;
-                case 2:
-                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetTotalScore()).ToList();
-                    break;
-                case 3:
-                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetScoreFromName(thisName, includeCapitals)).ToList();
-                    break;
-                default:
-                    break;
-            }
-
-            return SortedList;
-        }
-
-        private int FindGreatestScore(List<DataEntry> EntriesToSearch)
-        {
-            int currentGreatest = 0;
-            int thisScore;
-
-            foreach (var item in EntriesToSearch)
-            {
-                thisScore = item.GetHighestScore();
-
-                if (thisScore > currentGreatest)
-                {
-                    currentGreatest = thisScore;
-                }
-            }
-
-            return currentGreatest;
         }
 
         private int GetNumOfBars(List<DataEntry> EntriesToSearch)
@@ -286,11 +180,14 @@ namespace A_Level_Project__New_
             return count;
         }
 
-        public void DisplayGraph(List<DataEntry> ChosenEntries)
+        public void DisplayGraph(List<DataEntry> ChosenEntries, int GreatestScore)
         {
             double[] AvailableSpace = new double[2];
 
             GraphLines.Clear();
+            ClearCanvas();
+
+            HighestScoreForGraph = GreatestScore;
 
             double[] indent = new double[2];
             indent[0] = thisCanvas.ActualWidth * 0.05;
@@ -299,13 +196,12 @@ namespace A_Level_Project__New_
             AvailableSpace[0] = thisCanvas.ActualWidth - (2 * indent[0]);
             AvailableSpace[1] = thisCanvas.ActualHeight - (1.5 * indent[1]);
 
-            int LargestScore = FindGreatestScore(ChosenEntries);
-            double newHeightScale = AvailableSpace[1] / LargestScore;
+            double newHeightScale = AvailableSpace[1] / HighestScoreForGraph;
 
             double shapeWidth = 10;
             double newWidthScale = AvailableSpace[0] / (2 * shapeWidth * GetNumOfBars(ChosenEntries));
             shapeWidth *= newWidthScale;
-            
+
             if (shapeWidth > 150)
             {
                 shapeWidth = 200;
@@ -355,43 +251,140 @@ namespace A_Level_Project__New_
 
     public partial class ViewHistoryWindow : Window
     {
-        private VisualGraph GraphDisplay;
-        string SearchName;
-        int SortByType = 0;
+        private VisualGraph BarChart;
+        private bool IncludeLowerCase;
+        private bool IncludeUpperCase;
+        private string SearchName;
+
+        private List<DataEntry> AllFileEntries = new List<DataEntry>();
+        private int HighestScoreForAllPlayers = 0;
+
+        private Label HighestScoreLbl = new Label() { Width = 200, Height = 30 };
+        private Label NumOfRecordsLbl = new Label() { Width = 200, Height = 30 };
 
         public ViewHistoryWindow()
         {
             InitializeComponent();
-            LowerUpperCheckBox.IsChecked = true;
+            LowercaseCheckBox.IsChecked = true;
+            UppercaseCheckBox.IsChecked = true;
 
-            GraphDisplay = new VisualGraph(myCanvas);
+            BarChart = new VisualGraph(myCanvas);
+
+            myCanvas.Children.Add(HighestScoreLbl);
+            Canvas.SetRight(HighestScoreLbl, 40);
+            Canvas.SetTop(HighestScoreLbl, 100);
+            myCanvas.Children.Add(NumOfRecordsLbl);
+            Canvas.SetRight(NumOfRecordsLbl, 40);
+            Canvas.SetTop(NumOfRecordsLbl, 130);
         }
 
         private void SearchBtn_Click(object sender, RoutedEventArgs e)
         {
-            string NameToSearch = InputNameTxtBox.Text;
-            
-            GraphDisplay.GetAllResultsWithName(NameToSearch, (bool)LowerUpperCheckBox.IsChecked, SortByType);
+            SearchName = InputNameTxtBox.Text;
+
+            if (SearchName.Length > 0)
+            {
+                IncludeLowerCase = (bool)LowercaseCheckBox.IsChecked;
+                IncludeUpperCase = (bool)UppercaseCheckBox.IsChecked;
+
+                List<DataEntry> EntriesToDisplay = GetAllResultsWithName(SearchName, IncludeLowerCase, IncludeUpperCase);
+
+                EntriesToDisplay = EntriesToDisplay.OrderBy(DataEntry => DataEntry.GetScoreFromName(SearchName, IncludeLowerCase, IncludeUpperCase)).ToList<DataEntry>();
+                //Orders entries by the score of the player with the searched name 
+                //e.g if Bob got 12, and Bill got 15, and you search for Bill, it returns 15; if you search for Bob, it returns 12;
+
+                //EntriesToDisplay = EntriesToDisplay.OrderBy(DataEntry => DataEntry.SurvivedFor).ToList<DataEntry>();
+                //Orders entries by the length of time the last player survived for
+
+                if (EntriesToDisplay.Count > 0)
+                {
+                    NumOfRecordsLbl.Content = "Number Of Games Displayed: " + Convert.ToString(EntriesToDisplay.Count());
+                    BarChart.DisplayGraph(EntriesToDisplay, FindGreatestScore(EntriesToDisplay));
+                }
+                else
+                {
+                    string MessageToShow = "'" + SearchName + "'";
+
+                    if (IncludeLowerCase && SearchName.ToLower() != SearchName)
+                    {
+                        MessageToShow += ", " + "'" + SearchName.ToLower() + "'";
+                    }
+
+                    if (IncludeUpperCase && SearchName.ToUpper() != SearchName)
+                    {
+                        MessageToShow += ", " + "'" + SearchName.ToUpper() + "'";
+                    }
+
+                    MessageToShow += " not found in file history";
+                    MessageBox.Show(MessageToShow);
+
+                    NumOfRecordsLbl.Content = "Number Of Games Displayed: " + 0;
+                }
+
+            }
+            else
+            {
+                MessageBox.Show("Please input a name");
+            }
         }
 
-        private void DateRadioBtn_Checked(object sender, RoutedEventArgs e)
+        private void DeserialiseFile()
         {
-            SortByType = 0;
+            JsonSerializer JS = new JsonSerializer();
+
+            using (StreamReader reader = new StreamReader(GameConstants.FileName))
+            {
+                using (JsonTextReader jreader = new JsonTextReader(reader))
+                {
+                    AllFileEntries = (List<DataEntry>)JS.Deserialize(jreader, AllFileEntries.GetType());
+                    //gets all entries from the file and stores in a list of data entries
+                }
+            }
+
+            HighestScoreForAllPlayers = FindGreatestScore(AllFileEntries);
+            //gets the highest score in the file for all players 
+
+            HighestScoreLbl.Content = "High Score For All Players: " + Convert.ToString(HighestScoreForAllPlayers);
         }
 
-        private void TimeSurvivedRadioBtn_Checked(object sender, RoutedEventArgs e)
+        private List<DataEntry> GetAllResultsWithName(string NameToSearch, bool FindLowercase, bool FindUppercase)
         {
-            SortByType = 1;
+            List<DataEntry> ChosenEntries = new List<DataEntry>();
+
+            if (AllFileEntries.Count == 0)
+            {
+                DeserialiseFile();
+            }
+
+            foreach (var entry in AllFileEntries)
+            {
+                if (entry.SearchPlayers(NameToSearch, FindLowercase, FindUppercase) != -1)
+                {
+                    ChosenEntries.Add(entry);
+                    //isolates the data entries which contain the name we are searching for
+                }
+            }
+
+            return ChosenEntries;
+
         }
 
-        private void TotalScoreRadioBtn_Checked(object sender, RoutedEventArgs e)
+        private int FindGreatestScore(List<DataEntry> EntriesToSearch)
         {
-            SortByType = 2;
-        }
+            int currentGreatest = 0;
+            int nextScore;
 
-        private void PScoreRadioBtn_Checked(object sender, RoutedEventArgs e)
-        {
-            SortByType = 3;
+            foreach (var item in EntriesToSearch)
+            {
+                nextScore = item.GetHighestScore();
+
+                if (nextScore > currentGreatest)
+                {
+                    currentGreatest = nextScore;
+                }
+            }
+
+            return currentGreatest;
         }
     }
 }

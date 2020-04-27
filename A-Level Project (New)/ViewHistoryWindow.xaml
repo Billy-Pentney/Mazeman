@@ -12,17 +12,9 @@
         <Label Name="InputLbl" Content="Input a name to search for:" Canvas.Left="17" Canvas.Top="36"></Label>
         <TextBox Name="InputNameTxtBox" Width="180" Canvas.Left="185" Canvas.Top="37" Height="25"></TextBox>
         <Button Name="SearchBtn" Content="Search" Height="25" Width="60" Canvas.Right="20" Canvas.Top="20" Click="SearchBtn_Click"></Button>
-        <CheckBox Name="LowerUpperCheckBox" Canvas.Left="400" Canvas.Top="40"></CheckBox>
-        <Label Name="LowerUpperLbl" Content="Include Lowercase/Uppercase" Canvas.Left="421" Canvas.Top="33"></Label>
-
-        <RadioButton Name="DateRadioBtn" Canvas.Right="180" Canvas.Top="80" Checked="DateRadioBtn_Checked"></RadioButton>
-        <RadioButton Name="TimeSurvivedRadioBtn" Canvas.Right="180" Canvas.Top="110" Checked="TimeSurvivedRadioBtn_Checked"></RadioButton>
-        <RadioButton Name="TotalScoreRadioBtn" Canvas.Right="180" Canvas.Top="140" Checked="TotalScoreRadioBtn_Checked"></RadioButton>
-        <RadioButton Name="PScoreRadioBtn" Canvas.Right="180" Canvas.Top="170" Checked="PScoreRadioBtn_Checked"></RadioButton>
-
-        <Label Name="SortByDateLbl" Canvas.Right="90" Canvas.Top="73" Content="Sort by date played" Canvas.Left="819"></Label>
-        <Label Name="SortByTimeLbl" Canvas.Right="90" Canvas.Top="103" Content="Sort by time survived" Canvas.Left="819"></Label>
-        <Label Name="SortByTScoreLbl" Canvas.Right="90" Canvas.Top="133" Content="Sort by the total score" Canvas.Left="819"></Label>
-        <Label Name="SortByPScoreLbl" Canvas.Right="90" Canvas.Top="163" Content="Sort by this player's score" Canvas.Left="819"></Label>
+        <CheckBox Name="LowercaseCheckBox" Canvas.Left="400" Canvas.Top="25"></CheckBox>
+        <Label Name="LowercaseLbl" Content="Include Lowercase" Canvas.Left="420" Canvas.Top="19"></Label>
+        <CheckBox Name="UppercaseCheckBox" Canvas.Left="400" Canvas.Top="57"></CheckBox>
+        <Label Name="UppercaseLbl" Content="Include Uppercase" Canvas.Left="420" Canvas.Top="50"></Label>
     </Canvas>
 </Window>

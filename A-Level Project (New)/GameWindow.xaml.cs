@@ -25,7 +25,7 @@ namespace A_Level_Project__New_
 
         public static int[] CellDimensions { get; } = new int[2] { 25, 25 };
         //24 used because it is divisible by 1, 2, 3 (the movement speeds)
-        public static double WallThicknessProportion { get; } = 0.1;
+        public int WallThickness { get; }
 
         public static int[] indent { get; } = new int[2] { 40, 0 };
         //the pixel values used to indent the maze from the left/top of the window
@@ -33,13 +33,16 @@ namespace A_Level_Project__New_
         public const string FileName = "History.txt";
         //the name/address of the file where scores should be written to/read from
 
-        public static double[] Difficulties = new double[3]{1, 2, 3};
+        public GameConstants()
+        {
+            WallThickness = CellDimensions[0] / 10;
+        }
 
-        public const double DefaultMovementSpeed = 3;
+        public const double DefaultMovementSpeed = 4;
         //the player movement speed with no powerups
 
         public static Brush[] PlayerColours { get; } = new Brush[] { Brushes.Yellow, Brushes.Blue, Brushes.Red };
-        public static Brush[] PowerUpColours { get; } = new Brush[] { Brushes.Orange, Brushes.Green, Brushes.LightBlue, Brushes.Purple };
+        public static Brush[] PowerUpColours { get; } = new Brush[] { Brushes.Orange, Brushes.LimeGreen, Brushes.LightBlue, Brushes.Purple };
         public static Brush[] ScorePointColours { get; } = new Brush[] { Brushes.Gray, Brushes.Orange, Brushes.Purple };
 
         public static Brush BackgroundColour { get; } = Brushes.White;
@@ -496,7 +499,7 @@ namespace A_Level_Project__New_
             SetPixelPt(StartPixelPt);
 
             DefaultMovementSpeed = GameConstants.DefaultMovementSpeed;
-            CurrentMovementSpeed = DefaultMovementSpeed;
+            CurrentMovementSpeed = GameConstants.DefaultMovementSpeed;
             PlayerNum = Number;
             //player 1 has number 0, player 2 has number 1, Enemy has number 2
 
@@ -505,8 +508,8 @@ namespace A_Level_Project__New_
                 Shape.Fill = GameConstants.PlayerColours[PlayerNum];
             }
 
-            Shape.Width = (1 - GameConstants.WallThicknessProportion) * GameConstants.CellDimensions[0];
-            Shape.Height = (1 - GameConstants.WallThicknessProportion) * GameConstants.CellDimensions[1];
+            Shape.Width = GameConstants.CellDimensions[0] - Constants.WallThickness;
+            Shape.Height = GameConstants.CellDimensions[1] - Constants.WallThickness;
 
             CentrePixelPt.X = StartPixelPt.X + Shape.Width / 2;
             CentrePixelPt.Y = StartPixelPt.Y + Shape.Width / 2;
@@ -580,11 +583,6 @@ namespace A_Level_Project__New_
             Score += ScorePointValue;
         }
 
-        public void IncrementScore(int increment)
-        {
-            Score += increment;
-        }
-
         public void RemoveFromMap()
         {
             Game.MW.GameCanvas.Children.Remove(Shape);
@@ -627,6 +625,7 @@ namespace A_Level_Project__New_
         public int GetDirection()
         {
             int toReturn = CurrentDirection;
+            //CurrentDirection = -1;
 
             return toReturn;
         }
@@ -784,16 +783,17 @@ namespace A_Level_Project__New_
             return false;
         }
 
-        public void ToggleScorePoint()
+        public bool HideScorePoint()
         {
-            if (ScorePoint.IsVisible())
+            if (ScorePoint.GetVisible())
             {
                 ScorePoint.Hide();
+                return true;
+                //returns true if the point had not been collected before
             }
-            else
-            {
-                ScorePoint.Draw();
-            }
+
+            //returns false if it was already hidden
+            return false;
         }
 
         public void DrawScorePoint()
@@ -801,9 +801,9 @@ namespace A_Level_Project__New_
             ScorePoint.Draw();
         }
 
-        public bool IsScorePointVisible()
+        public bool IsPointVisible()
         {
-            return ScorePoint.IsVisible();
+            return ScorePoint.GetVisible();
         }
     }
 
@@ -868,7 +868,7 @@ namespace A_Level_Project__New_
             Canvas.SetTop(Shape, PixelPt.Y);
         }
 
-        public bool IsVisible()
+        public bool GetVisible()
         {
             return visible;
         }
@@ -900,12 +900,12 @@ namespace A_Level_Project__New_
         private int TotalNumOfCells;
         #endregion
 
-        public Maze(int[] MazeDimensions, GameConstants constants)
+        public Maze(int[] MazeDimensions)
         {
             ///number of grid spaces in the maze
             this.MazeDimensions = MazeDimensions;
             this.CellDimensions = GameConstants.CellDimensions;
-            Thickness = (int)(CellDimensions[0] * GameConstants.WallThicknessProportion);
+            Thickness = CellDimensions[0] / 10;
 
             AllWallsH = new Wall[MazeDimensions[0], MazeDimensions[1] + 1];
             AllWallsV = new Wall[MazeDimensions[0] + 1, MazeDimensions[1]];
@@ -992,7 +992,7 @@ namespace A_Level_Project__New_
             {
                 for (int x = 0; x < Cells.GetLength(0); x++)
                 {
-                    Point CanvasPoint = AllWallsH[x, y].GetCoordinates();
+                    Point CanvasPoint = AllWallsH[x, y].GetPixelPt();
                     Point MazePoint = new Point(x, y);
 
                     CanvasPoint.X += Thickness;
@@ -1352,43 +1352,32 @@ namespace A_Level_Project__New_
             throw new Exception("Attempt to convert two invalid points to a movement");
         }
 
-        public int PointCrossed(Player collector, Point newPoint)
+        public bool PointCrossed(Point newPoint)
         {
-            int PointsToAdd = 0;
+            if (NumOfActivePoints < 1)
+            {
+                //if there are no visible collectible points, they are all redrawn
+                DrawAllScorePoints();
+                NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
+            }
 
-            bool Unvisited = Cells[(int)newPoint.X, (int)newPoint.Y].IsScorePointVisible();
+            bool Unvisited = Cells[(int)newPoint.X, (int)newPoint.Y].HideScorePoint();
 
             if (Unvisited)
             {
-                //if the cell has not previously been visited and the point is uncollected
-                Cells[(int)newPoint.X, (int)newPoint.Y].ToggleScorePoint();
-
-                if (NumOfActivePoints < 1)
-                {
-                    //if there are no visible collectible points, they are all redrawn
-                    ResetAllScorePoints();
-                    NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
-
-                    PointsToAdd = 25 * collector.GetScorePointValue();
-                }
-
                 NumOfActivePoints -= 1;
-                PointsToAdd = collector.GetScorePointValue();
             }
 
-            return PointsToAdd;
+            return Unvisited;
         }
 
-        private void ResetAllScorePoints()
+        private void DrawAllScorePoints()
         {
-            NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
-
             foreach (var cell in Cells)
             {
                 cell.DrawScorePoint();
             }
         }
-
         public void SetScorePointColour(double effectVal)
         {
             int ColourIndex = (int)Math.Truncate(effectVal);
@@ -1400,7 +1389,7 @@ namespace A_Level_Project__New_
 
             foreach (var cell in Cells)
             {
-                if (cell.IsScorePointVisible())
+                if (cell.IsPointVisible())
                 {
                     cell.DrawScorePoint();
                 }
@@ -1410,23 +1399,18 @@ namespace A_Level_Project__New_
 
     class Wall
     {
-        //protected allows use in derived Horizontal and Vertical Wall classes
-        protected int width;
-        protected int height;
-        protected Rectangle Shape = new Rectangle { Fill = GameConstants.ForegroundColour, };
-        protected int XCoord;
-        protected int YCoord;
-        protected bool hidden = false;                  //used to hide walls
-        protected bool hideable = true;                 //used to prevent hiding outer edge walls
+        private int width;
+        private int height;
+        private Rectangle Shape = new Rectangle { Fill = GameConstants.ForegroundColour, };
+        private Point PixelPt;                  
+        private bool hideable = true;                 //used to prevent hiding outer edge walls
         private char type;
 
         public Wall(char typeParam, int i, int j, int[] cellDimensions, int[] mazeDimensions, int thickness)
         {
-            this.type = typeParam;
-
             //sets size of wall based on whether horizontal or vertical
 
-            if (type == 'h')
+            if (typeParam == 'h')
             {
                 //horizontal wall conditions
 
@@ -1439,7 +1423,7 @@ namespace A_Level_Project__New_
                     hideable = false;
                 }
             }
-            else if (type == 'v')
+            else if (typeParam == 'v')
             {
                 //vertical wall conditions
 
@@ -1456,34 +1440,30 @@ namespace A_Level_Project__New_
             Shape.Width = this.width;
             Shape.Height = this.height;
 
-            XCoord = 65 + (i + 1) * cellDimensions[0];
-            YCoord = (j + 1) * cellDimensions[1];
+            PixelPt.X = 65 + (i + 1) * cellDimensions[0];
+            PixelPt.Y = (j + 1) * cellDimensions[1];
             //calculates position of wall based on location in array
 
             Game.MW.GameCanvas.Children.Add(Shape);
         }
 
-        public Point GetCoordinates()
+        public Point GetPixelPt()
         {
-            return new Point(XCoord, YCoord);
+            return PixelPt;
         }
 
         public void Hide()
         {
             if (hideable)
             {
-                // Shape.Opacity = 0;      
                 Game.MW.GameCanvas.Children.Remove(Shape);
-                hidden = true;
             }
         }
 
         public void Draw()
         {
-            Shape.Opacity = 1;
-            Canvas.SetLeft(Shape, XCoord);
-            Canvas.SetTop(Shape, YCoord);
-            hidden = false;
+            Canvas.SetLeft(Shape, PixelPt.X);
+            Canvas.SetTop(Shape, PixelPt.Y);
         }
 
     }
@@ -1542,9 +1522,9 @@ namespace A_Level_Project__New_
             return Total;
         }
 
-        public int GetScoreFromName(string NameToFind, bool FindCaseVariations)
+        public int GetScoreFromName(string NameToFind, bool IncludeLowercase, bool IncludeUppercase)
         {
-            int Index = SearchPlayers(NameToFind, FindCaseVariations);
+            int Index = SearchPlayers(NameToFind, IncludeLowercase, IncludeUppercase);
 
             if (Index > -1 && Index < PlayerScores.Count())
             {
@@ -1554,27 +1534,30 @@ namespace A_Level_Project__New_
             return 0;
         }
 
-        public int SearchPlayers(string toFind, bool FindCaseVariations)
+        public int SearchPlayers(string toFind, bool IncludeLowercase, bool IncludeUppercase)
         {
             //searches through all the game saves in the file, checking the players in each
 
             for (int i = 0; i < PlayerNames.Count(); i++)
             {
-                if (PlayerNames[i] == toFind)
+                if (IncludeLowercase)
+                {
+                    if (toFind.ToLower() == PlayerNames[i].ToLower())
+                    {
+                        return i;
+                    }
+                }
+                else if (IncludeUppercase)
+                {
+                    if (toFind.ToUpper() == PlayerNames[i].ToUpper())
+                    {
+                        return i;
+                    }
+                }
+                else if (PlayerNames[i] == toFind)
                 {
                     return i;
                 }
-                else if (FindCaseVariations && toFind.ToLower() == PlayerNames[i].ToLower())
-                {
-                    return i;
-                }
-                //else if (IncludeUppercase)
-                //{
-                //    if (toFind.ToUpper() == PlayerNames[i].ToUpper())
-                //    {
-                //        return i;
-                //    }
-                //}
             }
 
             return -1;
@@ -1610,8 +1593,6 @@ namespace A_Level_Project__New_
         private int TotalScore = 0;
         private double Difficulty = GameConstants.DefaultMovementSpeed;
         //this is set just in case it is not passed by the Settings Window (default = 2 is normal speed)
-
-        private Random rand = new Random();
 
         public Game(GameWindow thisWindow, int[] MazeDimensions, int[] CellDimensions, bool TwoPlayers, double EnemyDifficulty)
         {
@@ -1659,18 +1640,64 @@ namespace A_Level_Project__New_
 
         public Point GenerateRandomLocation()
         {
+            //generates a random location to place the powerup
             Random rand = new Random();
             Point GeneratedPt = new Point();
+            //List<Point> AdjacentPoints = new List<Point>();
+            //bool invalidPoint = false;
+            //int attempts = 0;
+            //int maxAttempts = 10;
 
+            //do
+            //{
             GeneratedPt.X = rand.Next(0, MazeDimensions[0]);
             GeneratedPt.Y = rand.Next(0, MazeDimensions[1]);
+            //    AdjacentPoints = MazeOne.GetAdjacentPoints(GeneratedPt);
+
+            //    attempts += 1;
+
+            //    foreach (var Point in AdjacentPoints)
+            //    {
+            //        foreach (var Player in ActivePlayers)
+            //        {
+            //            if (Player.GetCurrentMazePt() == Point)
+            //            {
+            //                invalidPoint = true;
+            //            }
+            //        }
+
+            //        foreach (var Enemy in ActiveEnemies)
+            //        {
+            //            if (Enemy.GetCurrentMazePt() == Point)
+            //            {
+            //                invalidPoint = true;
+            //            }
+            //        }
+
+            //        foreach (var Powerup in VisiblePowerups)
+            //        {
+            //            if (Powerup.GetCurrentMazePt() == Point)
+            //            {
+            //                invalidPoint = true;
+            //            }
+            //        }
+            //    }
+
+            //    if (attempts > maxAttempts)
+            //    {
+            //        GeneratedPt.X = 0;
+            //        GeneratedPt.Y = 0;
+            //        invalidPoint = false;
+            //    }
+
+            //} while (invalidPoint);
 
             return GeneratedPt;
         }
 
         private void MovementTimer_Tick(object sender, EventArgs e)
         {
-            List<Powerup> PowerupsToRemove = new List<Powerup>();
+            List<int> ExpiredPowerupIndexes = new List<int>();
 
             foreach (Player player in ActivePlayers)
             {
@@ -1678,10 +1705,12 @@ namespace A_Level_Project__New_
 
                 if (!player.IsMoving())
                 {
-                    int increment = MazeOne.PointCrossed(player, player.GetCurrentMazePt());
-
-                    player.IncrementScore(increment);
-                    TotalScore += increment;
+                    if (MazeOne.PointCrossed(player.GetCurrentMazePt()))
+                    {
+                        //if the player is on a new point, it increments the score by 1
+                        player.IncrementScore();
+                        TotalScore += player.GetScorePointValue();
+                    }
                     UpdatePlayerPosition(player);
                 }
 
@@ -1709,13 +1738,16 @@ namespace A_Level_Project__New_
                 {
                     VisiblePowerups[i].RemoveFromMap();
                     CountOfPowerupType[VisiblePowerups[i].GetTypeNumber()] -= 1;
-                    PowerupsToRemove.Add(VisiblePowerups[i]);
+                    ExpiredPowerupIndexes.Add(i);
                 }
             }
 
-            foreach (var powerup in PowerupsToRemove)
+            foreach (int i in ExpiredPowerupIndexes)
             {
-                VisiblePowerups.Remove(powerup);
+                if (i > -1 && i < VisiblePowerups.Count())
+                {
+                    VisiblePowerups.RemoveAt(i);
+                }
             }
 
             UpdateScoreAndTime();
@@ -1736,6 +1768,12 @@ namespace A_Level_Project__New_
             for (int i = 0; i < ActivePlayers.Count; i++)
             {
                 currentSpeed = ActivePlayers[i].GetSpeed();
+
+                //if (currentSpeed < 0)
+                //{
+                //    MessageBox.Show("Players unfrozen");
+                //}
+
                 ActivePlayers[i].SetSpeed(currentSpeed / effects[0]);
                 ActivePlayers[i].SetScoreValue(1);
             }
@@ -1744,6 +1782,11 @@ namespace A_Level_Project__New_
             {
                 currentSpeed = ActiveEnemies[i].GetSpeed();
                 ActiveEnemies[i].SetSpeed(currentSpeed / effects[1]);
+
+                //if (currentSpeed < 0)
+                //{
+                //    MessageBox.Show("Enemy unfrozen");
+                //}
             }
 
             MazeOne.SetScorePointColour(1);
@@ -1766,6 +1809,7 @@ namespace A_Level_Project__New_
                 dx = Math.Abs(EnemyPixel.X - ActivePlayers[i].GetPixelPt().X);
                 dy = Math.Abs(EnemyPixel.Y - ActivePlayers[i].GetPixelPt().Y);
 
+                //if (*EnemyToCheck.GetCurrentMazePt() == ActivePlayers[i].GetCurrentMazePt() || 
                 if ((dx < GameConstants.CellDimensions[0] / 2 && dy < GameConstants.CellDimensions[1] / 2))
                 {
                     toRemove = i;
@@ -1813,6 +1857,7 @@ namespace A_Level_Project__New_
 
         private void GenerateRandomPowerUp(int type)
         {
+            Random rand = new Random();
             Point MazeLocation = GenerateRandomLocation();     //gets random location inside the maze                ///needs to be amended to ensure it is certain distance from entities
             Point PixelPt = MazeOne.GetPixelPoint(MazeLocation);
 
@@ -2010,13 +2055,11 @@ namespace A_Level_Project__New_
             int direction = Entity.GetDirection();
             Point newPoint;
             Point newPixelPoint;
-
             if (direction >= 0 && direction <= 3)
             {
                 if (MazeOne.CheckEdgeInDirection(currentPoint, direction))
                 {
                     //checks that there is an edge between those cells
-
                     newPoint = MazeOne.MoveFromPoint(currentPoint, direction);
                     Entity.SetCurrentCellPt(newPoint);
 
@@ -2027,51 +2070,14 @@ namespace A_Level_Project__New_
             }
         }
 
-        public Point ConvertPixelPtToMazePt(Point PixelPt)
-        {
-            PixelPt.X -= GameConstants.indent[0];
-            PixelPt.Y -= GameConstants.indent[1];
-
-            PixelPt.X = Math.Truncate(PixelPt.X / GameConstants.CellDimensions[0]);
-            PixelPt.Y = Math.Truncate(PixelPt.Y / GameConstants.CellDimensions[1]);
-
-            return PixelPt;
-        }
-
         private void GameTimer_Tick(object sender, EventArgs e)
         {
+            Random rand = new Random();
             int randVal = rand.Next(5, 21);
             currentTime += 1;
             //updates the length of time the game has been open, once per second
 
             List<Powerup> PowerupsToRemove = new List<Powerup>();
-            int PowerupIndexToRemove;
-
-            do
-            {
-                PowerupIndexToRemove = -1;
-
-                for (int i = 0; i < VisiblePowerups.Count; i++)
-                {
-                    VisiblePowerups[i].IncrementActiveTime();
-                    //increments each powerups time by 1
-
-                    if (VisiblePowerups[i].IsExpired())
-                    {
-                        //if they have been visible for more than their maximum duration, 
-                        //then they are removed from the map and from the list of powerups
-                        VisiblePowerups[i].RemoveFromMap();
-                        CountOfPowerupType[VisiblePowerups[i].GetTypeNumber()] -= 1;
-                        PowerupsToRemove.Add(VisiblePowerups[i]);
-                    }
-                }
-
-                if (PowerupIndexToRemove > -1 && PowerupIndexToRemove < VisiblePowerups.Count)
-                {
-                    VisiblePowerups.RemoveAt(PowerupIndexToRemove);
-                }
-
-            } while (PowerupIndexToRemove != -1);
 
             for (int i = 0; i < VisiblePowerups.Count; i++)
             {
@@ -2091,6 +2097,11 @@ namespace A_Level_Project__New_
             foreach (var powerup in AppliedPowerUpEffects)
             {
                 powerup.IncrementActiveTime();
+            }
+
+            foreach (var powerup in PowerupsToRemove)
+            {
+                VisiblePowerups.Remove(powerup);
             }
 
             if (AppliedPowerUpEffects.Count > 0)
@@ -2122,7 +2133,7 @@ namespace A_Level_Project__New_
         {
             currentTime = 0;
 
-            MazeOne = new Maze(MazeDim, Constants);
+            MazeOne = new Maze(MazeDim);
 
             AddEntities();
             GameTimer.Start();
@@ -2152,6 +2163,8 @@ namespace A_Level_Project__New_
                 //LastPointPixelPt = MazeOne.GetTopRightCell(1);
                 //ActiveEnemies.Add(new Enemy(LastPoint, LastPointPixelPt, Constants, 2, Difficulty));
             }
+
+            //FindShortestPath(ActiveEnemies[0]);
         }
 
         private void FindShortestPath(Enemy enemyParam)
