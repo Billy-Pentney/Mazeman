@@ -25,23 +25,23 @@ namespace A_Level_Project__New_
         //this class contains most of the major Game constants/variables
         //these can be changed to affect the way the game looks/plays
 
-        public static int[] CellDimensions { get; } = new int[2] { 25, 25 };
-        public static double WallThicknessProportion = 0.1;
+        public static int[] CellDimensions { get; } = new int[2] { 30, 30 };
+        public static double WallThicknessProportion = 0.15;
 
         public static int[] WinIndent { get; } = new int[2] { 85, 20 };
         public static int[] MazeIndent { get; } = new int[2] { 85, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
-        public const string FileName = "History - Copy.txt";
+        public const string FileName = "History.txt";
         //the name/address of the file where scores should be written to/read from
 
         public static double[] difficulties = new double[] { 1, 2, 3 };
         //the player movement speed with no powerups
 
         public static int ClearPointsValue { get; } = 50;
+        //the number of points awarded when the player clears the screen of ScorePoints and they are refreshed
 
-        public static Brush[] PlayerColours { get; } = new Brush[] { Brushes.Yellow, Brushes.Blue, Brushes.Red };
-        public static Brush[] PlayerFreezeColours { get; } = new Brush[] { Brushes.Gray, Brushes.DarkGray, Brushes.DarkRed };
+        //public static Brush[] PlayerColours { get; } = new Brush[] { Brushes.Yellow, Brushes.Blue, Brushes.Red };
         public static Brush[] PowerUpColours { get; } = new Brush[] { Brushes.Orange, Brushes.LimeGreen, Brushes.LightBlue, Brushes.HotPink };
         public static Brush[] ScorePointColours { get; } = new Brush[] { Brushes.Gray, Brushes.Orange, Brushes.HotPink };
 
@@ -249,7 +249,6 @@ namespace A_Level_Project__New_
     {
         public FreezePowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt)
         {
-            Random rand = new Random();
             DisplayMessage = "Enemy is frozen for " + Convert.ToString(maxDuration) + " seconds!";
             TypeNumber = 2;
             shape.Fill = GameConstants.PowerUpColours[TypeNumber];
@@ -299,15 +298,17 @@ namespace A_Level_Project__New_
     {
         protected double CurrentMovementSpeed;
         protected double DefaultMovementSpeed;
-        //protected Ellipse Shape = new Ellipse();
         protected Point CurrentMazePt = new Point();
         protected Point PixelPt = new Point();
-        protected int CurrentDirection = -1;     //moving left at start
+
+        protected int CurrentDirection = -1;     //-1 so the character is not moving at start
         private int Score = 0;
         private int PlayerNum;
-        private int ScorePointValue = 1;
-        private int DisplayNumber = 0;          ///used to reduce movement to every other frame
-        private double UpdateFrequency = 1;
+        private int ScorePointValue = 1;                
+        //how many points the player's score is incremented by when collecting scorepoints
+
+        private int DisplayNumber = 0;          //used to reduce movement to every other frame (slows character)
+        private double UpdateFrequency = 1;     //how frequently the player's position should be updated (based on speed)  
 
         private Point PixelPtChange = new Point(0, 0);        /// used during movement
         private Point NextPixelPt;
@@ -316,9 +317,8 @@ namespace A_Level_Project__New_
         private Point StartingPoint = new Point();      //when the player dies, it is reset to these coordinates
         private Point StartingPixelPoint = new Point();
 
-        protected Image Shape = new Image();
-        protected BitmapImage[,] IMGSources = new BitmapImage[4, 4];
-        protected int[] SpriteImage = new int[2];
+        protected Image Sprite = new Image();
+        protected BitmapImage[] IMGSources = new BitmapImage[4];
 
         public int Lives = 3;
 
@@ -331,44 +331,27 @@ namespace A_Level_Project__New_
             RESET();
 
             PlayerNum = Number;
-            //player 1 has number 0, player 2 has number 1, Enemy has number 2
+            //player 1 has number 0, player 2 has number 1, enemy1 is -1, enemy 2 is -2...
 
             if (PlayerNum > -1 && PlayerNum < 3)
             {
-                for (int j = 0; j < IMGSources.GetLength(0); j++)
+                for (int i = 0; i < IMGSources.Length; i++)
                 {
-                    for (int i = 0; i < IMGSources.GetLength(1); i++)
-                    {
-                        IMGSources[j, i] = new BitmapImage();
-                        IMGSources[j, i].BeginInit();
-                        IMGSources[j, i].UriSource = new Uri(Environment.CurrentDirectory + "/Pac" + (PlayerNum + 1) + "-" + i + GameConstants.FileNameSuffixes[j]);
-                        IMGSources[j, i].EndInit();
-                    }
+                    IMGSources[i] = new BitmapImage();
+                    IMGSources[i].BeginInit();
+                    IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/P" + (PlayerNum + 1) + GameConstants.FileNameSuffixes[i]);
+                    IMGSources[i].EndInit();
                 }
 
-                //Shape.Fill = GameConstants.PlayerColours[PlayerNum];
-                //sets colour based on which player is being created 
-                //i.e. player 1 = yellow, player 2 = blue...
-            }
-            else if (PlayerNum < 0)
-            {
-                for (int j = 0; j < IMGSources.GetLength(0); j++)
-                {
-                    for (int i = 0; i < IMGSources.GetLength(1); i++)
-                    {
-                        IMGSources[j, i] = new BitmapImage();
-                        IMGSources[j, i].BeginInit();
-                        IMGSources[j, i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost" + (-1 * PlayerNum) + GameConstants.FileNameSuffixes[j]);
-                        IMGSources[j, i].EndInit();
-                    }
-                }
+                //stores the four addresses of each player's sprites (up, down, left, right)
+
+                Sprite.Source = IMGSources[1];
+
             }
 
-            Shape.Width = GameConstants.CellDimensions[0] * (1 - GameConstants.WallThicknessProportion);
-            Shape.Height = GameConstants.CellDimensions[1] * (1 - GameConstants.WallThicknessProportion);
+            Sprite.Width = GameConstants.CellDimensions[0] * (1 - GameConstants.WallThicknessProportion);
+            Sprite.Height = GameConstants.CellDimensions[1] * (1 - GameConstants.WallThicknessProportion);
             //subtracts the wall thickness from the shape dimensions, so that the player fits in a square
-
-            Shape.Source = IMGSources[1, 0];
 
             Draw();
         }
@@ -383,9 +366,9 @@ namespace A_Level_Project__New_
             SetPixelPt(StartingPixelPoint);
             SetSpeed(DefaultMovementSpeed);
 
-            if (!Game.MW.GameCanvas.Children.Contains(Shape))
+            if (!Game.MW.GameCanvas.Children.Contains(Sprite))
             {
-                Game.MW.GameCanvas.Children.Add(Shape);
+                Game.MW.GameCanvas.Children.Add(Sprite);
             }
         }
 
@@ -512,7 +495,7 @@ namespace A_Level_Project__New_
 
         public void RemoveFromMap()
         {
-            Game.MW.GameCanvas.Children.Remove(Shape);
+            Game.MW.GameCanvas.Children.Remove(Sprite);
         }
 
         public int GetScore()
@@ -558,31 +541,18 @@ namespace A_Level_Project__New_
             IncrementPixelPt();
             //moves player position
 
-            //RotateTransform rotation = new RotateTransform(CurrentDirection * 90);
-            //rotation.CenterX = Shape.Width / 2;
-            //rotation.CenterY = Shape.Height / 2;
-
-            //Shape.RenderTransform = rotation;
-
-            //if (CurrentDirection >= 0 && CurrentDirection < IMGSources.Length)
-            //{
-            //    SpriteImage = new int[2] { CurrentDirection, (DisplayNumber / 4) % 4 };
-            //}
-
             if (IsMoving())
             {
-                Shape.Source = IMGSources[Math.Abs(CurrentDirection), (DisplayNumber / 4) % 4];
+                Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
+            }
+            else if (CurrentMovementSpeed < 0)
+            {
+                //FROZEN
+                //Sprite.Source = FrozenIMGSource;
             }
 
-
-            //if (DisplayNumber % 4 == 0)
-            //{
-            //    Shape.Source = IMGSources[(DisplayNumber / 4) % IMGSources.Length];
-
-            //}
-
-            Canvas.SetLeft(Shape, PixelPt.X);
-            Canvas.SetTop(Shape, PixelPt.Y);
+            Canvas.SetLeft(Sprite, PixelPt.X);
+            Canvas.SetTop(Sprite, PixelPt.Y);
             //redraws player in new position
         }
 
@@ -643,7 +613,7 @@ namespace A_Level_Project__New_
     class Enemy : Player
     {
         private Point Target;
-        //the position of the object the enemy generated a path to
+        //the position of the object the enemy is currently following
         private Queue<int> DirectionsToFollow = new Queue<int>();
         //a list of movements for the enemy to follow to reach the target
 
@@ -652,14 +622,19 @@ namespace A_Level_Project__New_
             //speed of the enemy is directly proportional to the difficulty i.e. 1 on Easy, 2 on Medium, 3 on hard
             //larger values for speed increase how many pixels the enemy moves per frame
 
+            for (int i = 0; i < IMGSources.Length; i++)
+            {
+                IMGSources[i] = new BitmapImage();
+                IMGSources[i].BeginInit();
+                IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost" + (-1 * Number) + GameConstants.FileNameSuffixes[i]);
+                IMGSources[i].EndInit();
+                //if playernum < 0, then the player is an enemy, so these sources are callibrated differently
+
+                Sprite.Source = IMGSources[1];
+            }
+
             SetSpeed(Difficulty);
             DefaultMovementSpeed = Difficulty;
-        }
-
-        public int GetPathLength()
-        {
-            //gets the number of moves required to reach the current target (i.e. the length of the current path)
-            return DirectionsToFollow.Count();
         }
 
         public Point GetTarget()
@@ -1746,20 +1721,25 @@ namespace A_Level_Project__New_
 
             int NumOfActiveEffects = AppliedPowerUpEffects.Count;
 
+            for (int i = 0; i < RemovedPlayers.Length; i++)
+            {
+                ActivePlayers.Add(RemovedPlayers[i]);
+            }
+
+            ActivePlayers = ActivePlayers.OrderBy(player => player.GetPlayerNum()).ToList();
+
             for (int i = 0; i < NumOfActiveEffects; i++)
             {
                 Powerup thisPowerup = AppliedPowerUpEffects.Dequeue();
                 RemovePowerupEffect(thisPowerup);
             }
             //removes all active powerup effects on reset
+            //this must be done after the players are restored, so that the effects are successfully removed
 
-            for (int i = 0; i < RemovedPlayers.Length; i++)
+            foreach (var player in ActivePlayers)
             {
-                ActivePlayers.Add(RemovedPlayers[i]);
-                ActivePlayers[i].RESET();
+                player.RESET();
             }
-
-            ActivePlayers = ActivePlayers.OrderBy(player => player.GetPlayerNum()).ToList();
 
             foreach (var enemy in ActiveEnemies)
             {

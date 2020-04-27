@@ -3,6 +3,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Shapes;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
 
 
 namespace A_Level_Project__New_
@@ -56,6 +58,9 @@ namespace A_Level_Project__New_
             HeightTxt.Foreground = foregroundColour;
             HeightTxt.Background = backgroundColour;
 
+            ExclamationMarkLbl.Foreground = Brushes.Red;
+            ExclamationMark2Lbl.Foreground = Brushes.Red;
+
             MazeDimText.Foreground = foregroundColour;
             MazeDimText.Background = backgroundColour;
             EnemyDifficultyText.Foreground = foregroundColour;
@@ -71,6 +76,9 @@ namespace A_Level_Project__New_
 
             OtherOptionsText.Foreground = foregroundColour;
             OtherOptionsText.Background = backgroundColour;
+
+            PowerupsLbl.Foreground = foregroundColour;
+            PlayersLbl.Foreground = foregroundColour;
         }
 
         private void AddObjectsToWindow()
@@ -92,23 +100,28 @@ namespace A_Level_Project__New_
 
             #region Entity Shapes + Labels
 
-            Ellipse[] EntityShapes = new Ellipse[3];
+            Image[] EntitySpriteIMG = new Image[3];
+            BitmapImage[] EntitySpriteSources = new BitmapImage[3];
             Label[] EntityLabels = new Label[3];
 
-            Label EntityText = new Label() { Width = 80, Height = 40, FontSize = 14, Content = "Players:" };
-            SettingsCanvas.Children.Add(EntityText);
-            EntityText.Foreground = GameConstants.ForegroundColour;
-            Canvas.SetRight(EntityText, 170);
-            Canvas.SetTop(EntityText, 20);
-
-            for (int i = 0; i < EntityShapes.Length; i++)
+            for (int i = 0; i < EntitySpriteSources.Length; i++)
             {
-                EntityShapes[i] = new Ellipse()
+                EntitySpriteSources[i] = new BitmapImage();
+                EntitySpriteSources[i].BeginInit();
+
+                if (i < 2)
                 {
-                    Width = ShapeSize,
-                    Height = ShapeSize,
-                    Fill = GameConstants.PlayerColours[i],
-                };
+                    EntitySpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/P" + (i + 1) + "-R.png");
+                }
+                else
+                {
+                    EntitySpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost1-R.png");
+                }
+
+                EntitySpriteSources[i].EndInit();
+
+                EntitySpriteIMG[i] = new Image();
+                EntitySpriteIMG[i].Source = EntitySpriteSources[i];
 
                 EntityLabels[i] = new Label()
                 {
@@ -117,9 +130,9 @@ namespace A_Level_Project__New_
                     Foreground = GameConstants.ForegroundColour,
                 };
 
-                SettingsCanvas.Children.Add(EntityShapes[i]);
-                Canvas.SetRight(EntityShapes[i], 240);
-                Canvas.SetTop(EntityShapes[i], 65 + i * 50);
+                SettingsCanvas.Children.Add(EntitySpriteIMG[i]);
+                Canvas.SetRight(EntitySpriteIMG[i], 240);
+                Canvas.SetTop(EntitySpriteIMG[i], 65 + i * 50);
 
                 SettingsCanvas.Children.Add(EntityLabels[i]);
                 Canvas.SetRight(EntityLabels[i], 170);
@@ -136,12 +149,6 @@ namespace A_Level_Project__New_
 
             Rectangle[] PowerupShapes = new Rectangle[4];
             Label[] PowerupLabels = new Label[4];
-
-            Label PowerupsText = new Label() { Width = 80, Height = 40, FontSize = 14, Content = "Powerups:"};
-            SettingsCanvas.Children.Add(PowerupsText);
-            PowerupsText.Foreground = GameConstants.ForegroundColour;
-            Canvas.SetRight(PowerupsText, 40);
-            Canvas.SetTop(PowerupsText, 20);
 
             for (int i = 0; i < PowerupShapes.Length; i++)
             {
@@ -239,17 +246,34 @@ namespace A_Level_Project__New_
 
         private void WidthTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (WidthTxt.Text != "15")
+            DefaultCheck.IsChecked = (WidthTxt.Text == "15");
+
+
+            if (CheckText(WidthTxt.Text, 0))
             {
-                DefaultCheck.IsChecked = false;
+                ExclamationMarkLbl.Foreground = Brushes.Green;
+                ExclamationMarkLbl.Content = "✓";
+            }
+            else
+            {
+                ExclamationMarkLbl.Foreground = Brushes.Red;
+                ExclamationMarkLbl.Content = "X";
             }
         }
 
         private void HeightTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (HeightTxt.Text != "15")
+            DefaultCheck.IsChecked = (HeightTxt.Text == "15");
+
+            if (CheckText(HeightTxt.Text, 1))
             {
-                DefaultCheck.IsChecked = false;
+                ExclamationMark2Lbl.Foreground = Brushes.Green;
+                ExclamationMark2Lbl.Content = "✓";
+            }
+            else
+            {
+                ExclamationMark2Lbl.Foreground = Brushes.Red;
+                ExclamationMark2Lbl.Content = "X";
             }
         }
     }
