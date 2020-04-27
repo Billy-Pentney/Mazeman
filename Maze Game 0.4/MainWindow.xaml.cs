@@ -21,7 +21,7 @@ namespace Project_Practice
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     ///    
-   
+
     class GameConstants
     {
         public const int indent = 80;
@@ -79,7 +79,7 @@ namespace Project_Practice
     {
         private DispatcherTimer ActiveTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, 1) };
 
-        private static double[] FriendlyEffects = new double[] { 2, 1, 1, 1 }; 
+        private static double[] FriendlyEffects = new double[] { 2, 1, 1, 1 };
         //scalar multiples applied to speed of all players speed if collected by player
         private static double[] EnemyEffects = new double[] { 1, 0.5, 0, 1 };
         //scalar multiples applied to speed of all enemies speed if collected by player
@@ -145,7 +145,7 @@ namespace Project_Practice
         }
 
         private void SetType()
-        {   
+        {
             Effects[0] = FriendlyEffects[type];
             Effects[1] = EnemyEffects[type];
             Colour = PossibleColours[type];
@@ -241,8 +241,6 @@ namespace Project_Practice
 
         public void RemoveFromMap()
         {
-            CurrentMazePt = new Point(-1,-1);
-            CurrentMovementSpeed = 0;
             Game.MW.myCanvas.Children.Remove(Shape);
         }
 
@@ -301,11 +299,11 @@ namespace Project_Practice
             Canvas.SetTop(Shape, PixelPt.Y);
         }
 
-        public virtual void UpdateDirection(Key KeyPressed)
+        public virtual void UpdateDirection(Key thisKey)
         {
             if (PlayerNum == 0)
             {
-                switch (KeyPressed)
+                switch (thisKey)
                 {
                     case Key.W:
                         CurrentDirection = 0;
@@ -325,7 +323,7 @@ namespace Project_Practice
             }
             else if (PlayerNum == 1)
             {
-                switch (KeyPressed)
+                switch (thisKey)
                 {
                     case Key.I:
                         CurrentDirection = 0;
@@ -424,12 +422,12 @@ namespace Project_Practice
         }
     }
 
-    class Enemy: Player
+    class Enemy : Player
     {
         private Point Target;
         private Queue<int> DirectionsToFollow = new Queue<int>();
 
-        public Enemy(Point StartMazePt, Point StartPixelPt, int[] cellDimensions, int Thickness, int Number): base(StartMazePt, StartPixelPt, cellDimensions, Thickness, Number)
+        public Enemy(Point StartMazePt, Point StartPixelPt, int[] cellDimensions, int Thickness, int Number) : base(StartMazePt, StartPixelPt, cellDimensions, Thickness, Number)
         {
             CurrentMovementSpeed = 0.5;
         }
@@ -613,7 +611,7 @@ namespace Project_Practice
             else
             {
                 //otherwise, returns the position of that cell in the maze
-                return new Point(0,0);
+                return new Point(0, 0);
             }
         }
 
@@ -886,7 +884,7 @@ namespace Project_Practice
         {
             //Note: this method is for getting the adjacent cells via the graph
             //it determines which points are adjacent based off of the edges of the current cell
-        
+
             List<Point> PointsList = new List<Point>();
             Edge currentEdge;
 
@@ -897,8 +895,8 @@ namespace Project_Practice
                 if (currentEdge != null)
                 {
                     PointsList.Add(currentEdge.GetPoint(1));
-                }  
-                
+                }
+
             }
 
             return PointsList;
@@ -934,7 +932,7 @@ namespace Project_Practice
             {
                 throw new Exception("Attempt to move to invalid point");
             }
-        }   
+        }
 
         public bool CheckEdgeInDirection(Point position, int direction)
         {
@@ -986,7 +984,7 @@ namespace Project_Practice
                 {
                     AdjacentCells = GetAdjacentPoints(Current);
                     //gets all valid neighbouring cells to the current cell
-                    
+
                     foreach (var NextCell in AdjacentCells)
                     {
                         newCost = CostToReach[Current] + 1;
@@ -1017,7 +1015,7 @@ namespace Project_Practice
             Point newkey = CameFrom[Target];
             NewPath.Add(Target);
 
-            while (newkey != new Point(-1,-1))
+            while (newkey != new Point(-1, -1))
             {
                 //at the start we said that the value for the start cell was [-1,-1]
                 //if the key is [-1,-1], we must be at the start of the path
@@ -1229,7 +1227,6 @@ namespace Project_Practice
             MovementTimer.Tick += MovementTimer_Tick;
 
             TimeDisplayTXT.Width = 30;
-            TimeDisplayTXT.Text = "test";
             MW.myCanvas.Children.Add(TimeDisplayTXT);
             Canvas.SetLeft(TimeDisplayTXT, 55);
             Canvas.SetTop(TimeDisplayTXT, 225);
@@ -1240,18 +1237,18 @@ namespace Project_Practice
             Canvas.SetTop(ScoreDisplayTXT, 250);
         }
 
-        public void UpdatePlayerMovement(Key key)
+        public void UpdatePlayerMovement(Key thisKey)
         {
             foreach (var Player in ActivePlayers)
             {
-                Player.UpdateDirection(key);
-            }        
+                Player.UpdateDirection(thisKey);
+            }
         }
 
         private void MovementTimer_Tick(object sender, EventArgs e)
         {
             MovementCount += 1;
-            Point target = new Point(0,0);
+            Point target = new Point(0, 0);
             int PlayerToRemove;
 
             foreach (var Player in ActivePlayers)
@@ -1265,22 +1262,15 @@ namespace Project_Practice
                         Player.IncrementScore(PointValue);
                     }
                     UpdatePlayerPosition(Player);
-                }    
+                }
             }
 
             foreach (var Enemy in ActiveEnemies)
             {
                 PlayerToRemove = CheckTouches(Enemy);
-                if (PlayerToRemove != -1)
-                {
-                    ActivePlayers.RemoveAt(PlayerToRemove);
-                }
-                else
-                {
-                    Enemy.UpdateDirection();
-                    UpdatePlayerPosition(Enemy);
-                    FindShortestPath(Enemy);
-                }
+                Enemy.UpdateDirection();
+                UpdatePlayerPosition(Enemy);
+                FindShortestPath(Enemy);
             }
 
             UpdateScoreAndTime();
@@ -1295,14 +1285,24 @@ namespace Project_Practice
                 if (EnemyToCheck.GetCurrentLoc() == ActivePlayers[i].GetCurrentLoc())
                 {
                     ActivePlayers[i].RemoveFromMap();
+                    //removes the visual aspect of the player
                     RemovedPlayers.Add(ActivePlayers[i]);
+                    //stores the player in another list for score access
+
+                    ActivePlayers.RemoveAt(i);      
+                    ///removes that player from the game so it cannot be tracked by enemy
                     return i;
                     //if the enemy is on the same cell as the player
                 }
             }
 
+            if (ActivePlayers.Count() < 1)
+            {
+                //EndGame()
+            }
+
             return -1;
-           
+
         }
 
         private void UpdatePlayerPosition(Player Entity)
@@ -1310,7 +1310,7 @@ namespace Project_Practice
             Point currentPoint = Entity.GetCurrentLoc();
             int direction = Entity.GetDirection();
 
-            int ChanceOfMoving = MovementCount % (int)(1/Entity.GetSpeed());
+            int ChanceOfMoving = MovementCount % (int)(1 / Entity.GetSpeed());
 
             if (MazeOne.CheckEdgeInDirection(currentPoint, direction) && ChanceOfMoving == 0)
             {
@@ -1330,7 +1330,7 @@ namespace Project_Practice
         private void GameTimer_Tick(object sender, EventArgs e)
         {
             currentTime += 1;
-            
+
 
             //updates the length of time the game has been open, once per second
         }
@@ -1357,7 +1357,6 @@ namespace Project_Practice
 
             ClearWindow(15);
             currentTime = 0;
-            TimeDisplayTXT.Text = Convert.ToString(0);
 
             Constants = new GameConstants(mDimensions, cDimensions);
             MazeOne = new Maze(Constants);
@@ -1393,7 +1392,7 @@ namespace Project_Practice
 
         private void FindShortestPath(Enemy enemyParam)
         {
-            Queue<int> ShortestPath; 
+            Queue<int> ShortestPath;
             Queue<int> AlternatePath;
             Point target = new Point(0, 0);
 
