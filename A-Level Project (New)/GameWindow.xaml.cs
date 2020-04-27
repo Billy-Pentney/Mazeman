@@ -25,24 +25,21 @@ namespace A_Level_Project__New_
         //this class contains most of the major Game constants/variables
         //these can be changed to affect the way the game looks/plays
 
-        public static int[] CellDimensions { get; } = new int[2] { 30, 30 };
-        public static double WallThicknessProportion = 0.15;
+        public static int[] CellDimensions { get; } = new int[2] { 25, 25 };
+        public static double WallThicknessProportion = 0.1;
 
         public static int[] WinIndent { get; } = new int[2] { 85, 20 };
         public static int[] MazeIndent { get; } = new int[2] { 85, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
-        public const string FileName = "History.txt";
+        public const string FileName = "History - Copy.txt";
         //the name/address of the file where scores should be written to/read from
 
         public static double[] difficulties = new double[] { 1, 2, 3 };
         //the player movement speed with no powerups
 
         public static int ClearPointsValue { get; } = 50;
-        //the number of points awarded when the player clears the screen of ScorePoints and they are refreshed
 
-        //public static Brush[] PlayerColours { get; } = new Brush[] { Brushes.Yellow, Brushes.Blue, Brushes.Red };
-        public static Brush[] PowerUpColours { get; } = new Brush[] { Brushes.Orange, Brushes.LimeGreen, Brushes.LightBlue, Brushes.HotPink };
         public static Brush[] ScorePointColours { get; } = new Brush[] { Brushes.Gray, Brushes.Orange, Brushes.HotPink };
 
         public static Brush BackgroundColour = Brushes.Black;
@@ -79,8 +76,6 @@ namespace A_Level_Project__New_
 
         protected Point MazePt;
         protected Point PixelPt;
-        protected Rectangle shape = new Rectangle();
-        private bool Visible = true;
         protected bool ReverseEffects = false;
         //used to flip effects if the enemy collects the powerup
 
@@ -89,20 +84,40 @@ namespace A_Level_Project__New_
         protected int TypeNumber = -1;
         protected Random rand = new Random();
 
-        public Powerup(Point mazePt, Point pixelPt)
+        protected Image Sprite = new Image();
+        protected BitmapImage IMGSource = new BitmapImage();
+
+        public Powerup(Point mazePt, Point pixelPt, int TypeNum)
         {
-            shape.Width = GameConstants.CellDimensions[0] / 3;
-            shape.Height = GameConstants.CellDimensions[1] / 3;
+            if (TypeNum > -1 && TypeNum < 4)
+            {
+                TypeNumber = TypeNum;
+            }
+            else
+            {
+                TypeNumber = 0;
+            }
+
+            IMGSource.BeginInit();
+            IMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/Powerup-" + TypeNumber + ".png");
+            IMGSource.EndInit();
+
+            Sprite.Source = IMGSource;
+
+            Sprite.Width = GameConstants.CellDimensions[0] / 2;
+            Sprite.Height = GameConstants.CellDimensions[1] / 2;
             ///dimensions are 1/3 of the cell dimensions in order to centre the powerup in the cell
 
             this.MazePt = mazePt;
             this.PixelPt = pixelPt;
-            this.PixelPt.X += shape.Width;
-            this.PixelPt.Y += shape.Height;
+            this.PixelPt.X += Sprite.Width / 2;
+            this.PixelPt.Y += Sprite.Height / 2;
 
-            Game.MW.GameCanvas.Children.Add(shape);
-            Canvas.SetLeft(shape, this.PixelPt.X);
-            Canvas.SetTop(shape, this.PixelPt.Y);
+            Game.MW.GameCanvas.Children.Add(Sprite);
+            Canvas.SetLeft(Sprite, this.PixelPt.X);
+            Canvas.SetTop(Sprite, this.PixelPt.Y);
+
+            Sprite.Opacity = 0.3;
 
             maxDuration = rand.Next(5, 10);
             //generates a random time for the powerup to appear/be applied for
@@ -113,6 +128,20 @@ namespace A_Level_Project__New_
         {
             //used to determine which powerup is being applied/collected/removed e.g. 0 = SpeedUp
             return TypeNumber;
+        }
+
+        public void UpdateOpacity()
+        {
+            double opacity = Sprite.Opacity;
+
+            if (maxDuration - currentActiveTime <= 1)
+            {
+                Sprite.Opacity *= 0.7;
+            }
+            else if (currentActiveTime < 1)
+            {
+                Sprite.Opacity /= 0.7;
+            }
         }
 
         public string GetMessage()
@@ -146,18 +175,11 @@ namespace A_Level_Project__New_
             return true;
         }
 
-        public bool IsVisible()
-        {
-            //is the powerup being displayed in the maze (i.e. not collected by player or enemy)
-            return Visible;
-        }
-
         public virtual void Collect(Player collector)
         {
             //virtual because each type of powerup overrides this method
 
             currentActiveTime = 0;
-            Visible = false;
             RemoveFromMap();
 
             ReverseEffects = (collector is Enemy);
@@ -177,11 +199,6 @@ namespace A_Level_Project__New_
 
         }
 
-        public bool IsReversed()
-        {
-            return ReverseEffects;
-        }
-
         public double[] GetEffects()
         {
             return Effects;
@@ -189,7 +206,7 @@ namespace A_Level_Project__New_
 
         public void RemoveFromMap()
         {
-            Game.MW.GameCanvas.Children.Remove(shape);
+            Game.MW.GameCanvas.Children.Remove(Sprite);
         }
 
         public int GetMaxDuration()
@@ -203,12 +220,10 @@ namespace A_Level_Project__New_
     {
         private double multiplier = 1.5;            ///speed increased by 50%
 
-        public SpeedUpPowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt)
+        public SpeedUpPowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt, 0)
         {
             DisplayMessage = "Player Speed is increased for " + maxDuration + " seconds!";
             Effects[0] = multiplier;
-            TypeNumber = 0;
-            shape.Fill = GameConstants.PowerUpColours[TypeNumber];
         }
 
         public override void Collect(Player collector)
@@ -226,12 +241,10 @@ namespace A_Level_Project__New_
     {
         private double multiplier = 0.5;            ///speed decreased by 50%
 
-        public SpeedDownPowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt)
+        public SpeedDownPowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt, 1)
         {
             DisplayMessage = "Enemy Speed is halved for " + maxDuration + " seconds!";
             Effects[1] = multiplier;
-            TypeNumber = 1;
-            shape.Fill = GameConstants.PowerUpColours[TypeNumber];
         }
 
         public override void Collect(Player collector)
@@ -247,11 +260,9 @@ namespace A_Level_Project__New_
 
     class FreezePowerup : Powerup
     {
-        public FreezePowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt)
+        public FreezePowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt, 2)
         {
             DisplayMessage = "Enemy is frozen for " + Convert.ToString(maxDuration) + " seconds!";
-            TypeNumber = 2;
-            shape.Fill = GameConstants.PowerUpColours[TypeNumber];
             Effects[1] = -1;            //sets speed to -1 to prevent movement, but multiplies out to give original value again
         }
 
@@ -271,12 +282,10 @@ namespace A_Level_Project__New_
     {
         private double multiplier = 2;
 
-        public PointPowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt)
+        public PointPowerup(Point MazePt, Point PixelPt) : base(MazePt, PixelPt, 3)
         {
             DisplayMessage = "Points are x" + multiplier + " for " + maxDuration + " seconds!";
             Effects[2] = multiplier;
-            TypeNumber = 3;
-            shape.Fill = GameConstants.PowerUpColours[TypeNumber];
         }
 
         public override void Collect(Player collector)
@@ -300,15 +309,12 @@ namespace A_Level_Project__New_
         protected double DefaultMovementSpeed;
         protected Point CurrentMazePt = new Point();
         protected Point PixelPt = new Point();
-
-        protected int CurrentDirection = -1;     //-1 so the character is not moving at start
+        protected int CurrentDirection = -1;     //moving left at start
         private int Score = 0;
         private int PlayerNum;
-        private int ScorePointValue = 1;                
-        //how many points the player's score is incremented by when collecting scorepoints
-
-        private int DisplayNumber = 0;          //used to reduce movement to every other frame (slows character)
-        private double UpdateFrequency = 1;     //how frequently the player's position should be updated (based on speed)  
+        private int ScorePointValue = 1;
+        private int DisplayNumber = 0;          ///used to reduce movement to every other frame
+        private double UpdateFrequency = 1;
 
         private Point PixelPtChange = new Point(0, 0);        /// used during movement
         private Point NextPixelPt;
@@ -319,6 +325,7 @@ namespace A_Level_Project__New_
 
         protected Image Sprite = new Image();
         protected BitmapImage[] IMGSources = new BitmapImage[4];
+        protected BitmapImage FrozenIMGSource = new BitmapImage();
 
         public int Lives = 3;
 
@@ -331,7 +338,7 @@ namespace A_Level_Project__New_
             RESET();
 
             PlayerNum = Number;
-            //player 1 has number 0, player 2 has number 1, enemy1 is -1, enemy 2 is -2...
+            //player 1 has number 0, player 2 has number 1, Enemy has number 2
 
             if (PlayerNum > -1 && PlayerNum < 3)
             {
@@ -343,7 +350,11 @@ namespace A_Level_Project__New_
                     IMGSources[i].EndInit();
                 }
 
-                //stores the four addresses of each player's sprites (up, down, left, right)
+                //sets colour based on which player is being created 
+
+                FrozenIMGSource.BeginInit();
+                FrozenIMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/P1-F.png");
+                FrozenIMGSource.EndInit();
 
                 Sprite.Source = IMGSources[1];
 
@@ -365,6 +376,7 @@ namespace A_Level_Project__New_
             SetCurrentCellPt(StartingPoint);
             SetPixelPt(StartingPixelPoint);
             SetSpeed(DefaultMovementSpeed);
+            SetScorePointValue(1);
 
             if (!Game.MW.GameCanvas.Children.Contains(Sprite))
             {
@@ -406,7 +418,7 @@ namespace A_Level_Project__New_
             return false;
         }
 
-        public void SetScoreValue(int value)
+        public void SetScorePointValue(int value)
         {
             //sets the value of each point when collected by the player 
             //this is a multiplier so if it is 2, then all points that are collected increment the score by twice their normal value
@@ -469,11 +481,18 @@ namespace A_Level_Project__New_
                 CurrentMovementSpeed = newSpeed;
             }
 
-            if (CurrentMovementSpeed < 1 && CurrentMovementSpeed > 0)
+            Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
+
+            if (CurrentMovementSpeed > 0 && CurrentMovementSpeed < 1)
             {
                 UpdateFrequency = 1 / CurrentMovementSpeed;
                 //UpdateFrequency represents how frequently the player's position is updated
                 //e.g. if the current movement speed is 0.5, then UF = 2, so it is updated every second frame
+            }
+            else if (CurrentMovementSpeed < 0)
+            {
+                //if the character is frozen 
+                Sprite.Source = FrozenIMGSource;
             }
             else
             {
@@ -541,14 +560,9 @@ namespace A_Level_Project__New_
             IncrementPixelPt();
             //moves player position
 
-            if (IsMoving())
+            if (IsMoving() && CurrentMovementSpeed > 0)
             {
                 Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
-            }
-            else if (CurrentMovementSpeed < 0)
-            {
-                //FROZEN
-                //Sprite.Source = FrozenIMGSource;
             }
 
             Canvas.SetLeft(Sprite, PixelPt.X);
@@ -613,28 +627,37 @@ namespace A_Level_Project__New_
     class Enemy : Player
     {
         private Point Target;
-        //the position of the object the enemy is currently following
+        //the position of the object the enemy generated a path to
         private Queue<int> DirectionsToFollow = new Queue<int>();
         //a list of movements for the enemy to follow to reach the target
 
-        public Enemy(Point StartMazePt, Point StartPixelPt, int Number, double Difficulty) : base(StartMazePt, StartPixelPt, Number)
+        public Enemy(Point StartMazePt, Point StartPixelPt, int PNumber, double Difficulty) : base(StartMazePt, StartPixelPt, PNumber)
         {
             //speed of the enemy is directly proportional to the difficulty i.e. 1 on Easy, 2 on Medium, 3 on hard
             //larger values for speed increase how many pixels the enemy moves per frame
+
+            SetSpeed(Difficulty);
+            DefaultMovementSpeed = Difficulty;
 
             for (int i = 0; i < IMGSources.Length; i++)
             {
                 IMGSources[i] = new BitmapImage();
                 IMGSources[i].BeginInit();
-                IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost" + (-1 * Number) + GameConstants.FileNameSuffixes[i]);
+                IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost" + (-1 * PNumber) + GameConstants.FileNameSuffixes[i]);
                 IMGSources[i].EndInit();
-                //if playernum < 0, then the player is an enemy, so these sources are callibrated differently
-
-                Sprite.Source = IMGSources[1];
             }
 
-            SetSpeed(Difficulty);
-            DefaultMovementSpeed = Difficulty;
+            FrozenIMGSource.BeginInit();
+            FrozenIMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/Ghost1-F.png");
+            FrozenIMGSource.EndInit();
+
+            Sprite.Source = IMGSources[3];
+        }
+
+        public int GetPathLength()
+        {
+            //gets the number of moves required to reach the current target (i.e. the length of the current path)
+            return DirectionsToFollow.Count();
         }
 
         public Point GetTarget()
@@ -760,40 +783,52 @@ namespace A_Level_Project__New_
 
     class ScorePt
     {
-        private Ellipse Shape = new Ellipse();
+        private Image Sprite = new Image();
+        private BitmapImage[] IMGSources = new BitmapImage[3];
+
         private Point PixelPt = new Point();
         private bool visible = true;
-        public static Brush Colour = GameConstants.ScorePointColours[1];
+        public static int CurrentSourceIndex = 1;
 
         public ScorePt(Point PointParam, int[] cellDimensions)
         {
-            Shape.Width = cellDimensions[0] / 5;
-            Shape.Height = cellDimensions[1] / 5;
+            for (int i = 0; i < IMGSources.Length; i++)
+            {
+                IMGSources[i] = new BitmapImage();
+                IMGSources[i].BeginInit();
+                IMGSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/SP-" + i + ".png");
+                IMGSources[i].EndInit();
+            }
 
-            Game.MW.GameCanvas.Children.Add(Shape);
+            Sprite.Source = IMGSources[CurrentSourceIndex];
 
-            PixelPt = new Point(PointParam.X + 0.5 * (cellDimensions[0] - Shape.Width), PointParam.Y + 0.5 * (cellDimensions[1] - Shape.Height));
+            Sprite.Width = cellDimensions[0] / 3;
+            Sprite.Height = cellDimensions[1] / 3;
+
+            Game.MW.GameCanvas.Children.Add(Sprite);
+
+            PixelPt = new Point(PointParam.X + 0.5 * (cellDimensions[0] - Sprite.Width), PointParam.Y + 0.5 * (cellDimensions[1] - Sprite.Height));
             Draw();
         }
 
         public void Hide()
         {
-            Shape.Opacity = 0;
+            Sprite.Opacity = 0;
             visible = false;
         }
 
         public void Draw()
         {
-            Shape.Fill = Colour;
+            Sprite.Source = IMGSources[CurrentSourceIndex];
 
             if (!visible)
             {
-                Shape.Opacity = 255;
+                Sprite.Opacity = 255;
                 visible = true;
             }
 
-            Canvas.SetLeft(Shape, PixelPt.X);
-            Canvas.SetTop(Shape, PixelPt.Y);
+            Canvas.SetLeft(Sprite, PixelPt.X);
+            Canvas.SetTop(Sprite, PixelPt.Y);
         }
 
         public bool GetVisible()
@@ -1341,12 +1376,12 @@ namespace A_Level_Project__New_
         {
             int ColourIndex = (int)Math.Truncate(effectVal);
 
-            if (ColourIndex >= 0 && ColourIndex < GameConstants.ScorePointColours.Count())
+            if (ColourIndex >= 0 && ColourIndex < 3)
             {
                 //sets colour of the scorepoints based on the effect of the powerup
                 //
 
-                ScorePt.Colour = GameConstants.ScorePointColours[ColourIndex];
+                ScorePt.CurrentSourceIndex = ColourIndex;
             }
 
             foreach (var cell in Cells)
@@ -1551,8 +1586,6 @@ namespace A_Level_Project__New_
         private List<Enemy> ActiveEnemies = new List<Enemy>();
 
         private Player[] RemovedPlayers;
-        private GameConstants Constants;
-        //initialised in constructor
 
         private int[] CountOfPowerupType = new int[4] { 0, 0, 0, 0 };
         private List<Powerup> VisiblePowerups = new List<Powerup>();
@@ -1565,9 +1598,19 @@ namespace A_Level_Project__New_
         private int currentTime = 0;
         private int TotalScore = 0;
         private double Difficulty = GameConstants.difficulties.Last();
-        //this is set just in case it is not passed by the Settings Window (default = 2 is normal speed)
+        //this is set just in case it is not passed by the Settings Window
 
         private int PlayerLives = 3;
+
+        private int MaxPowerupsPerType = 1;         
+        ///how many of each powerup can be active (visible or collected) at one time (e.g. a freeze must expire before another can be generated)
+        private int PowerupGenDelay = 3;            
+        ///number of seconds between generation of each powerup
+        ///
+        private Random randPowerupType = new Random();
+
+        private Image[] LifeImages = new Image[3];
+        private BitmapImage LifeIMGSource = new BitmapImage();
 
         public Game(GameWindow thisWindow, int[] MazeDimensions, int[] CellDimensions, bool TwoPlayers, double EnemyDifficulty)
         {
@@ -1576,12 +1619,16 @@ namespace A_Level_Project__New_
 
             this.MazeDimensions = MazeDimensions;
 
+            if (MazeDimensions[0] * MazeDimensions[1] > 500)
+            {
+                MaxPowerupsPerType = 2;
+            }
+
             if (TwoPlayers)
             {
                 NumOfPlayers = 2;
             }
 
-            Constants = new GameConstants();
             Difficulty = EnemyDifficulty;
 
             RemovedPlayers = new Player[NumOfPlayers];
@@ -1591,15 +1638,32 @@ namespace A_Level_Project__New_
             GameTimer.Tick += GameTimer_Tick;
             MovementTimer.Tick += MovementTimer_Tick;
 
+            //setting colours for window
             thisWindow.TimeDisplayTXT.Foreground = GameConstants.ForegroundColour;
             thisWindow.ScoreDisplayTXT.Foreground = GameConstants.ForegroundColour;
-            thisWindow.LivesDisplayTXT.Foreground = GameConstants.ForegroundColour;
-
             thisWindow.PowerupInfoBlock.Foreground = GameConstants.ForegroundColour;
             thisWindow.PowerupInfoBlock.Background = GameConstants.BackgroundColour;
             thisWindow.PowerupInfoBlock.Foreground = GameConstants.ForegroundColour;
 
             MazeOne.SetScorePointColour(1);
+
+            //setting up life images so that users can see the number of lives they have left
+            LifeIMGSource.BeginInit();
+            LifeIMGSource.UriSource = new Uri(Environment.CurrentDirectory + "/Life.png");
+            LifeIMGSource.EndInit();
+
+            for (int i = 0; i < LifeImages.Length; i++)
+            {
+                LifeImages[i] = new Image();
+                LifeImages[i].Source = LifeIMGSource;
+                MW.GameCanvas.Children.Add(LifeImages[i]);
+
+                LifeImages[i].Width = 22;
+                LifeImages[i].Height = 22;
+
+                Canvas.SetLeft(LifeImages[i], 20 + i * 25 );
+                Canvas.SetTop(LifeImages[i], 100);
+            }
         }
 
         public void UpdatePlayerMovement(Key thisKey, int type)
@@ -1610,14 +1674,90 @@ namespace A_Level_Project__New_
             }
         }
 
-        public Point GenerateRandomLocation()
+        private void GenerateRandomPowerUp()
+        {
+            Point MazeLocation = new Point();
+            Point PixelPt = new Point();
+
+            int type = randPowerupType.Next(0, 4);
+
+            if (CountOfPowerupType[type] < MaxPowerupsPerType)
+            {
+                MazeLocation = GenerateRandomUnoccupiedLocation();     //gets random location inside the maze                ///needs to be amended to ensure it is certain distance from entities
+                PixelPt = MazeOne.GetPixelPoint(MazeLocation);
+
+                switch (type % 4)
+                {
+                    case 0:
+                        VisiblePowerups.Add(new SpeedUpPowerup(MazeLocation, PixelPt));
+                        break;
+                    case 1:
+                        VisiblePowerups.Add(new SpeedDownPowerup(MazeLocation, PixelPt));
+                        break;
+                    case 2:
+                        VisiblePowerups.Add(new FreezePowerup(MazeLocation, PixelPt));
+                        break;
+                    case 3:
+                        VisiblePowerups.Add(new PointPowerup(MazeLocation, PixelPt));
+                        break;
+                    default:
+                        break;
+                }
+
+                CountOfPowerupType[type] += 1;
+            }
+        }
+
+        public Point GenerateRandomUnoccupiedLocation()
         {
             //generates a random location to place the powerup
+
             Random rand = new Random();
             Point GeneratedPt = new Point();
 
-            GeneratedPt.X = rand.Next(0, MazeDimensions[0]);
-            GeneratedPt.Y = rand.Next(0, MazeDimensions[1]);
+            List<Point> AvailableMazePoints = new List<Point>();
+
+            Point thisPoint = new Point();
+
+            for (int j = 0; j < MazeDimensions[1]; j++)
+            {
+                for (int i = 0; i < MazeDimensions[0]; i++)
+                {
+                    AvailableMazePoints.Add(new Point(i,j));
+                }
+            }
+
+            foreach (var player in ActivePlayers)
+            {
+                thisPoint = player.GetCurrentMazePt();
+
+                foreach (var adjacentPoint in MazeOne.GetAdjacentPoints(thisPoint))
+                {
+                    AvailableMazePoints.Remove(adjacentPoint);
+                }
+            }
+
+            foreach (var enemy in ActiveEnemies)
+            {
+                thisPoint = enemy.GetCurrentMazePt();
+
+                foreach (var adjacentPoint in MazeOne.GetAdjacentPoints(thisPoint))
+                {
+                    AvailableMazePoints.Remove(adjacentPoint);
+                }
+            }
+
+            foreach (var powerup in VisiblePowerups)
+            {
+                thisPoint = powerup.GetCurrentMazePt();
+
+                foreach (var adjacentPoint in MazeOne.GetAdjacentPoints(thisPoint))
+                {
+                    AvailableMazePoints.Remove(adjacentPoint);
+                }
+            }
+
+            GeneratedPt = AvailableMazePoints[rand.Next(0, AvailableMazePoints.Count)];
 
             return GeneratedPt;
         }
@@ -1679,6 +1819,10 @@ namespace A_Level_Project__New_
                     CountOfPowerupType[VisiblePowerups[i].GetTypeNumber()] -= 1;
                     ExpiredPowerupIndexes.Add(i);
                 }
+                else
+                {
+                    VisiblePowerups[i].UpdateOpacity();
+                }
             }
 
             foreach (int i in ExpiredPowerupIndexes)
@@ -1698,8 +1842,7 @@ namespace A_Level_Project__New_
             if (ActivePlayers.Count() < 1)
             {
                 PlayerLives -= 1;
-
-                MW.LivesDisplayTXT.Content = Convert.ToString(PlayerLives);
+                MW.GameCanvas.Children.Remove(LifeImages[PlayerLives]);
 
                 if (PlayerLives > 0)
                 {
@@ -1762,7 +1905,7 @@ namespace A_Level_Project__New_
                 currentSpeed = ActivePlayers[i].GetSpeed();
 
                 ActivePlayers[i].SetSpeed(currentSpeed / effects[0]);
-                ActivePlayers[i].SetScoreValue(1);
+                ActivePlayers[i].SetScorePointValue((int)(ActivePlayers[i].GetScorePointValue() / effects[2]));
             }
 
             for (int i = 0; i < ActiveEnemies.Count; i++)
@@ -1858,39 +2001,6 @@ namespace A_Level_Project__New_
             }
         }
 
-        private void GenerateRandomPowerUp(int type)
-        {
-            Random rand = new Random();
-            Point MazeLocation = GenerateRandomLocation();     //gets random location inside the maze                ///needs to be amended to ensure it is certain distance from entities
-            Point PixelPt = MazeOne.GetPixelPoint(MazeLocation);
-
-            Powerup PowerupToAdd = new Powerup(MazeLocation, PixelPt);
-
-            if (MazeLocation != new Point(0, 0) && CountOfPowerupType[type] < 1)
-            {
-                switch (type % 4)
-                {
-                    case 0:
-                        PowerupToAdd = new SpeedUpPowerup(MazeLocation, PixelPt);
-                        break;
-                    case 1:
-                        PowerupToAdd = new SpeedDownPowerup(MazeLocation, PixelPt);
-                        break;
-                    case 2:
-                        PowerupToAdd = new FreezePowerup(MazeLocation, PixelPt);
-                        break;
-                    case 3:
-                        PowerupToAdd = new PointPowerup(MazeLocation, PixelPt);
-                        break;
-                    default:
-                        break;
-                }
-
-                CountOfPowerupType[type] += 1;
-                VisiblePowerups.Add(PowerupToAdd);
-            }
-        }
-
         private void ApplyPowerupEffect(Powerup thisPowerup, Player CollectedBy)
         {
             double[] Effects;
@@ -1920,6 +2030,11 @@ namespace A_Level_Project__New_
                 }
             }
 
+            if (Effects[2] != 1)
+            {
+                appliedEffect = true;
+            }
+
             if (appliedEffect == true)
             {
                 //if neither entity is frozen
@@ -1934,9 +2049,9 @@ namespace A_Level_Project__New_
                         player.SetSpeed(Effects[0] * currentSpeed);
                     }
 
-                    if (Effects[2] >= 0 && Effects[2] != 1)
+                    if (Effects[2] >= 0)
                     {
-                        player.SetScoreValue((int)Effects[2]);
+                        player.SetScorePointValue((int)Effects[2] * player.GetScorePointValue());
                         MazeOne.SetScorePointColour(Effects[2]);
                     }
 
@@ -2142,8 +2257,10 @@ namespace A_Level_Project__New_
                 }
             }
 
-            int type = rand.Next(0, 4);
-            GenerateRandomPowerUp(type);
+            if (currentTime % PowerupGenDelay == 0)
+            {
+                GenerateRandomPowerUp();
+            }
 
         }
 
@@ -2172,8 +2289,6 @@ namespace A_Level_Project__New_
             Point LastPointPixelPt = MazeOne.GetPixelPoint(LastPoint);
 
             ActivePlayers.Add(new Player(StartPoint, StartPointPixelPt, 0));
-
-            MW.LivesDisplayTXT.Content = Convert.ToString(PlayerLives);
 
             if (NumOfPlayers == 2)
             {
@@ -2208,8 +2323,6 @@ namespace A_Level_Project__New_
                     ActiveEnemies.Add(new Enemy(StartPoint, StartPointPixelPt, -3, Difficulty));
                 }
             }
-
-
         }
 
         private void FindShortestPath(Enemy enemyParam)
@@ -2283,11 +2396,9 @@ namespace A_Level_Project__New_
         Game newGame;
         bool UseClassicControls = true;
 
-        public GameWindow(int[] MazeDimensions, bool TwoPlayers, double EnemyDifficulty, bool ClassicControls)
+        public GameWindow(int[] MazeDimensions, bool TwoPlayers, double EnemyDifficulty)
         {
             InitializeComponent();
-
-            UseClassicControls = ClassicControls;
 
             this.Width = GameConstants.WinIndent[0] + (MazeDimensions[0] + 3) * GameConstants.CellDimensions[0];
             this.Height = GameConstants.WinIndent[1] + (MazeDimensions[1] + 3) * GameConstants.CellDimensions[1];
@@ -2298,7 +2409,6 @@ namespace A_Level_Project__New_
             InfoTitleLbl.Foreground = GameConstants.ForegroundColour;
             ScoreLbl.Foreground = GameConstants.ForegroundColour;
             TimeLbl.Foreground = GameConstants.ForegroundColour;
-            LivesLbl.Foreground = GameConstants.ForegroundColour;
             GameCanvas.Background = GameConstants.BackgroundColour;
 
             newGame = new Game(this, MazeDimensions, GameConstants.CellDimensions, TwoPlayers, EnemyDifficulty);

@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         ResizeMode="CanMinimize"
         WindowState="Normal"
-        Title="View History" Height="700" Width="1200">
+        Title="View History" Height="800" Width="1500">
     <Canvas Name="myCanvas">
         <Label Name="InputLbl" Content="Input a name to search for:" Canvas.Left="17" Canvas.Top="36"></Label>
         <TextBox Name="InputNameTxtBox" Width="180" Canvas.Left="185" Canvas.Top="37" Height="25"></TextBox>
@@ -17,16 +17,27 @@
 
         <RadioButton Name="DateRadioBtn" Canvas.Right="50" Width ="180" Canvas.Top="80" Content="Sort by date/time played" Checked="DateRadioBtn_Checked"></RadioButton>
         <RadioButton Name="TimeSurvivedRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="110" Content="Sort by longest time survived" Checked="TimeSurvivedRadioBtn_Checked"></RadioButton>
-        <RadioButton Name="TotalScoreRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="140" Content="Sort by total score" Checked="TotalScoreRadioBtn_Checked"></RadioButton>
-        <RadioButton Name="PScoreRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="170" Content="Sort by this player's score" Checked="PScoreRadioBtn_Checked"></RadioButton>
-        <RadioButton Name="DiffRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="200" Content="Sort by Game Difficulty" Checked="DiffRadioBtn_Checked"/>
+        <RadioButton Name="PScoreRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="140" Content="Sort by this player's score" Checked="PScoreRadioBtn_Checked"></RadioButton>
+        <RadioButton Name="DiffRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="170" Content="Sort by Game Difficulty" Checked="DiffRadioBtn_Checked" />
 
-        <Button Name="LeaderboardBtn" Content="Leaderboard"  FontSize="13" Canvas.Right="75" Canvas.Bottom="50" Height="35" Width="171" Click="LeaderboardBtn_Click" Canvas.Left="973" Canvas.Top="558"></Button>
+        <Button Name="LeaderboardBtn" Content="Leaderboard"  FontSize="13" Canvas.Right="50" Canvas.Bottom="50" Height="35" Width="170" Click="LeaderboardBtn_Click" Canvas.Top="558"></Button>
 
-        <TextBlock Name="GraphInfoBlock" Height="192" Width="200" Canvas.Right="35" Canvas.Top="242" TextWrapping="Wrap" Canvas.Left="950"></TextBlock>
-        <TextBlock Name="SearchInfoBlock" Height="100" Width="200" Canvas.Right="35" Canvas.Bottom="50" TextWrapping="Wrap" Canvas.Left="950" Canvas.Top="439" ></TextBlock>
+        <TextBlock Name="GraphInfoBlock" Height="203" Width="200" Canvas.Right="35" Canvas.Top="209" TextWrapping="Wrap" Canvas.Left="1259"></TextBlock>
+        <TextBlock Name="SearchInfoBlock" Height="100" Width="200" Canvas.Right="35" Canvas.Bottom="50" TextWrapping="Wrap" Canvas.Top="439" ></TextBlock>
 
-        <Button Name="ScrollLBtn" Height="25" Content="Scroll Left" FontSize="12" Width="83" Click="ScrollBtn_Click" Canvas.Left="973" Canvas.Top="598"></Button>
-        <Button Name="ScrollRBtn" Height="25" Content="Scroll Right" FontSize="12" Width="83" Click="ScrollBtn_Click" Canvas.Left="1061" Canvas.Top="598"></Button>
+        <Button Name="ScrollLBtn" Height="25" Content="Scroll Left" FontSize="12" Width="83" Click="ScrollBtn_Click" Canvas.Right="137" Canvas.Top="598"></Button>
+        <Button Name="ScrollRBtn" Height="25" Content="Scroll Right" FontSize="12" Width="83" Click="ScrollBtn_Click" Canvas.Right="50" Canvas.Top="598"></Button>
+
+        <Label Name="xAxisLabel" Content="" Canvas.Right="300" Canvas.Bottom="30"></Label>
+        <Label Name="yAxisLabel" Content="" Canvas.Left="14" Canvas.Top="150" RenderTransformOrigin="0.5,0.5">
+            <Label.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform/>
+                    <RotateTransform Angle="-90"/>
+                    <TranslateTransform/>
+                </TransformGroup>
+            </Label.RenderTransform>
+        </Label>
     </Canvas>
 </Window>

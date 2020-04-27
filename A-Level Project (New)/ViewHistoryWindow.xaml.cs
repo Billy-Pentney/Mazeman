@@ -246,7 +246,7 @@ namespace A_Level_Project__New_
             BottomLeftIndent[1] = thisCanvas.ActualHeight * 0.1;
 
             TopRightIndent[0] = 250;
-            TopRightIndent[1] = 80;
+            TopRightIndent[1] = 30;
 
             TopRightIndent[0] += BottomLeftIndent[0];
             TopRightIndent[1] += BottomLeftIndent[1];
@@ -406,7 +406,6 @@ namespace A_Level_Project__New_
             TimeSurvivedRadioBtn.Foreground = frg;
             PScoreRadioBtn.Foreground = frg;
             DiffRadioBtn.Foreground = frg;
-            TotalScoreRadioBtn.Foreground = frg;
             LeaderboardBtn.Background = bkg;
             LeaderboardBtn.Foreground = frg;
 
@@ -414,13 +413,14 @@ namespace A_Level_Project__New_
             ScrollLBtn.Background = bkg;
             ScrollRBtn.Foreground = frg;
             ScrollRBtn.Background = bkg;
+
+            xAxisLabel.Foreground = frg;
+            yAxisLabel.Foreground = frg;
         }
 
-        private void SearchBtn_Click(object sender, RoutedEventArgs e)
+        private void InitiateSearchForName(string SearchName)
         {
-            SearchName = InputNameTxtBox.Text;
-
-            if (SearchName.Length > 0 && AllFileEntries.Count > 0)
+            if (AllFileEntries.Count > 0)
             {
                 IncludeCapitals = (bool)IncCapsCheckBox.IsChecked;
                 IncludeTwoPlayers = (bool)IncTwoPlayersCheckBox.IsChecked;
@@ -449,6 +449,8 @@ namespace A_Level_Project__New_
                 else
                 {
                     SearchInfoBlock.Inlines.Add("Number Of Games Displayed: " + 0);
+                    xAxisLabel.Content = "";
+                    yAxisLabel.Content = "";
 
                     string MessageToShow = "'" + SearchName + "'";
 
@@ -466,14 +468,33 @@ namespace A_Level_Project__New_
                 }
 
             }
-            else if (AllFileEntries.Count > 0)
-            {
-                MessageBox.Show("Please input a name");
-            }
             else
             {
                 MessageBox.Show("Error: Specified file '" + GameConstants.FileName + "' contains no valid game records");
             }
+        }
+
+        private void SearchBtn_Click(object sender, RoutedEventArgs e)
+        {
+            SearchName = InputNameTxtBox.Text;
+
+            if (CheckValidName(SearchName))
+            {
+                InitiateSearchForName(SearchName);
+            }
+            else
+            {
+                MessageBox.Show("Please enter a name before searching");
+            }
+        }
+
+        private bool CheckValidName(string Name)
+        {
+            if (Name.Length > 0)
+            {
+                return true;
+            }
+            return false;
         }
 
         private List<DataEntry> SortEntries(List<DataEntry> ToSort, int SortType, string SearchName, bool IncludeCapitals)
@@ -485,25 +506,37 @@ namespace A_Level_Project__New_
                 case 0:
                     SortedList = ToSort.OrderBy(DataEntry => DataEntry.GameID).ToList();
                     //Orders by the date when the game was played
+                    xAxisLabel.Content = "Date Played";
+                    yAxisLabel.Content = "Total Score";
                     break;
                 case 1:
                     SortedList = ToSort.OrderBy(DataEntry => DataEntry.SurvivedFor).ToList();
                     //Orders by the length of time the last player survived for 
                     //e.g. if Bob was captured at 10 seconds and Bill was captured at 20 seconds, it returns 20
+                    xAxisLabel.Content = "Time Survived";
+                    yAxisLabel.Content = "Total Score";
                     break;
                 case 2:
-                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetTotalScore()).ToList();
-                    //orders entries by the total score of all players in that game
-                    //e.g. if Bob got 12, and Bill got 15, it returns 27
-                    break;
-                case 3:
                     SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetScoreFromName(SearchName, IncludeCapitals)).ToList();
                     // Orders entries by the score of the player with the searched name
                     //e.g if Bob got 12, and Bill got 15, and you search for Bill, it returns 15; if you search for Bob, it returns 12;
+                    xAxisLabel.Content = SearchName + "'s score";
+                    yAxisLabel.Content = "Total Score";
                     break;
-                case 4:
+                case 3:
                     SortedList = ToSort.OrderBy(DataEntry => DataEntry.difficulty).ToList();
+                    //Orders entries by the game difficulty 
+                    //i.e. all easy games first, then all medium games, then all hard games
+                    xAxisLabel.Content = "Difficulty";
+                    yAxisLabel.Content = "Total Score";
                     break;
+                //case 4:
+                //    SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetTotalScore()).ToList();
+                //    //orders entries by the total score of all players in that game
+                //    //e.g. if Bob got 12, and Bill got 15, it returns 27
+                //    xAxisLabel.Content = "Date Played";
+                //    yAxisLabel.Content = "Total Score";
+                //    break;
                 default:
                     SortedList = ToSort;
                     throw new Exception("Invalid Sort Type");
@@ -656,19 +689,14 @@ namespace A_Level_Project__New_
             SortByType = 1;
         }
 
-        private void TotalScoreRadioBtn_Checked(object sender, RoutedEventArgs e)
+        private void PScoreRadioBtn_Checked(object sender, RoutedEventArgs e)
         {
             SortByType = 2;
         }
 
-        private void PScoreRadioBtn_Checked(object sender, RoutedEventArgs e)
-        {
-            SortByType = 3;
-        }
-
         private void DiffRadioBtn_Checked(object sender, RoutedEventArgs e)
         {
-            SortByType = 4;
+            SortByType = 3;
         }
 
         private void LeaderboardBtn_Click(object sender, RoutedEventArgs e)
@@ -698,6 +726,11 @@ namespace A_Level_Project__New_
             else if (e.Key == Key.Right)
             {
                 BarChart.ShiftBars(1);
+            }
+
+            if (e.Key == Key.Enter && CheckValidName(InputNameTxtBox.Text))
+            {
+                InitiateSearchForName(InputNameTxtBox.Text);
             }
         }
     }    

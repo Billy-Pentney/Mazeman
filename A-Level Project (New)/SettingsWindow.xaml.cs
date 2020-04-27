@@ -6,7 +6,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 
-
 namespace A_Level_Project__New_
 {
     /// <summary>
@@ -21,7 +20,6 @@ namespace A_Level_Project__New_
 
         int[] MazeDimensions = new int[2];
         bool TwoPlayers = false;
-        bool ClassicControls = false;
 
         double EnemyDifficulty;
         //used to set the speed of the enemy
@@ -45,9 +43,6 @@ namespace A_Level_Project__New_
 
             SettingsCanvas.Background = backgroundColour;
 
-            DefaultLbl.Foreground = foregroundColour;
-            TwoPlayersLbl.Foreground = foregroundColour;
-            ClassicControlsLbl.Foreground = foregroundColour;
             MazeDimExplainText.Foreground = foregroundColour;
             MazeDimExplainText.Background = backgroundColour;
 
@@ -58,6 +53,9 @@ namespace A_Level_Project__New_
             HeightTxt.Foreground = foregroundColour;
             HeightTxt.Background = backgroundColour;
 
+            TwoPlayersCheck.Foreground = foregroundColour;
+            DefaultCheck.Foreground = foregroundColour;
+
             ExclamationMarkLbl.Foreground = Brushes.Red;
             ExclamationMark2Lbl.Foreground = Brushes.Red;
 
@@ -65,6 +63,7 @@ namespace A_Level_Project__New_
             MazeDimText.Background = backgroundColour;
             EnemyDifficultyText.Foreground = foregroundColour;
             EnemyDifficultyText.Background = backgroundColour;
+
             EasyLbl.Foreground = foregroundColour;
             MediumLbl.Foreground = foregroundColour;
             HardLbl.Foreground = foregroundColour;
@@ -77,51 +76,43 @@ namespace A_Level_Project__New_
             OtherOptionsText.Foreground = foregroundColour;
             OtherOptionsText.Background = backgroundColour;
 
+            ControlsExplainText.Foreground = foregroundColour;
+
             PowerupsLbl.Foreground = foregroundColour;
             PlayersLbl.Foreground = foregroundColour;
+            PointsLbl.Foreground = foregroundColour;
         }
 
         private void AddObjectsToWindow()
         {
-            int ShapeSize = 24;
-
-            TextBlock ExplainControlsText = new TextBlock() { Width = 250, Height = 130, FontSize = 11 };
-            ExplainControlsText.TextAlignment = TextAlignment.Justify;
-            ExplainControlsText.TextWrapping = TextWrapping.Wrap;
-            ExplainControlsText.Foreground = GameConstants.ForegroundColour;
-            ExplainControlsText.Inlines.Add("Player 1 is controlled by the W,A,S,D keys." + Environment.NewLine);
-            ExplainControlsText.Inlines.Add("Player 2 is controlled by the arrow keys." + Environment.NewLine + Environment.NewLine);
-            ExplainControlsText.Inlines.Add("If Classic Controls are enabled, the players will only move while a key is pressed down." + Environment.NewLine);
-            ExplainControlsText.Inlines.Add("If Classic Controls are disabled, the players continue to move in the direction of the last key press.");
-
-            SettingsCanvas.Children.Add(ExplainControlsText);
-            Canvas.SetBottom(ExplainControlsText, 50);
-            Canvas.SetRight(ExplainControlsText, 30);
-
             #region Entity Shapes + Labels
 
-            Image[] EntitySpriteIMG = new Image[3];
-            BitmapImage[] EntitySpriteSources = new BitmapImage[3];
-            Label[] EntityLabels = new Label[3];
+            int NumOfEntitySprites = 3;
 
-            for (int i = 0; i < EntitySpriteSources.Length; i++)
+            Image[] EntitySpriteImages = new Image[NumOfEntitySprites];
+            BitmapImage[] EntitySpriteSources = new BitmapImage[NumOfEntitySprites];
+            Label[] EntityLabels = new Label[NumOfEntitySprites];
+
+            for (int i = 0; i < NumOfEntitySprites; i++)
             {
                 EntitySpriteSources[i] = new BitmapImage();
                 EntitySpriteSources[i].BeginInit();
 
                 if (i < 2)
                 {
+                    //the player sprites are set here
                     EntitySpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/P" + (i + 1) + "-R.png");
                 }
                 else
                 {
+                    //the third, enemy sprite is set here
                     EntitySpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Ghost1-R.png");
                 }
 
                 EntitySpriteSources[i].EndInit();
 
-                EntitySpriteIMG[i] = new Image();
-                EntitySpriteIMG[i].Source = EntitySpriteSources[i];
+                EntitySpriteImages[i] = new Image();
+                EntitySpriteImages[i].Source = EntitySpriteSources[i];
 
                 EntityLabels[i] = new Label()
                 {
@@ -130,13 +121,13 @@ namespace A_Level_Project__New_
                     Foreground = GameConstants.ForegroundColour,
                 };
 
-                SettingsCanvas.Children.Add(EntitySpriteIMG[i]);
-                Canvas.SetRight(EntitySpriteIMG[i], 240);
-                Canvas.SetTop(EntitySpriteIMG[i], 65 + i * 50);
+                SettingsCanvas.Children.Add(EntitySpriteImages[i]);
+                Canvas.SetRight(EntitySpriteImages[i], 240);
+                Canvas.SetTop(EntitySpriteImages[i], 65 + i * 50);
 
                 SettingsCanvas.Children.Add(EntityLabels[i]);
                 Canvas.SetRight(EntityLabels[i], 170);
-                Canvas.SetTop(EntityLabels[i], 63 + i * 50);
+                Canvas.SetTop(EntityLabels[i], 65 + i * 50);
             }
 
             EntityLabels[0].Content = "= Player 1";
@@ -147,38 +138,91 @@ namespace A_Level_Project__New_
 
             #region Powerup Shapes + Labels
 
-            Rectangle[] PowerupShapes = new Rectangle[4];
-            Label[] PowerupLabels = new Label[4];
+            int NumOfPowerupSprites = 4;
 
-            for (int i = 0; i < PowerupShapes.Length; i++)
+            Image[] PowerupSpriteImages = new Image[NumOfPowerupSprites];
+            BitmapImage[] PowerupSpriteSources = new BitmapImage[NumOfPowerupSprites];
+            Label[] PowerupLabels = new Label[NumOfPowerupSprites];
+
+            for (int i = 0; i < NumOfPowerupSprites; i++)
             {
-                PowerupShapes[i] = new Rectangle()
-                {
-                    Width = ShapeSize / 3,
-                    Height = ShapeSize / 3,
-                    Fill = GameConstants.PowerUpColours[i],
-                };
+                PowerupSpriteSources[i] = new BitmapImage();
+
+                PowerupSpriteSources[i].BeginInit();
+                PowerupSpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/Powerup-" + (i) + ".png");
+                PowerupSpriteSources[i].EndInit();
+
+                PowerupSpriteImages[i] = new Image() { Width = 20, Height = 20};
+                PowerupSpriteImages[i].Source = PowerupSpriteSources[i];
 
                 PowerupLabels[i] = new Label()
                 {
                     Width = 110,
                     Height = 40,
                     Foreground = GameConstants.ForegroundColour,
-            };
+                };
 
-                SettingsCanvas.Children.Add(PowerupShapes[i]);
-                Canvas.SetRight(PowerupShapes[i], 125);
-                Canvas.SetTop(PowerupShapes[i], 70 + i * 35);
+                SettingsCanvas.Children.Add(PowerupSpriteImages[i]);
+                Canvas.SetRight(PowerupSpriteImages[i], 125);
+                Canvas.SetTop(PowerupSpriteImages[i], 70 + i * 35);
 
                 SettingsCanvas.Children.Add(PowerupLabels[i]);
                 Canvas.SetRight(PowerupLabels[i], 15);
-                Canvas.SetTop(PowerupLabels[i], 60 + i * 35);
+                Canvas.SetTop(PowerupLabels[i], 65 + i * 35);
+                
             }
 
             PowerupLabels[0].Content = "= Speed Up";
             PowerupLabels[1].Content = "= Speed Down";
             PowerupLabels[2].Content = "= Freeze";
             PowerupLabels[3].Content = "= Points Multiplier";
+
+            #endregion
+
+            #region Point Shapes + Labels
+
+            int NumOfPointSprites = 3;         
+            ///specifies how many different images should be displayed for the points
+            ///only change if more sprites are added
+
+            Image[] PointSpriteImages = new Image[NumOfPointSprites];
+            BitmapImage[] PointSpriteSources = new BitmapImage[NumOfPointSprites];
+            Label[] PointLabels = new Label[NumOfPointSprites];
+
+            for (int i = 0; i < NumOfPointSprites; i++)
+            {
+                PointSpriteSources[i] = new BitmapImage();
+
+                PointSpriteSources[i].BeginInit();
+                PointSpriteSources[i].UriSource = new Uri(Environment.CurrentDirectory + "/SP-" + i + ".png");
+                PointSpriteSources[i].EndInit();
+
+                PointSpriteImages[i] = new Image();
+                PointSpriteImages[i].Source = PointSpriteSources[i];
+
+                PointSpriteImages[i].Width = 20;
+                PointSpriteImages[i].Height = 20;
+
+                PointLabels[i] = new Label()
+                {
+                    Width = 70,
+                    Height = 30,
+                    Foreground = GameConstants.ForegroundColour,
+                };
+
+                SettingsCanvas.Children.Add(PointSpriteImages[i]);
+                Canvas.SetRight(PointSpriteImages[i], 240);
+                Canvas.SetTop(PointSpriteImages[i], 255 + i * 40);
+
+                SettingsCanvas.Children.Add(PointLabels[i]);
+                Canvas.SetRight(PointLabels[i], 170);
+                Canvas.SetTop(PointLabels[i], 250 + i * 40);
+                
+            }
+
+            PointLabels[0].Content = "= 0 Points";
+            PointLabels[1].Content = "= 1 Point";
+            PointLabels[2].Content = "= 2 Points";
 
             #endregion
         }
@@ -209,8 +253,7 @@ namespace A_Level_Project__New_
             if (CheckText(WidthTxt.Text, 0) && CheckText(HeightTxt.Text, 1))
             {
                 TwoPlayers = (bool)TwoPlayersCheck.IsChecked;
-                ClassicControls = (bool)ClassicControlsCheckBox.IsChecked;
-                new GameWindow(MazeDimensions, TwoPlayers, EnemyDifficulty, ClassicControls).Show();
+                new GameWindow(MazeDimensions, TwoPlayers, EnemyDifficulty).Show();
                 Close();
             }
             else
@@ -247,7 +290,6 @@ namespace A_Level_Project__New_
         private void WidthTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
             DefaultCheck.IsChecked = (WidthTxt.Text == "15");
-
 
             if (CheckText(WidthTxt.Text, 0))
             {
