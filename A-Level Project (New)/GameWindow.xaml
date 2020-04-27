@@ -1,0 +1,13 @@
+﻿<Window x:Class="A_Level_Project__New_.GameWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:A_Level_Project__New_"
+        mc:Ignorable="d"
+        Title="GameWindow" Height="450" Width="800">
+    <Canvas Name="GameCanvas">
+        <Label Name="TimeLbl" Content="Time: " Canvas.Left="10" Canvas.Top="10"></Label>
+        <Label Name="ScoreLbl" Content="Score: " Canvas.Left="10" Canvas.Top="40"></Label>
+    </Canvas>
+</Window>
