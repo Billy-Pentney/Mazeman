@@ -185,21 +185,30 @@ namespace A_Level_Project__New_
             int UndisplayedRight = (GraphLines.Count - 1) - DisplayRange[1];            // number of bars after the last one on the graph
             int UndisplayedLeft = DisplayRange[0];  // number of bars before the first one on the graph
 
+            double[] OldDisplayRange = new double[] { DisplayRange[0], DisplayRange[1]};
+
             if (UndisplayedLeft > 0 && difference < 0)
             {
-                //if there are more bars to show on the left and the left button is clicked
+                //SCROLL LEFT
 
-                GraphLines[DisplayRange[1]].RemoveAllFromCanvas();
-                //removes the right-most bar
+                //if there are more bars to show on the left and the left button is clicked
 
                 DisplayRange[0] += -1;
                 DisplayRange[1] = DetermineDisplayRange(BarLine.GetWidth(), DisplayRange[0]);
                 //determines how many bars to show
 
+                for (int i = DisplayRange[1]; i <= OldDisplayRange[1]; i++)
+                {
+                    GraphLines[i].RemoveAllFromCanvas();
+                }
+                //removes any bars which should no longer be displayed
+
                 DrawGraph();
             }
             else if (UndisplayedRight > 0 && difference > 0)
             {
+                //SCROLL RIGHT
+
                 //if there are more bars to show on the right and the right button is clicked
 
                 GraphLines[DisplayRange[0]].RemoveAllFromCanvas();
@@ -290,6 +299,9 @@ namespace A_Level_Project__New_
         {
             double currentLeft = width / 2;
             int DisplayUpTo = startAt;
+
+            //works out how many bars will fit in the window space
+            //returns the upper limit e.g. if it can display bars 1-20, then this returns 20
 
             for (int i = startAt; i < GraphLines.Count; i++)
             {
@@ -672,6 +684,18 @@ namespace A_Level_Project__New_
                 BarChart.ShiftBars(-1);
             }
             else if (e.Source == ScrollRBtn)
+            {
+                BarChart.ShiftBars(1);
+            }
+        }
+
+        protected override void OnKeyUp(KeyEventArgs e)
+        {
+            if (e.Key == Key.Left)
+            {
+                BarChart.ShiftBars(-1);
+            }
+            else if (e.Key == Key.Right)
             {
                 BarChart.ShiftBars(1);
             }
