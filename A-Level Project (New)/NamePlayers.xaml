@@ -7,8 +7,7 @@
         mc:Ignorable="d"
         Title="NamePlayers" Height="120" Width="250">
     <Canvas Name="myCanvas">
-        <TextBlock Name="ExplainTxt" Text="Input a nickname to save your score" Canvas.Left="10" Canvas.Top="20"></TextBlock>
-        <Button Name="DoneBtn" Content="Done" Canvas.Left="199" Canvas.Top="43" Click="DoneBtn_Click"></Button>
-
+        <TextBlock Name="ExplainTxt" Text="Input a nickname to save your score" Canvas.Left="10" Canvas.Top="19"></TextBlock>
+        <Button Name="DoneBtn" Content="Done" Canvas.Left="199" Canvas.Top="51" Click="DoneBtn_Click"></Button>
     </Canvas>
 </Window>

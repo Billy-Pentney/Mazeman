@@ -1,15 +1,20 @@
-﻿using Newtonsoft.Json;
-using Priority_Queue;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Priority_Queue;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace A_Level_Project__New_
 {
@@ -18,41 +23,33 @@ namespace A_Level_Project__New_
     /// </summary>
     /// 
 
-
     class GameConstants
     {
         //this class contains most of the major Game constants/variables
         //these can be changed to affect the way the game looks/plays
 
-        public static int[] CellDimensions { get; } = new int[2] { 25, 25 };
+        public int[] MazeDimensions { get; } = new int[2];
+        public static int[] CellDimensions { get; } = new int[2] { 24, 24 };
         //24 used because it is divisible by 1, 2, 3 (the movement speeds)
         public int WallThickness { get; }
 
         public static int[] indent { get; } = new int[2] { 40, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
-        public const string FileName = "History.txt";
+        public const string FileName = "History.txt";   
         //the name/address of the file where scores should be written to/read from
 
-        public GameConstants()
+        public GameConstants(int[] MD, int[] CD)
         {
+            MazeDimensions = MD;
             WallThickness = CellDimensions[0] / 10;
-            NumOfPowerupTypes = (PowerUpEnemyEffects.Count() + PowerUpFriendlyEffects.Count() + PowerUpScoreEffects.Count()) / 3;
         }
 
-        public const double DefaultMovementSpeed = 3;
-        //the player movement speed with no powerups
-
-        public static int NumOfPowerupTypes { get; set; }
-
-        //each index is a different type of powerup:
-        ///                                              Speed up, speed down, freeze, double points
-        public static double[] PowerUpFriendlyEffects { get; } = new double[] { 1.5, 1, 1, 1 };
-        public static double[] PowerUpEnemyEffects { get; } = new double[] { 1, 0.5, 0, 1 };
-        public static double[] PowerUpScoreEffects { get; } = new double[] { 1, 1, 1, 2 };
+        public const int DefaultMovementSpeed = 3;
+        //the player movement speed
 
         public static Brush[] PlayerColours { get; } = new Brush[] { Brushes.Yellow, Brushes.Blue, Brushes.Red };
-        public static Brush[] PowerUpColours { get; } = new Brush[] { Brushes.Orange, Brushes.LimeGreen, Brushes.LightBlue, Brushes.Purple };
+        public static Brush[] PowerUpColours { get; } = new Brush[] { Brushes.Orange, Brushes.LimeGreen, Brushes.Purple };
         public static Brush ScorePointColour { get; } = Brushes.Orange;
 
         public static Brush BackgroundColour { get; } = Brushes.White;
@@ -61,12 +58,14 @@ namespace A_Level_Project__New_
 
     class Cell
     {
+        private Point MazePt;
         private Point ShapePt;
         private Dictionary<int, Edge> Edges = new Dictionary<int, Edge>();
         private ScorePt thisPoint;
 
-        public Cell(Point CanvasLoc, int[] cellDimensions)
+        public Cell(Point MazeLoc, Point CanvasLoc, int[] cellDimensions)
         {
+            MazePt = MazeLoc;
             ShapePt = CanvasLoc;
             thisPoint = new ScorePt(ShapePt, cellDimensions);
         }
@@ -86,6 +85,11 @@ namespace A_Level_Project__New_
         public int GetEdgesCount()
         {
             return Edges.Count();
+        }
+
+        public Point GetMazePt()
+        {
+            return MazePt;
         }
 
         public Point GetPixelPt()
@@ -119,7 +123,7 @@ namespace A_Level_Project__New_
             return false;
         }
 
-        public void DrawPoint()
+        public void RedrawPoint()
         {
             thisPoint.Draw();
         }
@@ -127,176 +131,6 @@ namespace A_Level_Project__New_
         public bool IsPointVisible()
         {
             return thisPoint.GetVisible();
-        }
-    }
-
-    class Powerup
-    {
-        private int type = 0;
-        private double FriendlyEffect;
-        private double EnemyEffect;
-        private double ScorePointEffect;
-        private Rectangle shape = new Rectangle();
-        private Point MazePt;
-        private Point PixelPt;
-        private DispatcherTimer thisTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 1) };
-        private int MaxDuration = 10;
-        private int CurrentTime = 0;
-        private bool ReverseEffects = false;
-        private bool collected = false;
-        //this is for flipping friendly and enemy so that the enemy gets the beneficial effect when it collects it
-
-        public Powerup(GameConstants constants, Point location, Point PixelPt, int type)
-        {
-            shape.Width = GameConstants.CellDimensions[0] / 3;
-            shape.Height = GameConstants.CellDimensions[1] / 3;
-            this.type = type;
-           
-            if (type > -1 && type < GameConstants.NumOfPowerupTypes)
-            {
-                SetEffects();
-                PixelPt.X += GameConstants.CellDimensions[0] / 3;
-                PixelPt.Y += GameConstants.CellDimensions[1] / 3;
-
-                shape.Fill = GameConstants.PowerUpColours[type];
-                Game.MW.GameCanvas.Children.Add(shape);
-                MazePt = location;
-                this.PixelPt = PixelPt;
-                Canvas.SetLeft(shape, PixelPt.X);
-                Canvas.SetTop(shape, PixelPt.Y);
-                thisTimer.Start();
-                thisTimer.Tick += ThisTimer_Tick;
-            }
-        }
-
-        private void ThisTimer_Tick(object sender, EventArgs e)
-        {
-            CurrentTime += 1;
-        }
-
-        public void Collected()
-        {
-            thisTimer.Stop();
-            CurrentTime = 0;
-            collected = true;
-            thisTimer.Start();
-        }
-        
-        private void SetEffects()
-        {
-            FriendlyEffect = GameConstants.PowerUpFriendlyEffects[type];
-            EnemyEffect = GameConstants.PowerUpEnemyEffects[type];
-            ScorePointEffect = GameConstants.PowerUpScoreEffects[type];
-
-            if (EnemyEffect == 0)
-            {
-                MaxDuration = 5;
-            }
-        }
-
-        public double[] GetEffects()
-        {
-            double[] effects = new double[3];
-            //effects[0] is applied to players, 1 is applied to enemy, 2 is applied to the value of the score
-
-            if (ReverseEffects)
-            {
-                effects[0] = EnemyEffect;
-                effects[1] = FriendlyEffect;
-            }
-            else
-            {
-                effects[0] = FriendlyEffect;
-                effects[1] = EnemyEffect;
-            }
-
-            effects[2] = ScorePointEffect;
-
-            return effects;
-        }
-
-        public void SetReversedEffects()
-        {
-            ReverseEffects = true;
-        }
-
-        public void RemoveFromMap()
-        {
-            Game.MW.GameCanvas.Children.Remove(shape);
-            PixelPt.X = -1;
-            PixelPt.Y = -1;
-            MazePt.X = -1;
-            MazePt.Y = -1;
-        }
-
-        public bool IsReversed()
-        {
-            return ReverseEffects;
-        }
-
-        public static int DetermineType(List<Powerup> VisiblePowerups)
-        {
-            Random rand = new Random();
-            int randType;
-            bool ValidType = false;
-            int[] EachTypeCount = new int[GameConstants.NumOfPowerupTypes];
-            //counts how many of each type of powerup there are
-
-            foreach (var item in VisiblePowerups)
-            {
-                EachTypeCount[item.GetTypeOfPowerup()] += 1;
-                // e.g. if the powerup is type 1, then count[1] is incremented by 1;
-            }
-
-            randType = rand.Next(0, EachTypeCount.Count());
-
-            do
-            {
-                if (randType > -1)
-                {
-                    if (EachTypeCount[randType] > 0)
-                    {
-                        randType -= 1;
-                        ValidType = false;
-                    }
-                    else
-                    {
-                        ValidType = true;
-                    }
-                }
-
-            } while (ValidType == false && randType > -1);
-
-
-            return randType;
-        }
-
-        public int GetTypeOfPowerup()
-        {
-            return type;
-        }
-
-        public Point GetPixelPt()
-        {
-            return PixelPt;
-        }
-
-        public bool IsExpired()
-        {
-            //returns a value to indicate if the powerup has been active/in the maze past its maximum time
-
-            if (CurrentTime >= MaxDuration)
-            {
-                thisTimer.Stop();
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool IsCollected()
-        {
-            return collected;
         }
     }
 
@@ -309,8 +143,8 @@ namespace A_Level_Project__New_
 
         public ScorePt(Point PointParam, int[] cellDimensions)
         {
-            Shape.Width = cellDimensions[0] / 5;
-            Shape.Height = cellDimensions[1] / 5;
+            Shape.Width = (int)cellDimensions[0] / 5;
+            Shape.Height = (int)cellDimensions[1] / 5;
             Shape.Fill = GameConstants.ScorePointColour;
 
             Game.MW.GameCanvas.Children.Add(Shape);
@@ -355,8 +189,7 @@ namespace A_Level_Project__New_
 
     class Player
     {
-        protected double CurrentMovementSpeed;
-        protected double DefaultMovementSpeed;
+        protected int CurrentMovementSpeed;
         protected Ellipse Shape = new Ellipse();
         protected Point CurrentMazePt = new Point();
         protected Point PixelPt = new Point();
@@ -375,7 +208,6 @@ namespace A_Level_Project__New_
             SetCurrentCellPt(StartMazePt);
             SetPixelPt(StartPixelPt);
 
-            DefaultMovementSpeed = GameConstants.DefaultMovementSpeed;
             CurrentMovementSpeed = GameConstants.DefaultMovementSpeed;
             PlayerNum = Number;
             //player 1 has number 0, player 2 has number 1, Enemy has number 2
@@ -402,7 +234,7 @@ namespace A_Level_Project__New_
 
         public bool IsMoving()
         {
-            if (PixelPtChange.X != 0 || PixelPtChange.Y != 0)
+            if(PixelPtChange.X != 0 || PixelPtChange.Y != 0)
             {
                 return true;
             }
@@ -411,34 +243,14 @@ namespace A_Level_Project__New_
 
         public void IncrementPixelPt()
         {
-            for (int i = 0; i < CurrentMovementSpeed; i++)
-            {
-                PixelPt.X += PixelPtChange.X;
-                PixelPt.Y += PixelPtChange.Y;
+            PixelPt.X += PixelPtChange.X * CurrentMovementSpeed;
+            PixelPt.Y += PixelPtChange.Y * CurrentMovementSpeed;
 
-                if (PixelPt == NextPixelPt)
-                {
-                    PixelPtChange.X = 0;
-                    PixelPtChange.Y = 0;
-                    CurrentMazePt = NextPoint;
-                }
-            }
-        }
-
-        public double GetSpeed()
-        {
-            return CurrentMovementSpeed;
-        }
-
-        public void SetSpeed(double newSpeed)
-        {
-            if (newSpeed >= 0)
+            if (PixelPt == NextPixelPt)
             {
-                CurrentMovementSpeed = newSpeed;
-            }
-            else
-            {
-                CurrentMovementSpeed = DefaultMovementSpeed;
+                PixelPtChange.X = 0;
+                PixelPtChange.Y = 0;
+                CurrentMazePt = NextPoint;
             }
         }
 
@@ -548,10 +360,21 @@ namespace A_Level_Project__New_
         private Point Target;
         private Queue<int> DirectionsToFollow = new Queue<int>();
 
-        public Enemy(Point StartMazePt, Point StartPixelPt, GameConstants Constants, int Number, double Difficulty) : base(StartMazePt, StartPixelPt, Constants, Number)
+        public Enemy(Point StartMazePt, Point StartPixelPt, GameConstants Constants, int Number, int Difficulty) : base(StartMazePt, StartPixelPt, Constants, Number)
         {
             CurrentMovementSpeed = Difficulty;
-            DefaultMovementSpeed = Difficulty;
+        }
+
+        public int GetNextDirection(int StartIndex)
+        {
+            if (StartIndex < DirectionsToFollow.Count())
+            {
+                return DirectionsToFollow.ElementAt(StartIndex);
+            }
+            else
+            {
+                throw new Exception("Index refers to a later direction than is available");
+            }
         }
 
         public int GetPathLength()
@@ -601,15 +424,18 @@ namespace A_Level_Project__New_
             TargetPoint = EndPt;
         }
 
-        public Point GetStartPoint()
+        public Point GetPoint(int type)
         {
             //returns a specified vertex from the edge.
-            return StartPoint;
-        }
 
-        public Point GetTargetPoint()
-        {
-            return TargetPoint;
+            if (type == 0)
+            {
+                return StartPoint;
+            }
+            else
+            {
+                return TargetPoint;
+            }
         }
     }
 
@@ -624,10 +450,9 @@ namespace A_Level_Project__New_
 
         private Cell[,] Cells;
         private int NumOfActivePoints;
-        //the number of visible ScorePoints in the maze
 
         #region Maze Generation/Recursive Backtracker Variables
-        private List<int> ValidMoves = new List<int>();
+        private List<int> ValidMoves;
         private int randMoveSelection;
         private int thisMove;
         private Point nextCellPt = new Point();
@@ -635,15 +460,18 @@ namespace A_Level_Project__New_
         private Edge reverseEdge;
         private Random rand = new Random();
         private Stack<Point> VisitedCells = new Stack<Point>();
-        private int RandNumOfWallsToRemove;
+        private int randTakeTwoWalls;
+
+        private List<int> ValidDirections = new List<int>();
+        private int GetDirectionType = 0;
         private int NumOfCellsInPath;
         #endregion
 
-        public Maze(int[] MazeDimensions)
+        public Maze(int[] MazeDimensions, int[] CellDimensions)
         {
             ///number of grid spaces in the maze
             this.MazeDimensions = MazeDimensions;
-            this.CellDimensions = GameConstants.CellDimensions;
+            this.CellDimensions = CellDimensions;
             Thickness = CellDimensions[0] / 10;
 
             AllWallsH = new Wall[MazeDimensions[0], MazeDimensions[1] + 1];
@@ -655,13 +483,11 @@ namespace A_Level_Project__New_
             InitialiseMaze();
             //creates instances of each wall/cell and sets their x/y coordinates
             DrawGrid();
-
+           
             //Generates recursive maze starting at point 0,0 and continuing until all cells have been visited
             NumOfCellsInPath = MazeDimensions[0] * MazeDimensions[1];
+            MazeGeneration(GetFirstCellInMaze(0), GetDirectionType);
             NumOfActivePoints = NumOfCellsInPath;
-
-            MazeGeneration(GetFirstCellInMaze(0), false);
-            //the false indicates that it should not start by backtracking
         }
 
         public int[] GetMazeDimensions()
@@ -759,7 +585,7 @@ namespace A_Level_Project__New_
                     CanvasPoint.X += Thickness;
                     CanvasPoint.Y += Thickness;
 
-                    Cells[x, y] = new Cell(CanvasPoint, CellDimensions);
+                    Cells[x, y] = new Cell(MazePoint, CanvasPoint, CellDimensions);
                 }
             }
         }
@@ -780,7 +606,7 @@ namespace A_Level_Project__New_
 
         }
 
-        private void MazeGeneration(Point currentCellPt, bool IsBacktracking)
+        private void MazeGeneration(Point currentCellPt, int GetDirectionType)
         {
             ///RECURSIVE BACKRTRACKER
             ///Depth First Maze Generation Algorithm which uses recursive calls to step through cells
@@ -788,16 +614,16 @@ namespace A_Level_Project__New_
             //stores maze coordinates of maze cell currently being processed by algorithm
             //thisCell = Cells[(int)currentCellPt.X, (int)currentCellPt.Y];
 
-            GetAdjacentDirections(currentCellPt, IsBacktracking);
+            ValidMoves = GetAdjacentDirections(currentCellPt, GetDirectionType);
             //gets all possible moves from the current cell to adjacent ones
 
             if (ValidMoves.Count > 0)
             {
                 VisitedCells.Push(currentCellPt);
 
-                RandNumOfWallsToRemove = rand.Next(1, ValidMoves.Count());
+                randTakeTwoWalls = rand.Next(1, ValidMoves.Count());
 
-                for (int i = 0; i < RandNumOfWallsToRemove; i++)
+                for (int i = 0; i < randTakeTwoWalls; i++)
                 {
                     randMoveSelection = rand.Next(0, ValidMoves.Count);
                     thisMove = ValidMoves[randMoveSelection];
@@ -811,7 +637,7 @@ namespace A_Level_Project__New_
                     Cells[(int)currentCellPt.X, (int)currentCellPt.Y].AddEdge(thisEdge, thisMove);
                     //adds edge to the current cell
 
-                    reverseEdge = new Edge(thisEdge.GetTargetPoint(), thisEdge.GetStartPoint());
+                    reverseEdge = new Edge(thisEdge.GetPoint(1), thisEdge.GetPoint(0));
                     //flips the edge so its inverse can be stored in the other cell
 
                     TurnOffWall(nextCellPt, thisMove);
@@ -822,23 +648,21 @@ namespace A_Level_Project__New_
 
                 if (VisitedCells.Count < NumOfCellsInPath)
                 {
-                    IsBacktracking = false;
-                    MazeGeneration(nextCellPt, IsBacktracking);
+                    GetDirectionType = 0;
+                    MazeGeneration(nextCellPt, GetDirectionType);
                 }
 
             }
             else if (VisitedCells.Count > 0)
             {
-                IsBacktracking = true;
-                MazeGeneration(VisitedCells.Pop(), IsBacktracking);
+                GetDirectionType = 1;
+                MazeGeneration(VisitedCells.Pop(), GetDirectionType);
                 //Gets the last cell to be visited and recursively calls algorithm from that cell
             }
         }
 
         private void TurnOffWall(Point thisCell, int direction)
         {
-            //hides the wall in the specified direction
-
             switch (direction)
             {
                 case 0:
@@ -871,10 +695,28 @@ namespace A_Level_Project__New_
 
         }
 
-        private void GetAdjacentDirections(Point Current, bool IsBacktracking)
+        //private List<Point> GetAllUnvisitedCells()
+        //{
+        //    List<Point> Unvisited = new List<Point>();
+        //    Point thisCellPt = new Point();
+
+        //    foreach (var cell in Cells)
+        //    {
+        //        thisCellPt = cell.GetMazePt();
+
+        //        if (cell.GetEdgesCount() == 0)
+        //        {
+        //            //if a cell has no edges, it has not been visited by the maze-generator
+        //            Unvisited.Add(thisCellPt);
+        //        }
+        //    }
+
+        //    return Unvisited;
+        //}
+
+        private List<int> GetAdjacentDirections(Point Current, int type)
         {
             ///Note: this method is for the backtracker algorithm to find the possible directions it can move in
-            ///it runs BEFORE the graph of cells is created
 
             //ValidDirections stores the directions 0, 1, 2, 3 representing possible movements from the current cell
             //ex. Cell[0,0] is top-left, so it has 1, 2 (right, down)
@@ -889,9 +731,9 @@ namespace A_Level_Project__New_
                 new Point(Current.X - 1, Current.Y),
             };
 
-            ValidMoves.Clear();
+            ValidDirections = new List<int>();
 
-            if (IsBacktracking == false)
+            if (type == 0)
             {
                 //enters this statement when following new path of unvisited cells
 
@@ -899,13 +741,13 @@ namespace A_Level_Project__New_
                 {
                     if (IsValidCell(AdjacentPoints[i]) && !VisitedCells.Contains(AdjacentPoints[i]) && Cells[(int)Current.X, (int)Current.Y].GetEdgesCount() < 4)
                     {
-                        ValidMoves.Add(i);
+                        ValidDirections.Add(i);
                         //determines which adjacent cells have not already been explored
                         //creates list of valid directions from current cell
                     }
                 }
             }
-            else if (IsBacktracking)
+            else if (type == 1)
             {
                 //enters this statement when backtracking along path
 
@@ -913,11 +755,27 @@ namespace A_Level_Project__New_
                 {
                     if (IsValidCell(AdjacentPoints[i]) && Cells[(int)Current.X, (int)Current.Y].GetEdgeFromDirection(i) == null && Cells[(int)AdjacentPoints[i].X, (int)AdjacentPoints[i].Y].GetEdgesCount() == 0 && Cells[(int)Current.X, (int)Current.Y].GetEdgesCount() < 4)
                     {
-                        ValidMoves.Add(i);
+                        ValidDirections.Add(i);
                         //determines which adjacent cells (if any) have not already been explored
                     }
                 }
             }
+            //else if (type == 2)
+            //{
+            //    //enters this statement when backtracking along path
+
+            //    for (int i = 0; i < AdjacentPoints.Count; i++)
+            //    {
+            //        if (IsValidCell(AdjacentPoints[i]) && Cells[(int)AdjacentPoints[i].X, (int)AdjacentPoints[i].Y].GetEdgesCount() == 0 && Cells[(int)Current.X, (int)Current.Y].GetEdgesCount() < 4)
+            //        {
+            //            ValidDirections.Add(i);
+            //            //determines which adjacent cells (if any) have not already been explored
+            //        }
+            //    }
+            //}
+
+
+            return ValidDirections;
         }
 
         public List<Point> GetAdjacentPoints(Point Current)
@@ -934,7 +792,7 @@ namespace A_Level_Project__New_
 
                 if (currentEdge != null)
                 {
-                    PointsList.Add(currentEdge.GetTargetPoint());
+                    PointsList.Add(currentEdge.GetPoint(1));
                 }
 
             }
@@ -1124,18 +982,18 @@ namespace A_Level_Project__New_
 
             if (NumOfActivePoints <= 0)
             {
-                DrawAllScorePoints();
+                RedrawAllScorePoints();
                 NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
             }
 
             return Unvisited;
         }
 
-        private void DrawAllScorePoints()
+        private void RedrawAllScorePoints()
         {
             foreach (var cell in Cells)
             {
-                cell.DrawPoint();
+                cell.RedrawPoint();
             }
         }
     }
@@ -1204,8 +1062,7 @@ namespace A_Level_Project__New_
         {
             if (hideable)
             {
-                // Shape.Opacity = 0;      
-                Game.MW.GameCanvas.Children.Remove(Shape);
+                Shape.Opacity = 0;                  //hides wall when clicked         
                 hidden = true;
             }
         }
@@ -1238,7 +1095,7 @@ namespace A_Level_Project__New_
             PlayerScores.Add(score);
         }
 
-        public void SetOtherGameVariables(int GameID, int difficulty, int currentTime, int[] mazeDimensions)
+        public void SetOtherVariables(int GameID, int difficulty, int currentTime, int[] mazeDimensions)
         {
             this.GameID = GameID;
             this.difficulty = difficulty;
@@ -1252,44 +1109,37 @@ namespace A_Level_Project__New_
     {
         public static GameWindow MW { get; set; }                 ////allows access to canvas outside of main window
         private Maze MazeOne;
-        private int[] MazeDimensions;
-        private const int DisplayRefreshConstant = 17;          /// refresh rate for the entities
+        private const int DisplayRefreshConstant = 17;
         private DispatcherTimer GameTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 1), };
         private DispatcherTimer MovementTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 0, 0, DisplayRefreshConstant), };
         private List<Player> ActivePlayers = new List<Player>();
         private List<Enemy> ActiveEnemies = new List<Enemy>();
         private TextBlock TimeDisplayTXT = new TextBlock();
         private TextBlock ScoreDisplayTXT = new TextBlock();
-
         private Player[] RemovedPlayers;
         private GameConstants Constants;
-        //initialised in constructor
-
-        private List<Powerup> ActivePowerups = new List<Powerup>();
         private int NumOfPlayers = 1;
         private int currentTime = 0;
         private int TotalScore = 0;
-        private double Difficulty = GameConstants.DefaultMovementSpeed;
-        //this is set just in case it is not passed by the Settings Window (default = 2 is normal speed)
+        private int Difficulty = GameConstants.DefaultMovementSpeed;   
+        //this is just in case it is not passed by the Settings Window (default = 2 is normal speed)
 
-        public Game(GameWindow thisWindow, int[] MazeDimensions, int[] CellDimensions, bool TwoPlayers, double EnemyDifficulty)
+        public Game(GameWindow thisWindow, int[] MazeDimensions, int[] CellDimensions, bool TwoPlayers, int EnemyDifficulty)
         {
             MW = thisWindow;
             MW.GameCanvas.Background = GameConstants.BackgroundColour;
-
-            this.MazeDimensions = MazeDimensions;
 
             if (TwoPlayers)
             {
                 NumOfPlayers = 2;
             }
 
-            Constants = new GameConstants();
+            Constants = new GameConstants(MazeDimensions, CellDimensions);
             Difficulty = EnemyDifficulty;
 
             RemovedPlayers = new Player[NumOfPlayers];
 
-            CreateMaze(MazeDimensions);
+            CreateMaze(MazeDimensions, CellDimensions);
 
             GameTimer.Tick += GameTimer_Tick;
             MovementTimer.Tick += MovementTimer_Tick;
@@ -1316,11 +1166,9 @@ namespace A_Level_Project__New_
 
         private void MovementTimer_Tick(object sender, EventArgs e)
         {
-            List<int> ExpiredPowerupIndexes = new List<int>();
-
-            foreach (Player player in ActivePlayers)
+            foreach (var player in ActivePlayers)
             {
-                CheckTouchingPowerup(player);
+                //cycles through each player and "collects"/hides the point that they are on
 
                 if (!player.IsMoving())
                 {
@@ -1337,10 +1185,9 @@ namespace A_Level_Project__New_
                 player.IncrementPixelPt();
             }
 
-            foreach (Enemy enemy in ActiveEnemies)
+            foreach (var enemy in ActiveEnemies)
             {
                 CheckTouches(enemy);
-                CheckTouchingPowerup(enemy);
 
                 if (!enemy.IsMoving())
                 {
@@ -1353,82 +1200,12 @@ namespace A_Level_Project__New_
                 enemy.IncrementPixelPt();
             }
 
-            for (int i = 0; i < ActivePowerups.Count; i++)
-            {
-                if (ActivePowerups[i].IsExpired())
-                {
-                    if (!ActivePowerups[i].IsCollected())
-                    {
-                        //if it hasn't been collected, it must be removed
-                        ActivePowerups[i].RemoveFromMap();
-                    }
-                    else
-                    {
-                        //if it has been collected, the effect was applied
-                        RemovePowerupEffect(ActivePowerups[i]);
-                    }
-
-                    ExpiredPowerupIndexes.Add(i);
-                }
-            }
-
-            foreach (int i in ExpiredPowerupIndexes)
-            {
-                if (i > -1 && i < ActivePowerups.Count())
-                {
-                    ActivePowerups.RemoveAt(i);
-                }
-            }
-
             UpdateScoreAndTime();
 
             if (ActivePlayers.Count() < 1)
             {
                 EndGame();
             }
-        }
-
-        private void RemovePowerupEffect(Powerup thisPowerup)
-        {
-            double[] effects = thisPowerup.GetEffects();
-            double temporaryVal;
-
-            if (thisPowerup.IsReversed())
-            {
-                temporaryVal = effects[0];
-                effects[0] = effects[1];
-                effects[1] = temporaryVal;
-            }
-
-            foreach (var player in ActivePlayers)
-            {
-                //if (effects[0] != 0)
-                //{
-                //    player.SetSpeed(player.GetSpeed() / effects[0]);
-                //    //reverses the change to their speed
-                //}
-                //else
-                //{
-                    player.SetSpeed(-1);
-                    //if the change is not possible (divide by 0), then sets it to default value
-                //}
-            }
-
-            foreach (var enemy in ActiveEnemies)
-            {
-                //if (effects[1] != 0)
-                //{
-                //    enemy.SetSpeed(enemy.GetSpeed() / effects[1]);
-                //    //reverses the change to their speed
-                //}
-                //else
-                //{
-                    enemy.SetSpeed(-1);
-                    //if the change is not possible (divide by 0), then sets it to default value
-                //}
-            }
-
-            ScorePt.SetValue(1);
         }
 
         private void CheckTouches(Player EnemyToCheck)
@@ -1473,74 +1250,6 @@ namespace A_Level_Project__New_
             }
         }
 
-        private void CheckTouchingPowerup(Player EntityToCheck)
-        {
-            Point currentPixelPt = EntityToCheck.GetPixelPt();
-
-            double dx;
-            double dy;
-
-            for (int i = 0; i < ActivePowerups.Count; i++)
-            {
-
-                dx = Math.Abs(currentPixelPt.X - ActivePowerups[i].GetPixelPt().X);
-                dy = Math.Abs(currentPixelPt.Y - ActivePowerups[i].GetPixelPt().Y);
-
-                if (dx < GameConstants.CellDimensions[0] / 2 && dy < GameConstants.CellDimensions[1] / 2)
-                {
-                    ActivePowerups[i].RemoveFromMap();
-                    ApplyPowerupEffect(ActivePowerups[i], EntityToCheck);
-                }
-            }
-        }
-
-        private void GenerateRandomPowerUp(int type)
-        {
-            Random rand = new Random();
-            Point MazeLocation = new Point();
-            MazeLocation.X = rand.Next(0, MazeDimensions[0]);
-            MazeLocation.Y = rand.Next(0, MazeDimensions[1]);     //gets random location inside the maze
-
-            Point PixelPt = MazeOne.GetPixelPoint(MazeLocation);
-
-            Powerup PowerupToAdd = new Powerup(Constants, MazeLocation, PixelPt, type);
-
-            ActivePowerups.Add(PowerupToAdd);
-        }
-
-        private void ApplyPowerupEffect(Powerup thisPowerup, Player EntityToCheck)
-        {
-            double[] Effects;
-
-            if (EntityToCheck is Enemy)
-            {
-                thisPowerup.SetReversedEffects();
-            }
-
-            Effects = thisPowerup.GetEffects();
-
-            foreach (var player in ActivePlayers)
-            {
-                player.SetSpeed(Effects[0] * player.GetSpeed());
-                //sets the friendly effect for all players on same team as the player who collected it
-                //e.g. if player 1 or 2 collects it, both get the same friendly effect
-                //e.g. if the enemy gets it, neither player gets the effect
-            }
-
-            foreach (var enemy in ActiveEnemies)
-            {
-                enemy.SetSpeed(Effects[1] * enemy.GetSpeed());
-            }
-
-            MessageBox.Show("Applied effect: " + Convert.ToString(thisPowerup.GetTypeOfPowerup()));
-
-            thisPowerup.Collected();
-
-            ScorePt.SetValue((int)Effects[2]);
-            //enemy doesn't collect points so this only affects the human players
-            //also, score is integer only
-        }
-
         private void AddEntryToFile()
         {
             List<DataEntry> FileEntries = new List<DataEntry>();
@@ -1571,7 +1280,7 @@ namespace A_Level_Project__New_
                 FileEntries = new List<DataEntry>();
             }
 
-            thisEntry.SetOtherGameVariables(ID, (int)Difficulty, currentTime, MazeOne.GetMazeDimensions());
+            thisEntry.SetOtherVariables(ID, Difficulty, currentTime, MazeOne.GetMazeDimensions());
 
             FileEntries.Add(thisEntry);
 
@@ -1587,11 +1296,9 @@ namespace A_Level_Project__New_
 
         private DataEntry AddPlayersToEntry(DataEntry thisEntry)
         {
-            string name;
             for (int i = 0; i < RemovedPlayers.Count(); i++)
             {
-                name = GetName(i + 1);
-                thisEntry.AddPlayer(name, RemovedPlayers[i].GetScore());
+                thisEntry.AddPlayer(GetName(i + 1), RemovedPlayers[i].GetScore());
                 //i = 0 -> player 1, i = 1 -> player 2...etc. 
             }
 
@@ -1600,15 +1307,7 @@ namespace A_Level_Project__New_
 
         private string GetName(int PlayerNumber)
         {
-            string name = NamePlayers.GetName(PlayerNumber);
-            if (name.Length < 1)
-            {
-                name = "Anonymous";
-            }
-
-            MessageBox.Show("Saving Player " + PlayerNumber + " as '" + name + "'");
-
-            return name;
+            return NamePlayers.GetName(PlayerNumber);
         }
 
         private void EndGame()
@@ -1637,16 +1336,15 @@ namespace A_Level_Project__New_
         {
             Point currentPoint = Entity.GetCurrentMazePt();
             int direction = Entity.GetDirection();
-            Point newPoint;
-            Point newPixelPoint;
 
             if (MazeOne.CheckEdgeInDirection(currentPoint, direction))
             {
                 //checks that there is an edge between those cells
-                newPoint = MazeOne.MoveFromPoint(currentPoint, direction);
+                Point newPoint = MazeOne.MoveFromPoint(currentPoint, direction);
+
                 Entity.SetCurrentCellPt(newPoint);
 
-                newPixelPoint = MazeOne.GetPixelPoint(newPoint);
+                Point newPixelPoint = MazeOne.GetPixelPoint(newPoint);
                 Entity.ConvertMoveToChange(newPoint, newPixelPoint);
                 //gets the new position in the window
             }
@@ -1654,19 +1352,8 @@ namespace A_Level_Project__New_
 
         private void GameTimer_Tick(object sender, EventArgs e)
         {
-            Random rand = new Random();
-            int randVal = rand.Next(5, 21);
             currentTime += 1;
             //updates the length of time the game has been open, once per second
-
-            int type = Powerup.DetermineType(ActivePowerups);
-
-            if (currentTime % randVal < 2 && type > -1)
-            {
-                //randomly generates new powerups if there are spaces
-                GenerateRandomPowerUp(type);
-            }
-
         }
 
         private void UpdateScoreAndTime()
@@ -1675,11 +1362,11 @@ namespace A_Level_Project__New_
             ScoreDisplayTXT.Text = Convert.ToString(TotalScore);
         }
 
-        public void CreateMaze(int[] MazeDim)
+        public void CreateMaze(int[] MazeDim, int[] CellDim)
         {
             currentTime = 0;
 
-            MazeOne = new Maze(MazeDim);
+            MazeOne = new Maze(MazeDim, CellDim);
 
             AddEntities();
             GameTimer.Start();
@@ -1740,7 +1427,7 @@ namespace A_Level_Project__New_
     {
         Game newGame;
 
-        public GameWindow(int[] MazeDimensions, bool TwoPlayers, double EnemyDifficulty)
+        public GameWindow(int[] MazeDimensions, bool TwoPlayers, int EnemyDifficulty)
         {
             InitializeComponent();
 

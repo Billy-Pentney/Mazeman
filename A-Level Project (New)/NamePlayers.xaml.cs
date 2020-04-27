@@ -25,13 +25,8 @@ namespace A_Level_Project__New_
         {
             InitializeComponent();
             Title = "Player " + Convert.ToString(PlayerNum);
-            ExplainTxt.Text = "Input a name for player " + PlayerNum;    
-
-            if (!myCanvas.Children.Contains(InputTxt))
-            {
-                myCanvas.Children.Add(InputTxt);
-            }
-
+            ExplainTxt.Text = "Input a name for player " + PlayerNum;
+            myCanvas.Children.Add(InputTxt);
             Canvas.SetLeft(InputTxt, 10);
             Canvas.SetTop(InputTxt, 50);
         }
@@ -40,13 +35,20 @@ namespace A_Level_Project__New_
         {
             NamePlayers NameWindow = new NamePlayers(PlayerNum);
             NameWindow.ShowDialog();
-            NameWindow.myCanvas.Children.Remove(InputTxt);
             return InputTxt.Text;
         }
 
         private void DoneBtn_Click(object sender, RoutedEventArgs e)
         {
-            Close();
+            if (InputTxt.Text.Length > 0)
+            {
+                myCanvas.Children.Remove(InputTxt);
+                Close();
+            }
+            else
+            {
+                MessageBox.Show("Please input a name to proceed");
+            }
         }
     }
 }
