@@ -13,6 +13,6 @@
         <Button Name="SwapColoursBtn" Content="Switch Colours" FontSize="8" Width ="60" HorizontalAlignment="Center" Click="SwapColoursBtn_Click" Canvas.Top="210" Canvas.Left="140"></Button>
 
         <Label Name="IdentifierLbl" Content="A-Level Project &#x0a;Billy Pentney &#x0a;Candidate Number: 5081" FontSize="8" Opacity="0.5" Canvas.Top="219"/>
-        <Label Name="VersionNumLbl" Content="V.2.1.5" Canvas.Left="298" Canvas.Top="239" FontSize="9" Opacity="0.5"></Label>
+        <Label Name="VersionNumLbl" Content="V.2.2.0" Canvas.Left="298" Canvas.Top="239" FontSize="9" Opacity="0.5"></Label>
     </Canvas>
 </Window>

@@ -19,13 +19,14 @@ namespace A_Level_Project__New_
     /// </summary>
     public partial class SettingsWindow : Window
     {
-        int[] MazeDimRange = new int[2] { 10, 30 };
+        int[] MazeDimRange = new int[2] { 5, 30 };
         //the range of values that are allowed to be inputted
         int[] defMazeDimensions = new int[2] { 15, 15 };
         //the default values to use if the user checks the box
 
         int[] MazeDimensions = new int[2];
         bool TwoPlayers = false;
+        bool DisableEnemies = false;
 
         double EnemyDifficulty;
         //used to set the speed of the enemy
@@ -114,6 +115,8 @@ namespace A_Level_Project__New_
             PlayersLbl.Foreground = foregroundColour;
             PointsLbl.Foreground = foregroundColour;
             ControlsLbl.Foreground = foregroundColour;
+
+            DisableEnemiesChk.Foreground = foregroundColour;
         }
 
         private void AddObjectsToWindow()
@@ -299,6 +302,8 @@ namespace A_Level_Project__New_
                 return true;
             }
 
+            DefaultCheck.IsChecked = (WidthTxt.Text == Convert.ToString(defMazeDimensions[0]) && HeightTxt.Text == Convert.ToString(defMazeDimensions[1]));
+
             return false;
         }
 
@@ -310,10 +315,12 @@ namespace A_Level_Project__New_
 
         private void StartBtn_Click(object sender, RoutedEventArgs e)
         {
+            DisableEnemies = (bool)DisableEnemiesChk.IsChecked;
+
             if (CheckText(WidthTxt.Text, 0) && CheckText(HeightTxt.Text, 1))
             {
                 TwoPlayers = (bool)TwoPlayersCheck.IsChecked;
-                new GameWindow(MazeDimensions, TwoPlayers, EnemyDifficulty, EnemyColourIndex).Show();
+                new GameWindow(MazeDimensions, TwoPlayers, EnemyDifficulty, EnemyColourIndex + 1, DisableEnemies).Show();
                 Close();
             }
             else
@@ -349,8 +356,6 @@ namespace A_Level_Project__New_
 
         private void WidthTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
-            DefaultCheck.IsChecked = (WidthTxt.Text == "15");
-
             if (CheckText(WidthTxt.Text, 0))
             {
                 ExclamationMarkLbl.Foreground = Brushes.Green;
@@ -365,8 +370,6 @@ namespace A_Level_Project__New_
 
         private void HeightTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
-            DefaultCheck.IsChecked = (HeightTxt.Text == "15");
-
             if (CheckText(HeightTxt.Text, 1))
             {
                 ExclamationMark2Lbl.Foreground = Brushes.Green;
