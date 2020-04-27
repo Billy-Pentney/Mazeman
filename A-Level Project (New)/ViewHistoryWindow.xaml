@@ -20,7 +20,7 @@
         <Label Name="SortByLbl" Content="Sort By:" Canvas.Right="250" VerticalContentAlignment="Center" Canvas.Top="26" Height="25"></Label>
 
         <TextBlock Name="GraphInfoBlock" Height="450" Width="190" Canvas.Right="35" Canvas.Bottom="150" TextWrapping="Wrap" TextAlignment="Justify"></TextBlock>
-        <Label Name="GamesDisplayedTxt" Content="Displaying 40-50 of 111 games" Canvas.Right="35" Canvas.Bottom="110" Width="185"></Label>
+        <Label Name="GamesDisplayedTxt" Content="" Canvas.Right="35" Canvas.Bottom="110" Width="185"></Label>
 
         <Button Name="LeaderboardBtn" Content="Leaderboard"  FontSize="13" Canvas.Right="45" Canvas.Bottom="60" Height="35" Width="170" Click="LeaderboardBtn_Click"></Button>
         <Button Name="ScrollLBtn" Height="25" Content="Scroll Left" FontSize="12" Width="83" Click="ScrollBtn_Click" Canvas.Right="132" Canvas.Bottom="30"></Button>

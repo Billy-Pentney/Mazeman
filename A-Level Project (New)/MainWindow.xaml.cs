@@ -23,6 +23,7 @@ namespace A_Level_Project__New_
         public MainWindow()
         {
             InitializeComponent();
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             BitmapImage WindowIconSource = new BitmapImage();
             WindowIconSource.BeginInit();
@@ -41,8 +42,7 @@ namespace A_Level_Project__New_
 
         private void ViewHistoryBtn_Click(object sender, RoutedEventArgs e)
         {
-            new ViewHistoryWindow().Show();
-
+            new ViewHistoryWindow().ShowDialog();
         }
 
         private void SwapColoursBtn_Click(object sender, RoutedEventArgs e)

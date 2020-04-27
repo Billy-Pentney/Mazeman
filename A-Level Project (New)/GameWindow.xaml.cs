@@ -27,6 +27,7 @@ namespace A_Level_Project__New_
 
         public static int[] CellDimensions { get; } = new int[2] { 25, 25 };
         public static double WallThicknessProportion = 0.10;
+        //the walls are 25 * 0.1 pixels thick
 
         public static int[] WinIndent { get; } = new int[2] { 85, 20 };
         public static int[] MazeIndent { get; } = new int[2] { 85, 0 };
@@ -37,8 +38,6 @@ namespace A_Level_Project__New_
 
         public static double[] difficulties { get; } = new double[] { 1, 2, 3 };
         //the player movement speed with no powerups
-
-        public static int ClearPointsValue { get; } = 50;
 
         public static Brush BackgroundColour { get; set; } = Brushes.Black;       ///colour for the main background of the game windows
         public static Brush ForegroundColour { get; set; } = Brushes.White;           ///colour for the text/alternate background colour if switched
@@ -179,12 +178,9 @@ namespace A_Level_Project__New_
                         DisplayMessage = "Players are frozen for " + maxDuration + " seconds!";
                         break;
                     case 3:
-                        Effects[2] = 0;
-                        DisplayMessage = "Points have " + Effects[2] + " value for " + maxDuration + " seconds!";
+                        Effects[2] = -1;
+                        DisplayMessage = "Points have no value for " + maxDuration + " seconds!";
                         break;
-                    //case 4:
-                    //    EnemyEffectBehaviour = Behaviour.None;
-                    //    break;
                     default:
                         break;
                 }
@@ -226,12 +222,12 @@ namespace A_Level_Project__New_
 
         public bool IsExpired()
         {
-            if (currentActiveTime < maxDuration)
+            if (currentActiveTime > maxDuration)
             {
-                return false;
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         public void RemoveFromMap()
@@ -269,6 +265,53 @@ namespace A_Level_Project__New_
         public double GetOpacity()
         {
             return Sprite.Opacity;
+        }
+
+        public int GetRemainingTime()
+        {
+            return maxDuration - currentActiveTime;
+        }
+
+        public void ApplyEffect(ref Player thisPlayer)
+        {
+            double speed = thisPlayer.GetSpeed();
+            double PointValue = thisPlayer.GetScorePointValue();
+
+            //limitation to prevent two freezes cancelling each other out since -1 * -1 = +1
+
+            if (thisPlayer is Enemy && (speed > 0 || Effects[1] > 0))
+            {
+                thisPlayer.SetSpeed(speed * Effects[1]);
+            }
+            else
+            {
+                if (speed > 0 || Effects[0] > 0)
+                {
+                    thisPlayer.SetSpeed(speed * Effects[0]);
+                }
+
+                if (PointValue > 0 || Effects[2] > 0)
+                {
+                    thisPlayer.SetScorePointValue((int)(PointValue * Effects[2]));
+                }
+            }
+            
+        }
+
+        public void RemoveEffect(ref Player thisPlayer)
+        {
+            double speed = thisPlayer.GetSpeed();
+            double PointValue = thisPlayer.GetScorePointValue();
+
+            if (thisPlayer is Enemy)
+            {
+                thisPlayer.SetSpeed(speed / Effects[1]);
+            }
+            else
+            {
+                thisPlayer.SetSpeed(speed / Effects[0]);
+                thisPlayer.SetScorePointValue((int)(PointValue / Effects[2]));
+            }
         }
     }
 
@@ -460,6 +503,11 @@ namespace A_Level_Project__New_
             //determines the movement in terms of x and y for that move based on the pixel positions
 
             Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
+
+            if (CurrentMovementSpeed < 0)
+            {
+                Sprite.Source = FrozenIMGSource;
+            }
         }
 
         public void IncrementDisplayNumber()
@@ -497,11 +545,7 @@ namespace A_Level_Project__New_
             //sets the value of each point when collected by the player 
             //this is a multiplier so if it is 2, then all points that are collected increment the score by twice their normal value
 
-            if (value >= 0 && value < 100)
-            {
-                //value of points should not be negative (score would decrease)
-                ScorePointValue = value;
-            }
+            ScorePointValue = value;
         }
 
         public int GetScorePointValue()
@@ -610,7 +654,7 @@ namespace A_Level_Project__New_
             DefaultMovementSpeed = Difficulty;
             SetSpeed(DefaultMovementSpeed);
 
-            PowerupAffinity = 1 + (0.125 * (PNumber + 1));// Math.Pow(0.5, EnemyLevel);
+            PowerupAffinity = 1 + (0.25 * (PNumber + 1));// Math.Pow(0.5, EnemyLevel);
 
             for (int i = 0; i < IMGSources.Length; i++)
             {
@@ -831,7 +875,7 @@ namespace A_Level_Project__New_
                 {
                     NumOfMovesSinceSplit = 0;
                 }
-                else if (NumOfMovesSinceSplit > 2 && RandNumOfWallsToRemove < ValidMoves.Count())
+                else if (NumOfMovesSinceSplit > 4 && RandNumOfWallsToRemove < ValidMoves.Count())
                 {
                     //if it has been 5 moves since the path split, then an additional wall is taken this time
                     RandNumOfWallsToRemove += 1;
@@ -1113,7 +1157,7 @@ namespace A_Level_Project__New_
 
         #region Gameplay Functions
 
-        public int[] PointCrossed(Point newPoint, double ValueMultiplier)
+        public int[] PointCrossed(Point newPoint)
         {
             int[] NumOfVisiblePoints = new int[2];
 
@@ -1150,18 +1194,6 @@ namespace A_Level_Project__New_
             {
                 wall.Clear();
             }
-        }
-
-        public void DrawAllScorePoints()
-        {
-            //iterates through each cell and redisplays its point
-
-            foreach (var cell in Cells)
-            {
-                cell.DrawScorePoint();
-            }
-
-            NumOfActivePoints = MazeDimensions[0] * MazeDimensions[1];
         }
 
         public void SetScorePointColour(double effectVal)
@@ -1274,43 +1306,6 @@ namespace A_Level_Project__New_
             }
 
             throw new Exception("Attempt to convert two invalid points to a movement");
-        }
-
-        public int[] ConvertDirectionToMovement(int direction)
-        {
-            //converts the movement between two points into the four directions of motion
-
-            switch (direction)
-            {
-                case 0:
-                    return new int[2] { 0, -1 };
-                case 1:
-                    return new int[2] { 1,0 };
-                case 2:
-                    return new int[2] { 0, 1 };
-                case 3:
-                    return new int[2] { -1, 0 };
-                default:
-                    break;
-            }
-
-            throw new Exception("Attempt to convert two invalid points to a movement");
-        }
-
-        public Point ConvertPixelPtToMazePt(Point PixelPt)
-        {
-            Point MazeTopLeft = new Point(GameConstants.MazeIndent[0] + Thickness, GameConstants.MazeIndent[1] + Thickness);
-
-            PixelPt.X -= MazeTopLeft.X;
-            PixelPt.Y -= MazeTopLeft.Y;
-
-            PixelPt.X /= (CellDimensions[0] + Thickness);
-            PixelPt.Y /= (CellDimensions[1] + Thickness);
-
-            PixelPt.X = (int)Math.Round(PixelPt.X);
-            PixelPt.Y = (int)Math.Round(PixelPt.Y);
-
-            return PixelPt;
         }
 
         public int GetNumofScorePoints()
@@ -1685,7 +1680,7 @@ namespace A_Level_Project__New_
         private int[] CountOfPowerupType;
         private List<Powerup> VisiblePowerups = new List<Powerup>();
         //stores powerups that can be seen in the maze
-        private SimplePriorityQueue<Powerup, int> AppliedPowerUpEffects = new SimplePriorityQueue<Powerup, int>();
+        private List<Powerup> AppliedPowerUpEffects = new List<Powerup>();
         //stores powerups which have been collected and the effect is being applied with the priority as the powerup duration
 
         private int NumOfPlayers = 1;
@@ -1696,9 +1691,9 @@ namespace A_Level_Project__New_
 
         private int PlayerLives = 3;
 
-        private int MaxPowerupsPerType = 1;         
+        private int MaxPowerupsPerType = 1;
         ///how many of each powerup can be active (visible or collected) at one time (e.g. a freeze must expire before another can be generated)
-        private int PowerupGenDelay = 3;            
+        private int PowerupGenDelay = 3;
         ///number of seconds between generation of each powerup
 
         private Random rand = new Random();
@@ -1723,10 +1718,7 @@ namespace A_Level_Project__New_
 
             this.MazeDimensions = MazeDimensions;
 
-            if (MazeDimensions[0] * MazeDimensions[1] > 500)
-            {
-                MaxPowerupsPerType *= 2;
-            }
+            MaxPowerupsPerType = (int)Math.Floor((double)(MazeDimensions[0] * MazeDimensions[1] / 200));
 
             if (TwoPlayers)
             {
@@ -1763,7 +1755,7 @@ namespace A_Level_Project__New_
                 LifeImages[i].Width = 22;
                 LifeImages[i].Height = 22;
 
-                Canvas.SetLeft(LifeImages[i], 17 + i * 25 );
+                Canvas.SetLeft(LifeImages[i], 17 + i * 25);
                 Canvas.SetTop(LifeImages[i], 95);
             }
         }
@@ -1811,14 +1803,19 @@ namespace A_Level_Project__New_
         {
             if (RemainingPauseTime < 0)
             {
-                Random rand = new Random();
                 int randVal = rand.Next(5, 21);
                 currentTime += 1;
-                //updates the length of time the game has been open, once per second
+                //updates the unpaused time the game has been open
+
+                foreach (var powerup in AppliedPowerUpEffects)
+                {
+                    powerup.IncrementActiveTime();
+                }
 
                 if (AppliedPowerUpEffects.Count > 0)
                 {
-                    Powerup NextEffectToExpire = AppliedPowerUpEffects.First;
+                    AppliedPowerUpEffects = AppliedPowerUpEffects.OrderBy(powerup => powerup.GetRemainingTime()).ToList();
+                    Powerup NextEffectToExpire = AppliedPowerUpEffects.First();
 
                     if (NextEffectToExpire.IsExpired())
                     {
@@ -1826,8 +1823,6 @@ namespace A_Level_Project__New_
                         AppliedPowerUpEffects.Remove(NextEffectToExpire);
                     }
                 }
-
-                List<Powerup> PowerupsToRemove = new List<Powerup>();
 
                 for (int i = 0; i < VisiblePowerups.Count;)
                 {
@@ -1840,18 +1835,12 @@ namespace A_Level_Project__New_
                         //then they are removed from the map and from the list of powerups
                         VisiblePowerups[i].RemoveFromMap();
                         CountOfPowerupType[VisiblePowerups[i].GetTypeNumber()] -= 1;
-                        PowerupsToRemove.Add(VisiblePowerups[i]);
                         VisiblePowerups.RemoveAt(i);
                     }
                     else
                     {
                         i += 1;
                     }
-                }
-
-                foreach (var powerup in AppliedPowerUpEffects)
-                {
-                    powerup.IncrementActiveTime();
                 }
 
                 if (currentTime % PowerupGenDelay == 0)
@@ -1876,52 +1865,67 @@ namespace A_Level_Project__New_
         {
             List<int> ExpiredPowerupIndexes = new List<int>();
 
-            foreach (Player player in ActivePlayers)
+            for (int i = 0; i < ActivePlayers.Count; i++)
             {
-                player.IncrementDisplayNumber();
-                CheckPowerupTouches(player);
+                ActivePlayers[i].IncrementDisplayNumber();
+                CheckPowerupTouches(ActivePlayers[i]);
 
-                if (!player.IsMoving())
+                if (!ActivePlayers[i].IsMoving())
                 {
-                    CollectPoint(player);
-                    UpdatePlayerPosition(player);
+                    CollectPoint(ActivePlayers[i]);
+                    UpdatePlayerPosition(ActivePlayers[i]);
                 }
 
-                player.Draw();
+                ActivePlayers[i].Draw();
 
             }
 
             if (MazeOne.GetNumofScorePoints() < 1)
             {
+                //resets maze if the board is cleared of collectible points
+                int ClearBoardPoints = GameConstants.CellDimensions[0] + GameConstants.CellDimensions[1];
+                int ScorePointValue = 0;
+
                 foreach (var player in ActivePlayers)
                 {
-                    player.IncrementScore(GameConstants.ClearPointsValue * player.GetScorePointValue());
-                    ///+50 for each player
-                    TotalScore += GameConstants.ClearPointsValue * player.GetScorePointValue();
+                    ScorePointValue = player.GetScorePointValue();
+                    if (ScorePointValue > 0)
+                    {
+                        player.IncrementScore(ClearBoardPoints * ScorePointValue);
+                        ///adds a bonus based on the size of the board and the number of players.
+                        ///e.g. in 15x15, with 1P, 30pts is added; in 30x20 with 2P, 50 pts is added per player
+                        TotalScore += ClearBoardPoints * ScorePointValue;
+                    }                 
                 }
 
-                Pause(2);
+                Pause(1);
 
                 MazeOne.ClearMaze();
                 MazeOne = new Maze(MazeDimensions);
+
+                if (PlayerLives < 3)
+                {
+                    LifeImages[PlayerLives].Opacity = 1;
+                    PlayerLives += 1;
+                }
                 ResetGame();
             }
 
-            foreach (Enemy enemy in ActiveEnemies)
+            for (int i = 0; i < ActiveEnemies.Count; i++)
             {
-                enemy.IncrementDisplayNumber();
+                ActiveEnemies[i].IncrementDisplayNumber();
 
-                CheckPlayerTouches(enemy);
-                CheckPowerupTouches(enemy);
+                CheckPlayerTouches(ActiveEnemies[i]);
+                CheckPowerupTouches(ActiveEnemies[i]);
 
-                if (!enemy.IsMoving())
+                if (!ActiveEnemies[i].IsMoving())
                 {
-                    enemy.UpdateDirection();
-                    UpdatePlayerPosition(enemy);
-                    FindShortestPath(enemy);
+                    ActiveEnemies[i].UpdateDirection();
+                    UpdatePlayerPosition(ActiveEnemies[i]);
+                    FindShortestPath(ActiveEnemies[i]);
                 }
 
-                enemy.Draw();
+                ActiveEnemies[i].Draw();
             }
 
             #region Powerup Removal
@@ -1985,20 +1989,25 @@ namespace A_Level_Project__New_
             {
                 Player.UpdateDirection(thisKey, type);
             }
-        }       
+        }
 
         public void CollectPoint(Player thisPlayer)
         {
             //controls incrementing the score when a player moves over a point
 
-            int[] NumOfVisiblePoints = MazeOne.PointCrossed(thisPlayer.GetCurrentMazePt(), thisPlayer.GetScorePointValue());
+            int ScorePointValue = thisPlayer.GetScorePointValue();
+            int[] NumOfVisiblePoints = MazeOne.PointCrossed(thisPlayer.GetCurrentMazePt());
             //0 is the points before this move, 1 is the points after
 
             int IncrementScore = NumOfVisiblePoints[0] - NumOfVisiblePoints[1];
 
-            thisPlayer.IncrementScore(IncrementScore * thisPlayer.GetScorePointValue());
-            TotalScore += IncrementScore * thisPlayer.GetScorePointValue();
-        }  
+            if (ScorePointValue > 0)
+            {
+                thisPlayer.IncrementScore(IncrementScore * ScorePointValue);
+                TotalScore += IncrementScore * ScorePointValue;
+            }
+
+        }
 
         private void UpdatePlayerPosition(Player Entity)
         {
@@ -2103,9 +2112,9 @@ namespace A_Level_Project__New_
                     {
                         chosenPoint = closestPlayerPoint;
                     }
-                }   
+                }
             }
-          
+
             shortestDistance = 0;
 
             foreach (var powerup in VisiblePowerups)
@@ -2166,7 +2175,7 @@ namespace A_Level_Project__New_
             //generates a random location to place the powerup
 
             Random rand = new Random();
-            Point GeneratedPt = new Point(-1,-1);
+            Point GeneratedPt = new Point(-1, -1);
             List<Point> OccupiedPoints = new List<Point>();
             int TimesTried = 0;
             bool validGen = true;
@@ -2201,7 +2210,7 @@ namespace A_Level_Project__New_
                 }
 
             } while (TimesTried < 5 && validGen == false);
-            
+
             return GeneratedPt;
         }
 
@@ -2209,9 +2218,7 @@ namespace A_Level_Project__New_
         {
             //resets game after all players are caught, and at least one still has lives
 
-            MovementTimer.Stop();
-
-            int NumOfActiveEffects = AppliedPowerUpEffects.Count;
+            Pause(1);
 
             if (RemovedPlayers.Count > 0)
             {
@@ -2224,14 +2231,28 @@ namespace A_Level_Project__New_
                 ActivePlayers = ActivePlayers.OrderBy(player => player.GetPlayerNum()).ToList();
             }
 
-            for (int i = 0; i < NumOfActiveEffects; i++)
+            for (int i = 0; i < AppliedPowerUpEffects.Count; i++)
             {
-                Powerup thisPowerup = AppliedPowerUpEffects.Dequeue();
+                Powerup thisPowerup = AppliedPowerUpEffects.First();
                 RemovePowerupEffect(thisPowerup);
             }
 
+            AppliedPowerUpEffects.Clear();
             //removes all active powerup effects on reset
-            //this must be done after the players are restored, so that the effects are successfully removed
+            //this must be done before the players are restored, so that the effects are successfully removed
+
+            foreach (var powerup in VisiblePowerups)
+            {
+                powerup.RemoveFromMap();
+            }
+            //removes all visible powerups so that the game is clear again
+
+            VisiblePowerups.Clear();
+
+            for (int i = 0; i < CountOfPowerupType.Length; i++)
+            {
+                CountOfPowerupType[i] = 0;
+            }
 
             foreach (var player in ActivePlayers)
             {
@@ -2244,125 +2265,177 @@ namespace A_Level_Project__New_
                 enemy.Reset();
                 enemy.Draw();
             }
-
-            Pause(1);
-
         }
 
         private void ApplyPowerupEffect(Powerup thisPowerup, Player CollectedBy)
         {
             double[] Effects;
-            double currentSpeed;
-            bool appliedEffect = true;
+            //double currentSpeed;
+            //bool appliedEffect = true;
 
             thisPowerup.Collect(CollectedBy);
             VisiblePowerups.Remove(thisPowerup);
 
             Effects = thisPowerup.GetEffects();
 
-            foreach (var player in ActivePlayers)
+            for (int i = 0; i < ActivePlayers.Count; i++)
             {
-                if (player.GetSpeed() <= 0)
-                {
-                    appliedEffect = false;
-                    //doesn't apply if player already frozen
-                }
+                Player thisPlayer = ActivePlayers[i];
+                thisPowerup.ApplyEffect(ref thisPlayer);
+                ActivePlayers[i] = thisPlayer;
             }
 
-            foreach (var enemy in ActiveEnemies)
+            for (int i = 0; i < ActiveEnemies.Count; i++)
             {
-                if (enemy.GetSpeed() <= 0)
-                {
-                    appliedEffect = false;
-                    //doesn't apply effect if the enemy is already frozen
-                }
+                Player thisEnemy = ActiveEnemies[i];
+                thisPowerup.ApplyEffect(ref thisEnemy);
+                ActiveEnemies[i] = (Enemy)thisEnemy;
             }
 
-            if (Effects[2] != 1)
+            AppliedPowerUpEffects.Add(thisPowerup);
+
+            int ScorePointValue = ActivePlayers[0].GetScorePointValue();
+
+            if (ScorePointValue < 0)
             {
-                appliedEffect = true;
+                MazeOne.SetScorePointColour(0);
+            }
+            else
+            {
+                MazeOne.SetScorePointColour(ScorePointValue);
             }
 
-            if (appliedEffect == true)
-            {
-                //if neither entity is frozen
-                AppliedPowerUpEffects.Enqueue(thisPowerup, thisPowerup.GetMaxDuration());
-                //enqueues powerup based on how long they last -> shortest will be checked/removed earlier
+            #region old ApplyEffects
+            //foreach (var player in ActivePlayers)
+            //{
+            //    if (player.GetSpeed() <= 0)
+            //    {
+            //        appliedEffect = false;
+            //        //doesn't apply if player already frozen
+            //    }
+            //}
 
-                foreach (var player in ActivePlayers)
-                {
-                    if (Effects[0] != 1)
-                    {
-                        currentSpeed = player.GetSpeed();
-                        player.SetSpeed(Effects[0] * currentSpeed);
-                    }
+            //foreach (var enemy in ActiveEnemies)
+            //{
+            //    if (enemy.GetSpeed() <= 0 && Effects[0] == 1)
+            //    {
+            //        appliedEffect = false;
+            //        //doesn't apply effect if the enemy is already frozen
+            //    }
+            //}
 
-                    if (Effects[2] != 1)
-                    {
-                        player.SetScorePointValue((int)Effects[2] * player.GetScorePointValue());
-                        MazeOne.SetScorePointColour(Effects[2]);
-                    }
+            //if (Effects[2] != 1)
+            //{
+            //    appliedEffect = true;
+            //}
 
-                    //sets the friendly effect for all players on same team as the player who collected it
-                    //e.g. if player 1 or 2 collects it, both get the same friendly effect
-                    //e.g. if the enemy gets it, neither player gets the effect
-                }
+            //if (appliedEffect == true)
+            //{
+            //    //if neither entity is frozen
+            //    AppliedPowerUpEffects.Add(thisPowerup);
+            //    //enqueues powerup based on how long they last -> shortest will be checked/removed earlier
 
-                foreach (var enemy in ActiveEnemies)
-                {
-                    if (Effects[1] != 1)
-                    {
-                        currentSpeed = enemy.GetSpeed();
+            //    foreach (var player in ActivePlayers)
+            //    {
+            //        if (Effects[0] != 1)
+            //        {
+            //            currentSpeed = player.GetSpeed();
+            //            player.SetSpeed(Effects[0] * currentSpeed);
+            //        }
 
-                        //only stacks effect on speed up/down, not freeze
-                        //-1 * -1 = +1, so freeze stacks would not work
-                        enemy.SetSpeed(Effects[1] * currentSpeed);
-                    }
+            //        if (Effects[2] != 1)
+            //        {
+            //            player.SetScorePointValue((int)Effects[2] * player.GetScorePointValue());
+            //            MazeOne.SetScorePointColour(Effects[2]);
+            //        }
 
-                }
+            //        //sets the friendly effect for all players on same team as the player who collected it
+            //        //e.g. if player 1 or 2 collects it, both get the same friendly effect
+            //        //e.g. if the enemy gets it, neither player gets the effect
+            //    }
 
-                CurrentWindow.PowerupInfoBlock.Text += thisPowerup.GetMessage() + Environment.NewLine;
-            }
+            //    foreach (var enemy in ActiveEnemies)
+            //    {
+            //        if (Effects[1] != 1)
+            //        {
+            //            currentSpeed = enemy.GetSpeed();
 
+            //            //only stacks effect on speed up/down, not freeze
+            //            //-1 * -1 = +1, so freeze stacks would not work
+            //            enemy.SetSpeed(Effects[1] * currentSpeed);
+            //        }
+
+            //    }
+            //}
+            #endregion
+
+            CurrentWindow.PowerupInfoBlock.Text += thisPowerup.GetMessage() + Environment.NewLine;
         }
 
         private void RemovePowerupEffect(Powerup thisPowerup)
         {
-            double[] effects = thisPowerup.GetEffects();
-            double currentSpeed;
+            double[] Effects = thisPowerup.GetEffects();
+            //double currentSpeed;
 
             CountOfPowerupType[thisPowerup.GetTypeNumber()] -= 1;
 
             for (int i = 0; i < ActivePlayers.Count; i++)
             {
-                currentSpeed = ActivePlayers[i].GetSpeed();
-
-                ActivePlayers[i].SetSpeed(currentSpeed / effects[0]);
-
-                if (effects[2] == 0)
-                {       
-                    ActivePlayers[i].SetScorePointValue(1);
-                }
-                else if (effects[2] != 1 && ActivePlayers[i].GetScorePointValue() != 1)
-                {
-                    ActivePlayers[i].SetScorePointValue((int)(ActivePlayers[i].GetScorePointValue() / effects[2]));
-                }
+                Player thisPlayer = ActivePlayers[i];
+                thisPowerup.RemoveEffect(ref thisPlayer);
+                ActivePlayers[i] = thisPlayer;
             }
 
             for (int i = 0; i < ActiveEnemies.Count; i++)
             {
-                currentSpeed = ActiveEnemies[i].GetSpeed();
-                ActiveEnemies[i].SetSpeed(currentSpeed / effects[1]);
+                Player thisEnemy = ActiveEnemies[i];
+                thisPowerup.RemoveEffect(ref thisEnemy);
+                ActiveEnemies[i] = (Enemy)thisEnemy;
             }
 
-            if (effects[2] == 0)
+            int ScorePointValue = ActivePlayers[0].GetScorePointValue();
+
+            if (ScorePointValue < 0)
             {
-                MazeOne.SetScorePointColour(1);
+                MazeOne.SetScorePointColour(0);
             }
-            else if (effects[2] != 1)
+            else
             {
-                MazeOne.SetScorePointColour(ActivePlayers[0].GetScorePointValue());
+                MazeOne.SetScorePointColour(ScorePointValue);
             }
+
+            #region Old RemoveEffect
+            //for (int i = 0; i < ActivePlayers.Count; i++)
+            //{
+            //    currentSpeed = ActivePlayers[i].GetSpeed();
+
+            //    ActivePlayers[i].SetSpeed(currentSpeed / effects[0]);
+
+            //    if (effects[2] == 0)
+            //    {       
+            //        ActivePlayers[i].SetScorePointValue(1);
+            //    }
+            //    else if (effects[2] != 1 && ActivePlayers[i].GetScorePointValue() != 1)
+            //    {
+            //        ActivePlayers[i].SetScorePointValue((int)(ActivePlayers[i].GetScorePointValue() / effects[2]));
+            //    }
+            //}
+
+            //for (int i = 0; i < ActiveEnemies.Count; i++)
+            //{
+            //    currentSpeed = ActiveEnemies[i].GetSpeed();
+            //    ActiveEnemies[i].SetSpeed(currentSpeed / effects[1]);
+            //}
+
+            //if (effects[2] == 0)
+            //{
+            //    MazeOne.SetScorePointColour(1);
+            //}
+            //else if (effects[2] != 1)
+            //{
+            //    MazeOne.SetScorePointColour(ActivePlayers[0].GetScorePointValue());
+            //}
+            #endregion  
 
             RemoveFromPowerupTextBlock(thisPowerup.GetMessage());
             //removes the effect text from the side panel
@@ -2580,6 +2653,7 @@ namespace A_Level_Project__New_
         public GameWindow(int[] MazeDimensions, bool TwoPlayers, double EnemyDifficulty, int EnemyColourIndex, bool DisableEnemies)
         {
             InitializeComponent();
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             int NumOfEnemies = 0;
             int MazeArea = MazeDimensions[0] * MazeDimensions[1];

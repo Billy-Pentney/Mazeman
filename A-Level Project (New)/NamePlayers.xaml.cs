@@ -24,6 +24,7 @@ namespace A_Level_Project__New_
         public NamePlayers(int PlayerNum)
         {
             InitializeComponent();
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             SetColours();
 

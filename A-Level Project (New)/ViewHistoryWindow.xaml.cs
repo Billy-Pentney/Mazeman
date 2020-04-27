@@ -398,6 +398,11 @@ namespace A_Level_Project__New_
         {
             InitializeComponent();
 
+            this.Width = SystemParameters.MaximizedPrimaryScreenWidth;
+            this.Height = SystemParameters.MaximizedPrimaryScreenHeight - 20;
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            //fills screen and centres window
+
             List<string> SortTypes = new List<string>();
             SortTypes.Add("Date/Time Played");
             SortTypes.Add("Time Survived");
@@ -412,13 +417,17 @@ namespace A_Level_Project__New_
             SetColours();
 
             BarChart = new VisualGraph(myCanvas);
-
             DeserialiseFile();
+            //reads file in and stores contents in AllFileEntries
 
             if (AllFileEntries != null)
             {
                 Determine1PLeaderboard();
             }
+
+            ScrollRBtn.Visibility = Visibility.Hidden;
+            ScrollLBtn.Visibility = Visibility.Hidden;
+            //buttons hidden by default because there is no graph to scroll
         }
 
         private void SetColours()
@@ -503,6 +512,9 @@ namespace A_Level_Project__New_
                     Canvas.SetTop(yAxisLabel, BarChart.GetEndOfAxis('y') + yAxisLabel.Width);
                     yAxisLabel.Content = "Total Score";
 
+                    ScrollRBtn.Visibility = Visibility.Visible;
+                    ScrollLBtn.Visibility = Visibility.Visible;
+
                     string rank = GetRank(SearchName, IncludeCapitals);
 
                     if (rank != "0th")
@@ -528,6 +540,9 @@ namespace A_Level_Project__New_
                     {
                         MessageToShow += " not found in file history";
                     }
+
+                    ScrollRBtn.Visibility = Visibility.Hidden;
+                    ScrollLBtn.Visibility = Visibility.Hidden;
 
                     MessageBox.Show(MessageToShow);
                 }
@@ -728,7 +743,7 @@ namespace A_Level_Project__New_
         private void LeaderboardBtn_Click(object sender, RoutedEventArgs e)
         {
             LeaderboardWindow LW = new LeaderboardWindow(SortedSinglePlayerEntries);
-            LW.Show();
+            LW.ShowDialog();
         }
 
         private void ScrollBtn_Click(object sender, RoutedEventArgs e)
@@ -744,9 +759,9 @@ namespace A_Level_Project__New_
 
             int[] DisplayRange = BarChart.GetDisplayRange();
             int[] AdjustedDisplayRange = new int[2] { DisplayRange[0] + 1, DisplayRange[1] + 1 };
-            string range = AdjustedDisplayRange[0] + "-" + AdjustedDisplayRange[1];
+            string Message = Environment.NewLine + "Displaying " + AdjustedDisplayRange[0] + "-" + AdjustedDisplayRange[1] + " of " + BarChart.GetNumOfEntries() + " games";
 
-            GamesDisplayedTxt.Content = Environment.NewLine + "Displaying " + range + " of " + BarChart.GetNumOfEntries() + " games";
+            GamesDisplayedTxt.Content = Message;
         }
 
         protected override void OnKeyUp(KeyEventArgs e)

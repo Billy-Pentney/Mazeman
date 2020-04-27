@@ -40,6 +40,8 @@ namespace A_Level_Project__New_
         {
             InitializeComponent();
 
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
             AddObjectsToWindow();
             //adds sprites and labels (i.e. the entities/powerups/scorepoints and the key the user sees)
             SetColours();

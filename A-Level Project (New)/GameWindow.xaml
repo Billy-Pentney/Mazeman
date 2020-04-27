@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:A_Level_Project__New_"
         mc:Ignorable="d"
-        Title="GameWindow" Height="450" Width="800">
+        Title="Game Window" Height="450" Width="800">
     <Canvas Name="GameCanvas">
         <Label Name="InfoTitleLbl" Content="Game Info:" FontWeight="DemiBold" HorizontalContentAlignment="Center" FontStyle="Italic" FontSize="16" Canvas.Left="10" Canvas.Top="10" Height="35" Width="90"></Label>
 
