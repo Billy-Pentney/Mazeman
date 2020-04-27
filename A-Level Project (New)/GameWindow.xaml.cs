@@ -30,7 +30,7 @@ namespace A_Level_Project__New_
         public static int[] MazeIndent { get; } = new int[2] { 85, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
-        public const string FileName = "History - Copy.txt";
+        public const string FileName = "History.txt";
         //the name/address of the file where scores should be written to/read from
 
         public static double[] difficulties = new double[] { 1, 2, 3 };
@@ -1531,6 +1531,9 @@ namespace A_Level_Project__New_
 
             thisWindow.TimeDisplayTXT.Foreground = GameConstants.ForegroundColour;
             thisWindow.ScoreDisplayTXT.Foreground = GameConstants.ForegroundColour;
+            thisWindow.P1LivesTxt.Foreground = GameConstants.ForegroundColour;
+            thisWindow.P2LivesTxt.Foreground = GameConstants.ForegroundColour;
+            thisWindow.PowerupInfoBlock.Foreground = GameConstants.ForegroundColour;
             thisWindow.PowerupInfoBlock.Background = GameConstants.BackgroundColour;
             thisWindow.PowerupInfoBlock.Foreground = GameConstants.ForegroundColour;
 
@@ -1653,19 +1656,49 @@ namespace A_Level_Project__New_
 
         private void ResetGame()
         {
+            //resets game after a player is caught
+
+            GameTimer.Stop();
+            MovementTimer.Stop();
+
+            int NumOfActiveEffects = AppliedPowerUpEffects.Count;
+
+            for (int i = 0; i < NumOfActiveEffects; i++)
+            {
+                Powerup thisPowerup = AppliedPowerUpEffects.Dequeue();
+                RemovePowerupEffect(thisPowerup);
+            }
+            //removes all active powerup effects on reset
+
             for (int i = 0; i < RemovedPlayers.Length; i++)
             {
                 if (RemovedPlayers[i].GetLives() > 0)
                 {
                     ActivePlayers.Add(RemovedPlayers[i]);
                     ActivePlayers[i].RESET();
+
+                    if (i == 0)
+                    {
+                        MW.P1LivesTxt.Content = Convert.ToString("P1 Lives:    " + ActivePlayers[i].GetLives());
+                    }
+                    else if (i == 1)
+                    {
+                        MW.P2LivesTxt.Content = Convert.ToString("P2 Lives:    " + ActivePlayers[1].GetLives());
+                    }
                 }
             }
+
+            ActivePlayers = ActivePlayers.OrderBy(player => player.GetPlayerNum()).ToList();
 
             foreach (var enemy in ActiveEnemies)
             {
                 enemy.RESET();
             }
+
+
+
+            GameTimer.Start();
+            MovementTimer.Start();
         }
 
         private void SetEntityLocations()
@@ -1757,6 +1790,7 @@ namespace A_Level_Project__New_
 
                     RemovedPlayers[playerNum] = ActivePlayers[i];
                     //stores the player in another data structure so that its score can be retrieved later
+                    //the players are stored by player number, so they can be retrieved in the correct order
 
                 }
             }
@@ -1951,6 +1985,8 @@ namespace A_Level_Project__New_
             string thisName;
             bool valid = false;
 
+            RemovedPlayers = RemovedPlayers.OrderBy(player => player.GetPlayerNum()).ToArray();
+
             for (int i = 0; i < RemovedPlayers.Count(); i++)
             {
                 do
@@ -2108,11 +2144,14 @@ namespace A_Level_Project__New_
             ActivePlayers.Add(new Player(StartPoint, StartPointPixelPt, 0));
             ActiveEnemies.Add(new Enemy(LastPoint, LastPointPixelPt, 2, Difficulty));
 
+            MW.P1LivesTxt.Content = Convert.ToString("P1 Lives:    " + ActivePlayers[0].GetLives());
+
             if (NumOfPlayers == 2)
             {
                 StartPoint = MazeOne.GetBottomLeftCell();
                 StartPointPixelPt = MazeOne.GetPixelPoint(StartPoint);
                 ActivePlayers.Add(new Player(StartPoint, StartPointPixelPt, 1));
+                MW.P2LivesTxt.Content = Convert.ToString("P2 Lives:    " + ActivePlayers[1].GetLives());
             }
         }
 

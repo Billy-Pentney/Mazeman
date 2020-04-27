@@ -63,6 +63,7 @@ namespace A_Level_Project__New_
             SwapColoursBtn.Background = background;
 
             VersionNumLbl.Foreground = foreground;
+            IdentifierLbl.Foreground = foreground;
         }
     }
 }

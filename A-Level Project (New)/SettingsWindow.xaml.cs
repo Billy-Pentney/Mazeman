@@ -48,7 +48,7 @@ namespace A_Level_Project__New_
             ClassicControlsLbl.Foreground = foregroundColour;
             MazeDimExplainText.Foreground = foregroundColour;
             MazeDimExplainText.Background = backgroundColour;
-            MazeDimLbl.Foreground = foregroundColour;
+
             WidthLbl.Foreground = foregroundColour;
             HeightLbl.Foreground = foregroundColour;
             WidthTxt.Foreground = foregroundColour;
@@ -56,8 +56,10 @@ namespace A_Level_Project__New_
             HeightTxt.Foreground = foregroundColour;
             HeightTxt.Background = backgroundColour;
 
-            EnemyDifficultyExplainText.Foreground = foregroundColour;
-            EnemyDifficultyExplainText.Background = backgroundColour;
+            MazeDimText.Foreground = foregroundColour;
+            MazeDimText.Background = backgroundColour;
+            EnemyDifficultyText.Foreground = foregroundColour;
+            EnemyDifficultyText.Background = backgroundColour;
             EasyLbl.Foreground = foregroundColour;
             MediumLbl.Foreground = foregroundColour;
             HardLbl.Foreground = foregroundColour;
@@ -66,13 +68,16 @@ namespace A_Level_Project__New_
             StartBtn.Foreground = foregroundColour;
             BackBtn.Foreground = foregroundColour;
             BackBtn.Background = backgroundColour;
+
+            OtherOptionsText.Foreground = foregroundColour;
+            OtherOptionsText.Background = backgroundColour;
         }
 
         private void AddObjectsToWindow()
         {
             int ShapeSize = 24;
 
-            TextBlock ExplainControlsText = new TextBlock() { Width = 250, Height = 130 };
+            TextBlock ExplainControlsText = new TextBlock() { Width = 250, Height = 130, FontSize = 11 };
             ExplainControlsText.TextAlignment = TextAlignment.Justify;
             ExplainControlsText.TextWrapping = TextWrapping.Wrap;
             ExplainControlsText.Foreground = GameConstants.ForegroundColour;

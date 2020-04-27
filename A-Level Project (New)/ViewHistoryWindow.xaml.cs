@@ -131,7 +131,7 @@ namespace A_Level_Project__New_
 
         private int[] DisplayRange = new int[2];
 
-        private List<DataEntry> DisplayedEntries = new List<DataEntry>();
+        private List<DataEntry> EntriesToDisplay = new List<DataEntry>();
         private int HighestScoreForGraph = 0;
 
         public VisualGraph(Canvas myCanvas)
@@ -182,24 +182,32 @@ namespace A_Level_Project__New_
 
         public void ShiftBars(double difference)
         { 
-            int UndisplayedRight = GraphLines.Count - 1 - DisplayRange[1];            // number of bars after the last one on the graph
+            int UndisplayedRight = (GraphLines.Count - 1) - DisplayRange[1];            // number of bars after the last one on the graph
             int UndisplayedLeft = DisplayRange[0];  // number of bars before the first one on the graph
 
             if (UndisplayedLeft > 0 && difference < 0)
             {
+                //if there are more bars to show on the left and the left button is clicked
+
                 GraphLines[DisplayRange[1]].RemoveAllFromCanvas();
+                //removes the right-most bar
 
                 DisplayRange[0] += -1;
-                DisplayRange[1] += -1;
+                DisplayRange[1] = DetermineDisplayRange(BarLine.GetWidth(), DisplayRange[0]);
+                //determines how many bars to show
 
                 DrawGraph();
             }
             else if (UndisplayedRight > 0 && difference > 0)
             {
+                //if there are more bars to show on the right and the right button is clicked
+
                 GraphLines[DisplayRange[0]].RemoveAllFromCanvas();
+                //removes the left-most bar
 
                 DisplayRange[0] += 1;
-                DisplayRange[1] += 1;
+                DisplayRange[1] = DetermineDisplayRange(BarLine.GetWidth(), DisplayRange[0]);
+                //determines how many bars to show
 
                 DrawGraph();
             }
@@ -222,15 +230,14 @@ namespace A_Level_Project__New_
 
         public void CreateGraph(List<DataEntry> ChosenEntries, int GreatestScore)
         {
+            #region Preparing Area/Indents
             ClearCanvas();
-
-            HighestScoreForGraph = GreatestScore;
 
             BottomLeftIndent[0] = thisCanvas.ActualWidth * 0.05;
             BottomLeftIndent[1] = thisCanvas.ActualHeight * 0.1;
 
             TopRightIndent[0] = 250;
-            TopRightIndent[1] = 100;
+            TopRightIndent[1] = 80;
 
             TopRightIndent[0] += BottomLeftIndent[0];
             TopRightIndent[1] += BottomLeftIndent[1];
@@ -238,24 +245,31 @@ namespace A_Level_Project__New_
             AvailableArea[0] = thisCanvas.ActualWidth - (BottomLeftIndent[0] + TopRightIndent[0]);
             AvailableArea[1] = thisCanvas.ActualHeight - (BottomLeftIndent[1] + TopRightIndent[1]);
 
+            #endregion
+
+            HighestScoreForGraph = GreatestScore;
+
             double HeightScale = AvailableArea[1] / HighestScoreForGraph;
             int NumOfBars = GetNumOfBars(ChosenEntries);
 
-            double shapeWidth = Math.Round(AvailableArea[0] / (2 * NumOfBars), 1);       
+            double shapeWidth = Math.Round(AvailableArea[0] / (2 * NumOfBars), 1);
             //1.5 is the multiplier because the graph is half of the width, then a bar
 
-            if (shapeWidth > 150)
+            int minWidth = 7;
+            int maxWidth = 200;
+
+            if (shapeWidth > maxWidth)
             {
-                shapeWidth = 150;
+                shapeWidth = maxWidth;
             }
-            else if (shapeWidth < 5)
+            else if (shapeWidth < minWidth)
             {
-                shapeWidth = 5;
+                shapeWidth = minWidth;
             }
 
             BarLine.SetBarScales(shapeWidth, HeightScale);
 
-            DisplayedEntries = ChosenEntries;
+            EntriesToDisplay = ChosenEntries;
 
             foreach (var entry in ChosenEntries)
             {
@@ -265,33 +279,35 @@ namespace A_Level_Project__New_
             }
 
             DisplayRange[0] = 0;
-            DisplayRange[1] = DetermineDisplayRange(shapeWidth, AvailableArea[0]);
+            DisplayRange[1] = DetermineDisplayRange(shapeWidth, 0);
             //determines the range of bars which need to be displayed based on their width e.g. 0-10 of 20 bars
 
             DrawGraph();
 
         }
 
-        public int DetermineDisplayRange(double width, double availableWidth)
+        public int DetermineDisplayRange(double width, int startAt)
         {
             double currentLeft = width / 2;
-            int DisplayUpTo = 0;
+            int DisplayUpTo = startAt;
 
-            for (int i = 0; i < GraphLines.Count; i++)
+            for (int i = startAt; i < GraphLines.Count; i++)
             {
-                foreach (var shape in GraphLines[i].GetShapes())
-                {
-                    currentLeft += width;
-                }
-                currentLeft += width / 2;
-
-                DisplayUpTo = i;
-
-                if (currentLeft >= availableWidth)
+                if (currentLeft >= AvailableArea[0])
                 {
                     i = GraphLines.Count;
                     //early exit of for loop
                 }
+                else
+                {
+                    foreach (var shape in GraphLines[i].GetShapes())
+                    {
+                        currentLeft += width;
+                    }
+                    currentLeft += width / 2;
+
+                    DisplayUpTo = i;
+                }                
             }
 
             return DisplayUpTo;
@@ -339,15 +355,21 @@ namespace A_Level_Project__New_
         public ViewHistoryWindow()
         {
             InitializeComponent();
+
             IncCapsCheckBox.IsChecked = true;
             IncTwoPlayersCheckBox.IsChecked = true;
             DateRadioBtn.IsChecked = true;
 
             SetColours();
+
             BarChart = new VisualGraph(myCanvas);
 
             DeserialiseFile();
-            Determine1PLeaderboard();
+
+            if (AllFileEntries != null)
+            {
+                Determine1PLeaderboard();
+            }
         }
 
         private void SetColours()
@@ -375,13 +397,18 @@ namespace A_Level_Project__New_
             TotalScoreRadioBtn.Foreground = frg;
             LeaderboardBtn.Background = bkg;
             LeaderboardBtn.Foreground = frg;
+
+            ScrollLBtn.Foreground = frg;
+            ScrollLBtn.Background = bkg;
+            ScrollRBtn.Foreground = frg;
+            ScrollRBtn.Background = bkg;
         }
 
         private void SearchBtn_Click(object sender, RoutedEventArgs e)
         {
             SearchName = InputNameTxtBox.Text;
 
-            if (SearchName.Length > 0)
+            if (SearchName.Length > 0 && AllFileEntries.Count > 0)
             {
                 IncludeCapitals = (bool)IncCapsCheckBox.IsChecked;
                 IncludeTwoPlayers = (bool)IncTwoPlayersCheckBox.IsChecked;
@@ -427,9 +454,13 @@ namespace A_Level_Project__New_
                 }
 
             }
-            else
+            else if (AllFileEntries.Count > 0)
             {
                 MessageBox.Show("Please input a name");
+            }
+            else
+            {
+                MessageBox.Show("Error: Specified file '" + GameConstants.FileName + "' contains no valid game records");
             }
         }
 
@@ -481,6 +512,11 @@ namespace A_Level_Project__New_
                     //gets all entries from the file and stores in a list of data entries
                 }
             }
+
+            if (AllFileEntries == null)
+            {
+                AllFileEntries = new List<DataEntry>();
+            }
         }
 
         private void Determine1PLeaderboard()
@@ -506,11 +542,6 @@ namespace A_Level_Project__New_
             List<DataEntry> ChosenEntries = new List<DataEntry>();
 
             SearchInfoBlock.Inlines.Clear();
-
-            if (AllFileEntries.Count == 0)
-            {
-                DeserialiseFile();
-            }
 
             foreach (var entry in AllFileEntries)
             {

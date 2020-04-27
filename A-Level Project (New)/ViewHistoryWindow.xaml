@@ -21,12 +21,12 @@
         <RadioButton Name="PScoreRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="170" Content="Sort by this player's score" Checked="PScoreRadioBtn_Checked"></RadioButton>
         <RadioButton Name="DiffRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="200" Content="Sort by Game Difficulty" Checked="DiffRadioBtn_Checked"/>
 
-        <Button Name="LeaderboardBtn" Content="Leaderboard"  FontSize="13" Canvas.Right="75" Canvas.Bottom="50" Height="35" Width="135" Click="LeaderboardBtn_Click" Canvas.Left="991" Canvas.Top="558"></Button>
+        <Button Name="LeaderboardBtn" Content="Leaderboard"  FontSize="13" Canvas.Right="75" Canvas.Bottom="50" Height="35" Width="171" Click="LeaderboardBtn_Click" Canvas.Left="973" Canvas.Top="558"></Button>
 
         <TextBlock Name="GraphInfoBlock" Height="192" Width="200" Canvas.Right="35" Canvas.Top="242" TextWrapping="Wrap" Canvas.Left="950"></TextBlock>
         <TextBlock Name="SearchInfoBlock" Height="100" Width="200" Canvas.Right="35" Canvas.Bottom="50" TextWrapping="Wrap" Canvas.Left="950" Canvas.Top="439" ></TextBlock>
 
-        <Button Name="ScrollLBtn" Height="25" Content="←" FontSize="14" Width="30" Click="ScrollBtn_Click" Canvas.Left="1026" Canvas.Top="598"></Button>
-        <Button Name="ScrollRBtn" Height="25" Content="→" FontSize="14" Width="30" Click="ScrollBtn_Click" Canvas.Left="1061" Canvas.Top="598"></Button>
+        <Button Name="ScrollLBtn" Height="25" Content="Scroll Left" FontSize="12" Width="83" Click="ScrollBtn_Click" Canvas.Left="973" Canvas.Top="598"></Button>
+        <Button Name="ScrollRBtn" Height="25" Content="Scroll Right" FontSize="12" Width="83" Click="ScrollBtn_Click" Canvas.Left="1061" Canvas.Top="598"></Button>
     </Canvas>
 </Window>
