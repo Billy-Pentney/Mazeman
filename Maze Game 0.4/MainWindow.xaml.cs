@@ -24,8 +24,6 @@ namespace Project_Practice
     {
         public const int indent = 80;
         //indents map in from left of canvas
-        public const int NumOfDirections = 4;
-        //defines number of directions that are possible in maze
 
         public int[] MazeDimensions { get; set; } = new int[2];
         public int[] CellDimensions { get; set; } = new int[2];
@@ -80,19 +78,15 @@ namespace Project_Practice
         private Point GridPt;
         private Point ShapePt;
         private Dictionary<int, Edge> Edges = new Dictionary<int, Edge>();
-        //private Rectangle Shape = new Rectangle();
 
         public Cell(Point MazeLoc, Point CanvasLoc, int[] cellDimensions)
         {
-            //Shape.Width = cellDimensions[0];
-            //Shape.Height = cellDimensions[1];
             GridPt = MazeLoc;
             ShapePt = CanvasLoc;
         }
 
-        public Edge GetEdgeFromDict(int key)
+        public Edge GetEdgeFromDirection(int key)
         {
-
             if (Edges.ContainsKey(key))
             {
                 return Edges[key];
@@ -277,8 +271,11 @@ namespace Project_Practice
 
             #endregion  
 
-            GeneratePathToPlayer(Entities[0].GetCurrentLoc(), Entities[1].GetCurrentLoc());
-
+            List<int> AIPathToFollow = new List<int>();
+            if (AIPathToFollow.Count == 0)
+            {
+                AIPathToFollow = GeneratePathToPlayer(Entities[0].GetCurrentLoc(), Entities[1].GetCurrentLoc());
+            }
         }
 
         private Point GetLastCellInMaze()
@@ -290,25 +287,6 @@ namespace Project_Practice
         {
             Game.MW.myCanvas.Children.RemoveRange(StartIndex, Game.MW.myCanvas.Children.Count);
         }
-
-        //public bool IsValidCell(int[] location)
-        //{
-        //    //determines if the passed coordinates are a valid point in the maze
-        //    //takes int[2], returns bool
-
-        //    bool valid = true;
-
-        //    for (int i = 0; i < location.Count(); i++)
-        //    {
-        //        if (location[i] < 0 || location[i] >= MazeDimensions[i])
-        //        {
-        //            valid = false;
-        //        }
-        //    }
-
-        //    return valid;
-
-        //}
 
         public bool IsValidCell(Point Location)
         {
@@ -389,31 +367,39 @@ namespace Project_Practice
             {
                 VisitedCells.Push(currentCellPt);
 
-                randMoveSelection = rand.Next(0, ValidMoves.Count);
-                thisMove = ValidMoves[randMoveSelection];
-                //gets a random valid move from the current cell
+                //int randTakeTwoWalls = rand.Next(0, 101) % 2;
 
-                nextCellPt = MoveFromPoint(thisCell.GetMazePt(), thisMove);
-                thisEdge = new Edge(currentCellPt, nextCellPt);
+                //for (int i = 0; i < randTakeTwoWalls; i++)
+                //{
+                    randMoveSelection = rand.Next(0, ValidMoves.Count);
+                    thisMove = ValidMoves[randMoveSelection];
+                    //gets a random valid move from the current cell to one of its neighbours
 
-                Cells[(int)currentCellPt.X, (int)currentCellPt.Y].AddEdge(thisEdge, thisMove);
-                //adds edge to the current cell
+                    ValidMoves.RemoveAt(randMoveSelection);
 
-                reverseEdge = new Edge(thisEdge.GetPoint(1), thisEdge.GetPoint(0));
-                //flips the edge so its inverse can be stored in the other cell
+                    nextCellPt = MoveFromPoint(thisCell.GetMazePt(), thisMove);
+                    thisEdge = new Edge(currentCellPt, nextCellPt);
 
-                TurnOffWall(nextCellPt, thisMove);
+                    Cells[(int)currentCellPt.X, (int)currentCellPt.Y].AddEdge(thisEdge, thisMove);
+                    //adds edge to the current cell
 
-                Cells[(int)nextCellPt.X, (int)nextCellPt.Y].AddEdge(reverseEdge, ReverseMove(thisMove));
-                //adds opposite edge to the next cell
+                    reverseEdge = new Edge(thisEdge.GetPoint(1), thisEdge.GetPoint(0));
+                    //flips the edge so its inverse can be stored in the other cell
 
-                if (VisitedCells.Count < NumOfCellsInPath)
-                {
-                    GetDirectionType = 0;
-                    MazeGeneration(nextCellPt, GetDirectionType);
-                }
+                    TurnOffWall(nextCellPt, thisMove);
+
+                    Cells[(int)nextCellPt.X, (int)nextCellPt.Y].AddEdge(reverseEdge, ReverseMove(thisMove));
+                    //adds opposite edge to the next cell
+
+                    if (VisitedCells.Count < NumOfCellsInPath)
+                    {
+                        GetDirectionType = 0;
+                        MazeGeneration(nextCellPt, GetDirectionType);
+                    }
+                //}
+                
             }
-            else if (VisitedCells.Count > 0)// && VisitedCells.Count < NumOfCellsInPath)
+            else if (VisitedCells.Count > 0)
             {
                 GetDirectionType = 1;
                 MazeGeneration(VisitedCells.Pop(), GetDirectionType);
@@ -449,9 +435,9 @@ namespace Project_Practice
 
             //reverses move as follows : 0 -> 2, 1 -> 3, 2 -> 0, 3 -> 1
 
-            return ((OriginalMove + 2) % GameConstants.NumOfDirections);
+            return ((OriginalMove + 2) % 4);
 
-            //numOfDirections = 4, so    (0 + 2) % 4 = 2,   (1 + 2) % 4 = 3, 
+            //numOfDirections = 4, so    (0 + 2) % 4 = 2,    (1 + 2) % 4 = 3, 
             //                           (2 + 2) % 4 = 0,    (3 + 2) % 4 = 1,
 
         }
@@ -464,8 +450,10 @@ namespace Project_Practice
             foreach (var cell in Cells)
             {
                 thisCellPt = cell.GetMazePt();
+
                 if (cell.GetEdgesCount() == 0)
                 {
+                    //if a cell has no edges, it has not been visited by the maze-generator
                     Unvisited.Add(thisCellPt);
                 }
             }
@@ -475,6 +463,8 @@ namespace Project_Practice
 
         private List<int> GetAdjacentDirections(Point Current, int type)
         {
+            ///Note: this method is for the backtracker algorithm to find the possible directions it can move in
+
             //ValidDirections stores the directions 0, 1, 2, 3 representing possible movements from the current cell
             //ex. Cell[0,0] is top-left, so it has 1, 2 (right, down)
             //ex-2. Cell[0,1] is one right of [0,0], so it has 1, 2, 3 (right, down, left)
@@ -517,41 +507,25 @@ namespace Project_Practice
                     }
                 }
             }
+
             return ValidDirections;
         }
 
         public List<Point> GetAdjacentPoints(Point Current)
         {
-            //Dictionary<int, Point> AdjacentPoints = new Dictionary<int, Point>();
-
-            //AdjacentPoints.Add(0, new Point(Current.X, Current.Y - 1));
-            //AdjacentPoints.Add(1, new Point(Current.X + 1, Current.Y));
-            //AdjacentPoints.Add(2, new Point(Current.X, Current.Y + 1));
-            //AdjacentPoints.Add(3, new Point(Current.X - 1, Current.Y));
-
+            //Note: this method is for getting the adjacent cells via the graph
+            //it determines which points are adjacent based off of the edges of the current cell
+        
             List<Point> PointsList = new List<Point>();
-
-            //finds adjacent cells AFTER maze has been generated (uses edges to determine validity)
-
-            //for (int i = 0; i < AdjacentPoints.Count(); i++)
-            //{
-            //    if (IsValidCell(AdjacentPoints[i]) && !(Cells[(int)Current.X, (int)Current.Y].GetEdgeFromDict(i) == null))
-            //    {
-            //        //determines which adjacent cells (if any) have not already been explored and removes them from the list
-            //        PointsList.Add(AdjacentPoints[i]);
-
-            //    }
-            //}
-
-            Edge current;
+            Edge currentEdge;
 
             for (int i = 0; i < 4; i++)
             {
-                current = Cells[(int)Current.X, (int)Current.Y].GetEdgeFromDict(i);
+                currentEdge = Cells[(int)Current.X, (int)Current.Y].GetEdgeFromDirection(i);
 
-                if (current != null)
+                if (currentEdge != null)
                 {
-                    PointsList.Add(current.GetPoint(1));
+                    PointsList.Add(currentEdge.GetPoint(1));
                 }  
                 
             }
@@ -591,19 +565,27 @@ namespace Project_Practice
             }
         }
 
-        public void GeneratePathToPlayer(Point Target, Point Current)
+        public List<int> GeneratePathToPlayer(Point Target, Point Current)
         {
             SimplePriorityQueue<Point, double> SearchCells = new SimplePriorityQueue<Point, double>();
+            //search cells is the list of cells to be checked by the algorithm
             SearchCells.Enqueue(Current, 0);
-            Dictionary<Point, double> CostToReach = new Dictionary<Point, double>();
-            Dictionary<Point, Point> CameFrom = new Dictionary<Point, Point>();
 
-            Dictionary<Point, Point> PathToFollow = new Dictionary<Point, Point>();
+            Dictionary<Point, double> CostToReach = new Dictionary<Point, double>();
+            //for each key, there is a value (cost) associated with moving from the start to that cell
+
+            Dictionary<Point, Point> CameFrom = new Dictionary<Point, Point>();
+            //each point directs back to the previous point in the path
+            //e.g. if the Enemy has to move from 1,1 to 0,1 and then from 0,1 to 0,0
+            //CameFrom[0,1] = [1,1]
+            //CameFrom[0,0] = [0,1]
 
             CostToReach.Add(Current, 0);
             CameFrom.Add(Current, new Point(-1, -1));
 
-            List<Point> AdjacentCells;
+            List<Point> AdjacentCells = new List<Point>();
+            List<Point> NewPath = new List<Point>();
+
             double newCost = 0;
             double thisPriority = 0;
 
@@ -616,6 +598,7 @@ namespace Project_Practice
 
                 if (Current == Target)
                 {
+                    //exits loop if path reaches the target cell
                     pathFound = true;
                 }
                 else
@@ -627,35 +610,58 @@ namespace Project_Practice
                     {
                         newCost = CostToReach[Current] + 1;
                         //adds one to the total cost to reach that cell from the start
+                        //(moving along the path increases its length by 1)
 
                         if (!CostToReach.ContainsKey(NextCell) || newCost < CostToReach[NextCell])
                         {
-                            //if this path now includes the next cell or it is shorter than the last path,
+                            //if this path now includes a cell that hadn't been in explored before 
+                            //or it is shorter than the previous best path to that cell,
 
                             CostToReach[NextCell] = newCost;
-                            thisPriority = newCost + Heuristic(Target, NextCell);
-                            //the priority with moving to that cell is based on the approximate distance to the target
+                            thisPriority = newCost + GetApproximateDistance(NextCell, Target);
+                            //the priority associated with moving to that cell is based on the approximate distance from it to the target
 
                             SearchCells.Enqueue(NextCell, thisPriority);
                             CameFrom[NextCell] = Current;
-                            //records all the paths from  of the previous one
+                            //points from the new cell to the last one so that a path can be followed
                         }
                     }
                 }
             }
 
+            //at the end of the loop, CameFrom points from each cell to the one before it on the path
+            //now we need to remove unnecessary points (those that don't lead to the goal)
+            //and reverse the list, before converting it to a set of instructions
+
             Point newkey = CameFrom[Target];
-            PathToFollow[Target] = newkey;
+            NewPath.Add(Target);
 
             while (newkey != new Point(-1,-1))
             {
-                PathToFollow[newkey] = CameFrom[newkey];
+                //at the start we said that the value for the start cell was [-1,-1]
+                //if the key is [-1,-1], we must be at the start of the path
+
+                NewPath.Add(newkey);
                 newkey = CameFrom[newkey];
+
+                //creates list of points leading from the target point to the start point
             }
 
+            NewPath.Reverse();
+            //reverses the list so that the path is from the start to the target
+
+            List<int> DirectionsToFollow = new List<int>();
+
+            for (int i = 0; i < NewPath.Count - 1; i++)
+            {
+                DirectionsToFollow.Add(ConvertMovementToDirection(NewPath[i], NewPath[i + 1]));
+                //converts the list of points to instructions for the enemy to follow
+            }
+
+            return DirectionsToFollow;
         }
 
-        private double Heuristic(Point target, Point current)
+        private double GetApproximateDistance(Point current, Point target)
         {
             //finds manhattan (direct) distance from current point to target
 
@@ -664,6 +670,28 @@ namespace Project_Practice
 
             double distSquared = Math.Pow(dx, 2) + Math.Pow(dy, 2);
             return Math.Sqrt(distSquared);
+        }
+
+        private int ConvertMovementToDirection(Point start, Point target)
+        {
+            if (target.Y == start.Y - 1)
+            {
+                return 0;
+            }
+            else if (target.X == start.X + 1)
+            {
+                return 1;
+            }
+            else if (target.Y == start.Y + 1)
+            {
+                return 2;
+            }
+            else if (target.X == start.X - 1)
+            {
+                return 3;
+            }
+
+            throw new Exception("Attempt to convert two invalid points to a movement");
         }
     }
 
@@ -768,26 +796,6 @@ namespace Project_Practice
 
     }
 
-    //class WallHorizontal : Wall
-    //{
-    //    public WallHorizontal(int i, int j, int[] cellDimensions, int[] mazeDimensions, int thickness) : base()
-    //    {
-    //        //parameters i and j represent location of wall in AllWallsH or AllWallsV
-
-           
-    //    }
-    //}
-
-    //class WallVertical : Wall
-    //{
-    //    public WallVertical(int i, int j, int[] cellDimensions, int[] mazeDimensions, int thickness) : base()
-    //    {
-    //        //parameters i and j represent location of wall in AllWallsH or AllWallsV
-
-            
-    //    }
-    //}
-
     class Game
     {
         public static MainWindow MW { get; set; }                 ////allows access to canvas outside of main window
@@ -797,7 +805,6 @@ namespace Project_Practice
         public Game()
         {
             MW = (MainWindow)Application.Current.MainWindow;
-            //MW.myCanvas.Background = Brushes.Black;
         }
 
         public void CreateMaze(string[] mazeDimText, string[] cellDimText)
@@ -834,13 +841,13 @@ namespace Project_Practice
 
     public partial class MainWindow : Window
     {
-        Game gameOne;
-
         private void StartBtn_Click(object sender, RoutedEventArgs e)
         {
             string[] mazeSizeTXT = new string[2] { MwidthTXT.Text, MheightTXT.Text };
             string[] cellSizeTXT = new string[2] { CwidthTXT.Text, CheightTXT.Text };
             //default values - can be appended at later date to add text boxes for cell sizes
+
+            Game gameOne = new Game();
 
             gameOne.CreateMaze(mazeSizeTXT, cellSizeTXT);
         }
@@ -848,7 +855,6 @@ namespace Project_Practice
         public MainWindow()
         {
             InitializeComponent();
-            gameOne = new Game();
         }
     }
 }
