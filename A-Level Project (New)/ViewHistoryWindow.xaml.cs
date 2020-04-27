@@ -161,7 +161,7 @@ namespace A_Level_Project__New_
 
         public void ClearCanvas()
         {
-            thisCanvas.Children.RemoveRange(9, thisCanvas.Children.Count);
+            thisCanvas.Children.RemoveRange(15, thisCanvas.Children.Count);
             //keeps the user input and labels, but removes the graph
         }
 
@@ -252,9 +252,9 @@ namespace A_Level_Project__New_
     public partial class ViewHistoryWindow : Window
     {
         private VisualGraph BarChart;
-        private bool IncludeLowerCase;
-        private bool IncludeUpperCase;
+        private bool IncludeCapitals;
         private string SearchName;
+        private int SortByType = 0;
 
         private List<DataEntry> AllFileEntries = new List<DataEntry>();
         private int HighestScoreForAllPlayers = 0;
@@ -265,17 +265,17 @@ namespace A_Level_Project__New_
         public ViewHistoryWindow()
         {
             InitializeComponent();
-            LowercaseCheckBox.IsChecked = true;
-            UppercaseCheckBox.IsChecked = true;
+            IncCapsCheckBox.IsChecked = true;
+            DateRadioBtn.IsChecked = true;
 
             BarChart = new VisualGraph(myCanvas);
 
             myCanvas.Children.Add(HighestScoreLbl);
-            Canvas.SetRight(HighestScoreLbl, 40);
-            Canvas.SetTop(HighestScoreLbl, 100);
+            Canvas.SetRight(HighestScoreLbl, 20);
+            Canvas.SetBottom(HighestScoreLbl, 50);
             myCanvas.Children.Add(NumOfRecordsLbl);
-            Canvas.SetRight(NumOfRecordsLbl, 40);
-            Canvas.SetTop(NumOfRecordsLbl, 130);
+            Canvas.SetRight(NumOfRecordsLbl, 20);
+            Canvas.SetBottom(NumOfRecordsLbl, 80);
         }
 
         private void SearchBtn_Click(object sender, RoutedEventArgs e)
@@ -284,17 +284,11 @@ namespace A_Level_Project__New_
 
             if (SearchName.Length > 0)
             {
-                IncludeLowerCase = (bool)LowercaseCheckBox.IsChecked;
-                IncludeUpperCase = (bool)UppercaseCheckBox.IsChecked;
+                IncludeCapitals = (bool)IncCapsCheckBox.IsChecked;
 
-                List<DataEntry> EntriesToDisplay = GetAllResultsWithName(SearchName, IncludeLowerCase, IncludeUpperCase);
+                List<DataEntry> EntriesToDisplay = GetAllResultsWithName(SearchName, IncludeCapitals);
 
-                EntriesToDisplay = EntriesToDisplay.OrderBy(DataEntry => DataEntry.GetScoreFromName(SearchName, IncludeLowerCase, IncludeUpperCase)).ToList<DataEntry>();
-                //Orders entries by the score of the player with the searched name 
-                //e.g if Bob got 12, and Bill got 15, and you search for Bill, it returns 15; if you search for Bob, it returns 12;
-
-                //EntriesToDisplay = EntriesToDisplay.OrderBy(DataEntry => DataEntry.SurvivedFor).ToList<DataEntry>();
-                //Orders entries by the length of time the last player survived for
+                EntriesToDisplay = SortEntries(EntriesToDisplay, SortByType, SearchName, IncludeCapitals);
 
                 if (EntriesToDisplay.Count > 0)
                 {
@@ -305,17 +299,15 @@ namespace A_Level_Project__New_
                 {
                     string MessageToShow = "'" + SearchName + "'";
 
-                    if (IncludeLowerCase && SearchName.ToLower() != SearchName)
+                    if (IncludeCapitals)
                     {
-                        MessageToShow += ", " + "'" + SearchName.ToLower() + "'";
+                        MessageToShow += ", and no capitalised variations of '" + SearchName + "' found in file history";
+                    }
+                    else
+                    {
+                        MessageToShow += " not found in file history";
                     }
 
-                    if (IncludeUpperCase && SearchName.ToUpper() != SearchName)
-                    {
-                        MessageToShow += ", " + "'" + SearchName.ToUpper() + "'";
-                    }
-
-                    MessageToShow += " not found in file history";
                     MessageBox.Show(MessageToShow);
 
                     NumOfRecordsLbl.Content = "Number Of Games Displayed: " + 0;
@@ -326,6 +318,39 @@ namespace A_Level_Project__New_
             {
                 MessageBox.Show("Please input a name");
             }
+        }
+
+        private List<DataEntry> SortEntries(List<DataEntry> ToSort, int SortType, string SearchName, bool IncludeCapitals)
+        {
+            List<DataEntry> SortedList = new List<DataEntry>();
+
+            switch (SortType)
+            {
+                case 0:
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.Timestamp).ToList();
+                    //Orders by the date when the game was played
+                    break;
+                case 1:
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.SurvivedFor).ToList();
+                    //Orders by the length of time the last player survived for 
+                    //e.g. if Bob was captured at 10 seconds and Bill was captured at 20 seconds, it returns 20
+                    break;
+                case 2:
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetTotalScore()).ToList();
+                    //orders entries by the total score of all players in that game
+                    //e.g. if Bob got 12, and Bill got 15, it returns 27
+                    break;
+                case 3:
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.GetScoreFromName(SearchName, IncludeCapitals)).ToList();
+                    // Orders entries by the score of the player with the searched name
+                    //e.g if Bob got 12, and Bill got 15, and you search for Bill, it returns 15; if you search for Bob, it returns 12;
+                    break;
+                default:
+                    SortedList = ToSort;
+                    throw new Exception("Invalid Sort Type");
+            }
+
+            return SortedList;
         }
 
         private void DeserialiseFile()
@@ -344,10 +369,10 @@ namespace A_Level_Project__New_
             HighestScoreForAllPlayers = FindGreatestScore(AllFileEntries);
             //gets the highest score in the file for all players 
 
-            HighestScoreLbl.Content = "High Score For All Players: " + Convert.ToString(HighestScoreForAllPlayers);
+            HighestScoreLbl.Content = "High Score For All Players: " + Convert.ToString(HighestScoreForAllPlayers) + "pts";
         }
 
-        private List<DataEntry> GetAllResultsWithName(string NameToSearch, bool FindLowercase, bool FindUppercase)
+        private List<DataEntry> GetAllResultsWithName(string NameToSearch, bool IncludeCapitals)
         {
             List<DataEntry> ChosenEntries = new List<DataEntry>();
 
@@ -358,7 +383,7 @@ namespace A_Level_Project__New_
 
             foreach (var entry in AllFileEntries)
             {
-                if (entry.SearchPlayers(NameToSearch, FindLowercase, FindUppercase) != -1)
+                if (entry.SearchPlayers(NameToSearch, IncludeCapitals) != -1)
                 {
                     ChosenEntries.Add(entry);
                     //isolates the data entries which contain the name we are searching for
@@ -386,5 +411,25 @@ namespace A_Level_Project__New_
 
             return currentGreatest;
         }
-    }
+
+        private void DateRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            SortByType = 0;
+        }
+
+        private void TimeSurvivedRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            SortByType = 1;
+        }
+
+        private void TotalScoreRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            SortByType = 2;
+        }
+
+        private void PScoreRadioBtn_Checked(object sender, RoutedEventArgs e)
+        {
+            SortByType = 3;
+        }
+    }    
 }

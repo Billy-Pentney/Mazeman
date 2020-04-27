@@ -1538,9 +1538,9 @@ namespace A_Level_Project__New_
             return Total;
         }
 
-        public int GetScoreFromName(string NameToFind, bool IncludeLowercase, bool IncludeUppercase)
+        public int GetScoreFromName(string NameToFind, bool IncludeCapitals)
         {
-            int Index = SearchPlayers(NameToFind, IncludeLowercase, IncludeUppercase);
+            int Index = SearchPlayers(NameToFind, IncludeCapitals);
 
             if (Index > -1 && Index < PlayerScores.Count())
             {
@@ -1550,29 +1550,19 @@ namespace A_Level_Project__New_
             return -1;
         }
 
-        public int SearchPlayers(string toFind, bool IncludeLowercase, bool IncludeUppercase)
+        public int SearchPlayers(string toFind, bool IncludeCapitals)
         {
             //searches through all the game saves in the file, checking the players in each
 
             for (int i = 0; i < PlayerNames.Count(); i++)
             {
-                if (IncludeLowercase)
-                {
-                    if (toFind.ToLower() == PlayerNames[i].ToLower())
-                    {
-                        return i;
-                    }
-                }
-                else if (IncludeUppercase)
-                {
-                    if (toFind.ToUpper() == PlayerNames[i].ToUpper())
-                    {
-                        return i;
-                    }
-                }
-                else if (PlayerNames[i] == toFind)
+                if (PlayerNames[i] == toFind)
                 {
                     return i;
+                }
+                else if (IncludeCapitals && toFind.ToLower() == PlayerNames[i].ToLower())
+                {
+                    return i;    
                 }
             }
 
