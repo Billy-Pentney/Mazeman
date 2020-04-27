@@ -7,22 +7,24 @@
         mc:Ignorable="d"
         ResizeMode="CanMinimize"
         WindowState="Normal"
-        Title="View History" Height="700" Width="1000">
+        Title="View History" Height="700" Width="1200">
     <Canvas Name="myCanvas">
         <Label Name="InputLbl" Content="Input a name to search for:" Canvas.Left="17" Canvas.Top="36"></Label>
         <TextBox Name="InputNameTxtBox" Width="180" Canvas.Left="185" Canvas.Top="37" Height="25"></TextBox>
         <Button Name="SearchBtn" Content="Search" Height="25" Width="60" Canvas.Right="20" Canvas.Top="20" Click="SearchBtn_Click"></Button>
-        <CheckBox Name="IncCapsCheckBox" Canvas.Left="400" Canvas.Top="40"></CheckBox>
-        <Label Name="IncCapsUpperLbl" Content="Include Lowercase/Uppercase" Canvas.Left="421" Canvas.Top="33"></Label>
+        <CheckBox Name="IncCapsCheckBox" Content="Include Lowercase/Uppercase" Canvas.Left="400" Canvas.Top="40"></CheckBox>
+        <CheckBox Name="IncTwoPlayersCheckBox" Content="Include Two-Player games" Canvas.Left="640" Canvas.Top="40"></CheckBox>
 
-        <RadioButton Name="DateRadioBtn" Canvas.Right="210" Canvas.Top="80" Checked="DateRadioBtn_Checked"></RadioButton>
-        <RadioButton Name="TimeSurvivedRadioBtn" Canvas.Right="210" Canvas.Top="110" Checked="TimeSurvivedRadioBtn_Checked"></RadioButton>
-        <RadioButton Name="TotalScoreRadioBtn" Canvas.Right="210" Canvas.Top="140" Checked="TotalScoreRadioBtn_Checked"></RadioButton>
-        <RadioButton Name="PScoreRadioBtn" Canvas.Right="210" Canvas.Top="170" Checked="PScoreRadioBtn_Checked"></RadioButton>
+        <RadioButton Name="DateRadioBtn" Canvas.Right="50" Width ="180" Canvas.Top="80" Content="Sort by date/time played" Checked="DateRadioBtn_Checked"></RadioButton>
+        <RadioButton Name="TimeSurvivedRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="110" Content="Sort by longest time survived" Checked="TimeSurvivedRadioBtn_Checked"></RadioButton>
+        <RadioButton Name="TotalScoreRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="140" Content="Sort by total score" Checked="TotalScoreRadioBtn_Checked"></RadioButton>
+        <RadioButton Name="PScoreRadioBtn" Canvas.Right="50" Width="180" Canvas.Top="170" Content="Sort by this player's score" Checked="PScoreRadioBtn_Checked"></RadioButton>
 
-        <Label Name="SortByDateLbl" Canvas.Right="30" Canvas.Top="73" Content="Sort by date played" Width="170"></Label>
-        <Label Name="SortByTimeLbl" Canvas.Right="30" Canvas.Top="103" Content="Sort by time survived" Width="170"></Label>
-        <Label Name="SortByTScoreLbl" Canvas.Right="30" Canvas.Top="133" Content="Sort by the total score" Width="170"></Label>
-        <Label Name="SortByPScoreLbl" Canvas.Right="30" Canvas.Top="163" Content="Sort by this player's score" Width="170"></Label>
+        <Button Name="LeaderboardBtn" Content="Leaderboard"  FontSize="13" Canvas.Left="980" Canvas.Top="430" Height="35" Width="140" Click="LeaderboardBtn_Click"></Button>
+
+        <TextBlock Name="GraphInfoBlock" Height="169" Width="200" Canvas.Right="35" Canvas.Top="228" TextWrapping="Wrap" Canvas.Left="950"></TextBlock>
+
+
+        <TextBlock Name="SearchInfoBlock" Height="120" Width="200" Canvas.Right="35" Canvas.Bottom="50" TextWrapping="Wrap" Canvas.Left="950" ></TextBlock>
     </Canvas>
 </Window>

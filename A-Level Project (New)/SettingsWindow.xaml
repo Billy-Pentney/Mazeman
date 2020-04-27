@@ -11,9 +11,9 @@
         <Label Name="MazeDimLbl" Content="Maze Dimensions" FontSize="15" Canvas.Left="70" Canvas.Top="26"></Label>
         <Label Name="WidthLbl" Content="Width:" Canvas.Left="60" Canvas.Top="61"></Label>
         <Label Name="HeightLbl" Content="Height:" Canvas.Left="60" Canvas.Top="92"></Label>
-        <TextBox Name="WidthTxt" Width="71" Canvas.Left="130" Canvas.Top="61" Height="26" TextChanged="WidthTxt_TextChanged"></TextBox>
-        <TextBox Name="HeightTxt" Width="71" Canvas.Left="130" Canvas.Top="92" Height="26" TextChanged="HeightTxt_TextChanged"></TextBox>
-        <TextBox Name="MazeDimExplainText" Text="Input the size of the maze you would like to use. Select default to use 15x15" IsReadOnly="True" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="Wrap" Height="60" Width="168" Canvas.Left="48" Canvas.Top="141"></TextBox>
+        <TextBox Name="WidthTxt" Width="50" Canvas.Left="140" Canvas.Top="61" Height="26" TextChanged="WidthTxt_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"></TextBox>
+        <TextBox Name="HeightTxt" Width="50" Canvas.Left="140" Canvas.Top="92" Height="26" TextChanged="HeightTxt_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"></TextBox>
+        <TextBox Name="MazeDimExplainText" Text="Input the size of the maze you would like to use. Select default to use 15x15" IsReadOnly="True" BorderThickness="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="Wrap" Height="60" Width="168" Canvas.Left="48" Canvas.Top="141"></TextBox>
 
         <CheckBox Name="DefaultCheck" Canvas.Left="55" Canvas.Top="230" Checked="DefaultCheck_Checked" Height="16" Width="16"></CheckBox>
         <Label Name="DefaultLbl" Content="Default" VerticalContentAlignment="Center" FontSize="10" Canvas.Left="70" Canvas.Top="223" Height="27"></Label>
@@ -31,6 +31,6 @@
         <Label Name="EasyLbl" Content="Easy" FontSize="9" Canvas.Left="55" Canvas.Top="355"></Label>
         <Label Name="MediumLbl" Content="Medium" FontSize="9" Canvas.Left="112" Canvas.Top="355"></Label>
         <Label Name="HardLbl" Content="Hard" FontSize="9" HorizontalContentAlignment="Center" Canvas.Left="180" Canvas.Top="355" Width="36"></Label>
-        <TextBox Name="EnemyDifficultyExplainText" BorderBrush="White" Text="Select the enemy difficulty:" IsReadOnly="True" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="Wrap" Height="35" Width="168" Canvas.Left="48" Canvas.Top="301"/>
+        <TextBox Name="EnemyDifficultyExplainText" BorderBrush="White" Text="Select the enemy difficulty:" IsReadOnly="True" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" TextWrapping="Wrap" Height="35" Width="168" Canvas.Left="48" Canvas.Top="301"/>
     </Canvas>
 </Window>

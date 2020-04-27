@@ -21,8 +21,6 @@ namespace A_Level_Project__New_
         bool TwoPlayers = false;
         bool ClassicControls = false;
 
-        double[] difficulties = new double[3] { 1, 2, 3 };
-
         double EnemyDifficulty;
         //used to set the speed of the enemy
 
@@ -31,10 +29,57 @@ namespace A_Level_Project__New_
             InitializeComponent();
 
             AddObjectsToWindow();
+            SetColours();
 
             DefaultCheck.IsChecked = true;
             MedRBtn.IsChecked = true;
             //sets the default values for ease (simply press start)
+        }
+
+        private void SetColours()
+        {
+            Brush foregroundColour = GameConstants.ForegroundColour;
+            Brush backgroundColour = GameConstants.BackgroundColour;
+
+            SettingsCanvas.Background = backgroundColour;
+
+            DefaultLbl.Foreground = foregroundColour;
+            TwoPlayersLbl.Foreground = foregroundColour;
+            ClassicControlsLbl.Foreground = foregroundColour;
+            MazeDimExplainText.Foreground = foregroundColour;
+            MazeDimExplainText.Background = backgroundColour;
+            MazeDimLbl.Foreground = foregroundColour;
+            WidthLbl.Foreground = foregroundColour;
+            HeightLbl.Foreground = foregroundColour;
+            WidthTxt.Foreground = foregroundColour;
+            WidthTxt.Background = backgroundColour;
+            HeightTxt.Foreground = foregroundColour;
+            HeightTxt.Background = backgroundColour;
+
+            EnemyDifficultyExplainText.Foreground = foregroundColour;
+            EnemyDifficultyExplainText.Background = backgroundColour;
+            EasyLbl.Foreground = foregroundColour;
+            MediumLbl.Foreground = foregroundColour;
+            HardLbl.Foreground = foregroundColour;
+
+            //EasyRBtn.Background = backgroundColour;
+            //EasyRBtn.Foreground = foregroundColour;
+            //MedRBtn.Background = backgroundColour;
+            //MedRBtn.Foreground = foregroundColour;
+            //HardRBtn.Background = backgroundColour;
+            //HardRBtn.Foreground = foregroundColour;
+
+            //DefaultCheck.Background = backgroundColour;
+            //DefaultCheck.Foreground = foregroundColour;
+            //TwoPlayersCheck.Background = backgroundColour;
+            //TwoPlayersCheck.Foreground = foregroundColour;
+            //ClassicControlsCheckBox.Background = backgroundColour;
+            //ClassicControlsCheckBox.Foreground = foregroundColour;
+
+            StartBtn.Background = backgroundColour;
+            StartBtn.Foreground = foregroundColour;
+            BackBtn.Foreground = foregroundColour;
+            BackBtn.Background = backgroundColour;
         }
 
         private void AddObjectsToWindow()
@@ -44,6 +89,7 @@ namespace A_Level_Project__New_
             TextBlock ExplainControlsText = new TextBlock() { Width = 250, Height = 130 };
             ExplainControlsText.TextAlignment = TextAlignment.Justify;
             ExplainControlsText.TextWrapping = TextWrapping.Wrap;
+            ExplainControlsText.Foreground = GameConstants.ForegroundColour;
             ExplainControlsText.Inlines.Add("Player 1 is controlled by the W,A,S,D keys." + Environment.NewLine);
             ExplainControlsText.Inlines.Add("Player 2 is controlled by the arrow keys." + Environment.NewLine + Environment.NewLine);
             ExplainControlsText.Inlines.Add("If Classic Controls are enabled, the players will only move while a key is pressed down." + Environment.NewLine);
@@ -60,6 +106,7 @@ namespace A_Level_Project__New_
 
             Label EntityText = new Label() { Width = 80, Height = 40, FontSize = 14, Content = "Players:" };
             SettingsCanvas.Children.Add(EntityText);
+            EntityText.Foreground = GameConstants.ForegroundColour;
             Canvas.SetRight(EntityText, 170);
             Canvas.SetTop(EntityText, 20);
 
@@ -76,6 +123,7 @@ namespace A_Level_Project__New_
                 {
                     Width = 70,
                     Height = 30,
+                    Foreground = GameConstants.ForegroundColour,
                 };
 
                 SettingsCanvas.Children.Add(EntityShapes[i]);
@@ -100,6 +148,7 @@ namespace A_Level_Project__New_
 
             Label PowerupsText = new Label() { Width = 80, Height = 40, FontSize = 14, Content = "Powerups:"};
             SettingsCanvas.Children.Add(PowerupsText);
+            PowerupsText.Foreground = GameConstants.ForegroundColour;
             Canvas.SetRight(PowerupsText, 40);
             Canvas.SetTop(PowerupsText, 20);
 
@@ -116,7 +165,8 @@ namespace A_Level_Project__New_
                 {
                     Width = 110,
                     Height = 40,
-                };
+                    Foreground = GameConstants.ForegroundColour,
+            };
 
                 SettingsCanvas.Children.Add(PowerupShapes[i]);
                 Canvas.SetRight(PowerupShapes[i], 125);
@@ -181,17 +231,17 @@ namespace A_Level_Project__New_
 
         private void EasyRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = difficulties[0];
+            EnemyDifficulty = GameConstants.difficulties[0];
         }
 
         private void MedRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = difficulties[1];
+            EnemyDifficulty = GameConstants.difficulties[1];
         }
 
         private void HardRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = difficulties[2];
+            EnemyDifficulty = GameConstants.difficulties[2];
         }
 
         #endregion

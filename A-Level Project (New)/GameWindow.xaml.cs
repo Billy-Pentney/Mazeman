@@ -24,238 +24,46 @@ namespace A_Level_Project__New_
         //these can be changed to affect the way the game looks/plays
 
         public static int[] CellDimensions { get; } = new int[2] { 25, 25 };
-        //24 used because it is divisible by 1, 2, 3 (the movement speeds)
-        public int WallThickness { get; }
+        public static double WallThicknessProportion = 0.1;
 
-        public static int[] indent { get; } = new int[2] { 90, 20 };
+        public static int[] WinIndent { get; } = new int[2] { 90, 20 };
+        public static int[] MazeIndent { get; } = new int[2] { 65, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
         public const string FileName = "History.txt";
         //the name/address of the file where scores should be written to/read from
 
-        public GameConstants()
-        {
-            WallThickness = CellDimensions[0] / 10;
-        }
-
-        public const double DefaultMovementSpeed = 4;
+        public static int[] difficulties = new int[] { 1, 2, 3 };
+        public const double DefaultMovementSpeed = 3;
         //the player movement speed with no powerups
 
         public static Brush[] PlayerColours { get; } = new Brush[] { Brushes.Yellow, Brushes.Blue, Brushes.Red };
         public static Brush[] PowerUpColours { get; } = new Brush[] { Brushes.Orange, Brushes.LimeGreen, Brushes.LightBlue, Brushes.Purple };
         public static Brush[] ScorePointColours { get; } = new Brush[] { Brushes.Gray, Brushes.Orange, Brushes.Purple };
 
-        public static Brush BackgroundColour { get; } = Brushes.White;
-        public static Brush ForegroundColour { get; } = Brushes.Black;
+        public static Brush BackgroundColour = Brushes.White;
+        public static Brush ForegroundColour = Brushes.Black;
+        public static Brush[] WallColours = new Brush[] { Brushes.Black, Brushes.Blue };
+        public static Brush[] SecondaryColours = new Brush[] { Brushes.Blue, Brushes.DarkBlue, Brushes.DarkViolet };
+
+        public static void SwapColours()
+        {
+            Brush temporary = BackgroundColour;
+
+            BackgroundColour = ForegroundColour;
+            ForegroundColour = temporary;
+
+            temporary = WallColours[0];
+            WallColours[0] = WallColours[1];
+            WallColours[1] = temporary;
+
+            temporary = SecondaryColours[1];
+            SecondaryColours[1] = SecondaryColours[2];
+            SecondaryColours[2] = temporary;
+        }
     }
 
     #region Powerup CLASSES
-
-    //class OldPowerup
-    //{
-    //    private int type = 0;
-    //    private double FriendlyEffect;
-    //    private double EnemyEffect;
-    //    private double ScorePointEffect;
-    //    private Rectangle shape = new Rectangle();
-    //    private Point MazePt;
-    //    private Point PixelPt;
-    //    private DispatcherTimer thisTimer = new DispatcherTimer() { Interval = new TimeSpan(0, 0, 1) };
-    //    private int MaxDuration = 10;
-    //    private int CurrentTime = 0;
-    //    private bool ReverseEffects = false;
-    //    private bool collected = false;
-    //    private double[] PlayerSpeeds;
-    //    private double[] EnemySpeeds;
-
-    //    public OldPowerup(GameConstants constants, Point MazePt, Point PixelPt, int type)
-    //    {
-    //        shape.Width = GameConstants.CellDimensions[0] / 3;
-    //        shape.Height = GameConstants.CellDimensions[1] / 3;
-    //        this.type = type;
-
-    //        if (type > -1 && type < GameConstants.NumOfPowerupTypes)
-    //        {
-    //            SetEffects();
-    //            PixelPt.X += GameConstants.CellDimensions[0] / 3;       //effectively centres the powerup in the cell
-    //            PixelPt.Y += GameConstants.CellDimensions[1] / 3;
-
-    //            shape.Fill = GameConstants.PowerUpColours[type];
-    //            Game.MW.GameCanvas.Children.Add(shape);
-    //            this.PixelPt = PixelPt;
-    //            this.MazePt = MazePt;
-    //            Canvas.SetLeft(shape, PixelPt.X);
-    //            Canvas.SetTop(shape, PixelPt.Y);
-
-    //            thisTimer.Start();
-    //            thisTimer.Tick += ThisTimer_Tick;
-    //        }
-    //    }
-
-    //    public Point GetMazePt()
-    //    {
-    //        return MazePt;
-    //    }
-
-    //    private void ThisTimer_Tick(object sender, EventArgs e)
-    //    {
-    //        CurrentTime += 1;
-    //    }
-
-    //    public void Collected()
-    //    {
-    //        thisTimer.Stop();
-    //        CurrentTime = 0;
-    //        collected = true;
-    //        thisTimer.Start();
-    //    }
-
-    //    public void StoreCurrentEntitySpeeds(List<Player> Players, List<Enemy> Enemies)
-    //    {
-    //        PlayerSpeeds = new double[Players.Count()];
-    //        EnemySpeeds = new double[Enemies.Count()];
-
-    //        if (Players.Count() > 0 && Enemies.Count() > 0)
-    //        {
-    //            for (int i = 0; i < Players.Count; i++)
-    //            {
-    //                PlayerSpeeds[i] = Players[i].GetSpeed();
-    //            }
-    //            for (int i = 0; i < Enemies.Count; i++)
-    //            {
-    //                EnemySpeeds[i] = Enemies[i].GetSpeed();
-    //            }
-    //        }
-    //    }
-
-    //    private void SetEffects()
-    //    {
-    //        FriendlyEffect = GameConstants.PowerUpFriendlyEffects[type];
-    //        EnemyEffect = GameConstants.PowerUpEnemyEffects[type];
-    //        ScorePointEffect = GameConstants.PowerUpScoreEffects[type];
-
-    //        if (EnemyEffect == 0)
-    //        {
-    //            MaxDuration = 3;
-    //        }
-    //    }
-
-    //    public double[] GetEffects()
-    //    {
-    //        double[] effects = new double[3];
-    //        //effects[0] is applied to players, 1 is applied to enemy, 2 is applied to the value of the score
-
-    //        effects[2] = ScorePointEffect;
-
-    //        if (ReverseEffects)
-    //        {
-    //            effects[0] = EnemyEffect;
-    //            effects[1] = FriendlyEffect;
-    //            effects[2] = 1 / effects[2];
-    //        }
-    //        else
-    //        {
-    //            effects[0] = FriendlyEffect;
-    //            effects[1] = EnemyEffect;
-    //        }
-
-    //        return effects;
-    //    }
-
-    //    public void SetReversedEffects()
-    //    {
-    //        ReverseEffects = true;
-    //    }
-
-    //    public void RemoveFromMap()
-    //    {
-    //        Game.MW.GameCanvas.Children.Remove(shape);
-    //        PixelPt.X = -1;
-    //        PixelPt.Y = -1;
-    //    }
-
-    //    public bool IsReversed()
-    //    {
-    //        return ReverseEffects;
-    //    }
-
-    //    public static int DetermineType(List<Powerup> VisiblePowerups)
-    //    {
-    //        Random rand = new Random();
-    //        int randType;
-    //        bool ValidType = false;
-    //        int[] EachTypeCount = new int[GameConstants.NumOfPowerupTypes];
-    //        //counts how many of each type of powerup there are
-
-    //        foreach (var item in VisiblePowerups)
-    //        {
-    //            EachTypeCount[item.GetTypeOfPowerup()] += 1;
-    //            // e.g. if the powerup is type 1, then count[1] is incremented by 1;
-    //        }
-
-    //        randType = rand.Next(0, EachTypeCount.Count());
-
-    //        do
-    //        {
-    //            if (randType > -1)
-    //            {
-    //                if (EachTypeCount[randType] > 0)
-    //                {
-    //                    randType -= 1;
-    //                    ValidType = false;
-    //                }
-    //                else
-    //                {
-    //                    ValidType = true;
-    //                }
-    //            }
-
-    //        } while (ValidType == false && randType > -1);
-
-
-    //        return randType;
-    //    }
-
-    //    public int GetTypeOfPowerup()
-    //    {
-    //        return type;
-    //    }
-
-    //    public Point GetPixelPt()
-    //    {
-    //        return PixelPt;
-    //    }
-
-    //    public bool IsExpired()
-    //    {
-    //        //returns a value to indicate if the powerup has been active/in the maze past its maximum time
-
-    //        if (CurrentTime >= MaxDuration)
-    //        {
-    //            thisTimer.Stop();
-    //            return true;
-    //        }
-
-    //        return false;
-    //    }
-
-    //    public bool IsCollected()
-    //    {
-    //        return collected;
-    //    }
-
-    //    public double[] GetOldPlayerSpeeds()
-    //    {
-    //        return PlayerSpeeds;
-    //    }
-
-    //    public double[] GetOldEnemySpeeds()
-    //    {
-    //        return EnemySpeeds;
-    //    }
-
-    //    public virtual void ApplyEffect() { }
-    //}
 
     class SpeedUpPowerup : Powerup
     {
@@ -508,8 +316,11 @@ namespace A_Level_Project__New_
                 Shape.Fill = GameConstants.PlayerColours[PlayerNum];
             }
 
-            Shape.Width = GameConstants.CellDimensions[0] - Constants.WallThickness;
-            Shape.Height = GameConstants.CellDimensions[1] - Constants.WallThickness;
+            StartPixelPt.X += GameConstants.WallThicknessProportion * 0.5 * GameConstants.CellDimensions[0];
+            StartPixelPt.Y += GameConstants.WallThicknessProportion * 0.5 * GameConstants.CellDimensions[1];
+
+            Shape.Width = GameConstants.CellDimensions[0] * (1 - GameConstants.WallThicknessProportion);
+            Shape.Height = GameConstants.CellDimensions[1] * (1 - GameConstants.WallThicknessProportion);
 
             CentrePixelPt.X = StartPixelPt.X + Shape.Width / 2;
             CentrePixelPt.Y = StartPixelPt.Y + Shape.Width / 2;
@@ -905,7 +716,7 @@ namespace A_Level_Project__New_
             ///number of grid spaces in the maze
             this.MazeDimensions = MazeDimensions;
             this.CellDimensions = GameConstants.CellDimensions;
-            Thickness = CellDimensions[0] / 10;
+            Thickness = (int)(CellDimensions[0] * GameConstants.WallThicknessProportion);
 
             AllWallsH = new Wall[MazeDimensions[0], MazeDimensions[1] + 1];
             AllWallsV = new Wall[MazeDimensions[0] + 1, MazeDimensions[1]];
@@ -970,7 +781,7 @@ namespace A_Level_Project__New_
 
         public Point ConvertPixelPtToMazePt(Point PixelPt)
         {
-            Point MazeTopLeft = new Point(GameConstants.indent[0] + Thickness, GameConstants.indent[1] + Thickness);
+            Point MazeTopLeft = new Point(GameConstants.MazeIndent[0] + Thickness, GameConstants.MazeIndent[1] + Thickness);
 
             PixelPt.X -= MazeTopLeft.X;
             PixelPt.Y -= MazeTopLeft.Y;
@@ -1416,9 +1227,9 @@ namespace A_Level_Project__New_
 
     class Wall
     {
-        private int width;
-        private int height;
-        private Rectangle Shape = new Rectangle { Fill = GameConstants.ForegroundColour, };
+        private double width;
+        private double height;
+        private Rectangle Shape = new Rectangle { Fill = GameConstants.WallColours[0], };
         private Point PixelPt;
         private bool hideable = true;                 //used to prevent hiding outer edge walls
 
@@ -1444,7 +1255,7 @@ namespace A_Level_Project__New_
                 //vertical wall conditions
 
                 width = thickness;
-                height = cellDimensions[1];
+                height = cellDimensions[1] + thickness;
 
                 if (i == 0 || i == mazeDimensions[0])
                 {
@@ -1456,8 +1267,8 @@ namespace A_Level_Project__New_
             Shape.Width = this.width;
             Shape.Height = this.height;
 
-            PixelPt.X = 65 + (i + 1) * cellDimensions[0];
-            PixelPt.Y = (j + 1) * cellDimensions[1];
+            PixelPt.X = GameConstants.MazeIndent[0] + (i + 1) * cellDimensions[0];
+            PixelPt.Y = GameConstants.MazeIndent[1] + (j + 1) * cellDimensions[1];
             //calculates position of wall based on location in array
 
             Game.MW.GameCanvas.Children.Add(Shape);
@@ -1484,7 +1295,7 @@ namespace A_Level_Project__New_
 
     }
 
-    class DataEntry
+    public class DataEntry
     {
         //these need to be public for the JSON to write their value correctly
         public int GameID { get; set; }
@@ -1511,6 +1322,11 @@ namespace A_Level_Project__New_
             Timestamp = DateTime.Now.ToString();
         }
 
+        public int GetNumberOfPlayers()
+        {
+            return PlayerNames.Count;
+        }
+
         public int GetHighestScore()
         {
             int LargestSoFar = 0;
@@ -1524,6 +1340,23 @@ namespace A_Level_Project__New_
             }
 
             return LargestSoFar;
+        }
+
+        public string GetNameofHighestScore()
+        {
+            int lastScore = 0;
+            int index = 0;
+
+            for (int i = 0; i < PlayerNames.Count; i++)
+            {
+                if (PlayerScores[i] > lastScore)
+                {
+                    lastScore = PlayerScores[i];
+                    index = i;
+                }
+            }
+
+            return PlayerNames[index];
         }
 
         public int GetTotalScore()
@@ -1623,11 +1456,13 @@ namespace A_Level_Project__New_
             MovementTimer.Tick += MovementTimer_Tick;
 
             TimeDisplayTXT.Width = 30;
+            TimeDisplayTXT.Foreground = GameConstants.ForegroundColour;
             MW.GameCanvas.Children.Add(TimeDisplayTXT);
             Canvas.SetLeft(TimeDisplayTXT, 55);
             Canvas.SetTop(TimeDisplayTXT, 15);
 
             ScoreDisplayTXT.Width = 30;
+            ScoreDisplayTXT.Foreground = GameConstants.ForegroundColour;
             MW.GameCanvas.Children.Add(ScoreDisplayTXT);
             ScoreDisplayTXT.Text = Convert.ToString(0);
             Canvas.SetLeft(ScoreDisplayTXT, 55);
@@ -2176,10 +2011,14 @@ namespace A_Level_Project__New_
 
             UseClassicControls = ClassicControls;
 
-            this.Width = GameConstants.indent[0] + (MazeDimensions[0] + 3) * GameConstants.CellDimensions[0];
-            this.Height = GameConstants.indent[1] + (MazeDimensions[1] + 3) * GameConstants.CellDimensions[1];
+            this.Width = GameConstants.WinIndent[0] + (MazeDimensions[0] + 2) * GameConstants.CellDimensions[0];
+            this.Height = GameConstants.WinIndent[1] + (MazeDimensions[1] + 3) * GameConstants.CellDimensions[1];
 
             this.ResizeMode = ResizeMode.NoResize;
+
+            ScoreLbl.Foreground = GameConstants.ForegroundColour;
+            TimeLbl.Foreground = GameConstants.ForegroundColour;
+            GameCanvas.Background = GameConstants.BackgroundColour;
 
             newGame = new Game(this, MazeDimensions, GameConstants.CellDimensions, TwoPlayers, EnemyDifficulty);
         }

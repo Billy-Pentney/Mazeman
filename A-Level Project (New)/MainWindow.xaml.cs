@@ -23,6 +23,8 @@ namespace A_Level_Project__New_
         public MainWindow()
         {
             InitializeComponent();
+            SetColours();
+
             Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
         }
 
@@ -36,6 +38,31 @@ namespace A_Level_Project__New_
         {
             new ViewHistoryWindow().Show();
 
+        }
+
+        private void SwapColoursBtn_Click(object sender, RoutedEventArgs e)
+        {
+            GameConstants.SwapColours();
+            SetColours();
+        }
+
+        private void SetColours()
+        {
+            Brush foreground = GameConstants.ForegroundColour;
+            Brush background = GameConstants.BackgroundColour;
+
+            MainCanvas.Background = background;
+
+            NewGameBtn.Foreground = foreground;
+            NewGameBtn.Background = background;
+
+            ViewHistoryBtn.Foreground = foreground;
+            ViewHistoryBtn.Background = background;
+
+            SwapColoursBtn.Foreground = foreground;
+            SwapColoursBtn.Background = background;
+
+            VersionNumLbl.Foreground = foreground;
         }
     }
 }
