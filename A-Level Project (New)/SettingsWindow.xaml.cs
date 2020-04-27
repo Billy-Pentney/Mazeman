@@ -10,8 +10,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 
-
-
 namespace A_Level_Project__New_
 {
     /// <summary>
@@ -333,6 +331,12 @@ namespace A_Level_Project__New_
         {
             WidthTxt.Text = Convert.ToString(defMazeDimensions[0]);
             HeightTxt.Text = Convert.ToString(defMazeDimensions[1]);
+        }
+
+        private void DefaultCheck_Unchecked(object sender, RoutedEventArgs e)
+        {
+            WidthTxt.Text = "";
+            HeightTxt.Text = "";
         }
 
         #region DifficultyButtons

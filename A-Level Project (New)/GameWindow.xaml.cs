@@ -25,14 +25,14 @@ namespace A_Level_Project__New_
         //this class contains most of the major Game constants/variables
         //these can be changed to affect the way the game looks/plays
 
-        public static int[] CellDimensions { get; } = new int[2] { 30, 30 };
+        public static int[] CellDimensions { get; } = new int[2] { 25, 25 };
         public static double WallThicknessProportion = 0.10;
 
         public static int[] WinIndent { get; } = new int[2] { 85, 20 };
         public static int[] MazeIndent { get; } = new int[2] { 85, 0 };
         //the pixel values used to indent the maze from the left/top of the window
 
-        public const string FileName = "History - New.txt";
+        public const string FileName = "History.txt";
         //the name/address of the file where scores should be written to/read from
 
         public static double[] difficulties { get; } = new double[] { 1, 2, 3 };
@@ -121,10 +121,6 @@ namespace A_Level_Project__New_
                     Effects[2] = 2;             ///each collected point is worth twice as many points in the total score
                     DisplayMessage = "Points are multiplied by " + Effects[2] + " for " + maxDuration + " seconds!";
                     break;
-                //case 4:             ///each collected point is worth twice as many points in the total score
-                //    DisplayMessage = "Enemies can be eaten!";
-                //    EnemyEffectBehaviour = Behaviour.FleePlayer;
-                //    break;
                 default:
                     break;
             }
@@ -260,12 +256,12 @@ namespace A_Level_Project__New_
             if (currentActiveTime < 2 && Sprite.Opacity < 0.95)
             {
                 //FADE IN
-                Sprite.Opacity *= 1.1;
+                Sprite.Opacity *= 1.18;
             }
             else if (maxDuration - currentActiveTime <= 1 && Sprite.Opacity > 0.01)
             {
                 //FADE OUT
-                Sprite.Opacity *= 0.9;
+                Sprite.Opacity *= 0.85;
             }
 
         }
@@ -462,6 +458,8 @@ namespace A_Level_Project__New_
             PixelPtChange.X = (newPixelPt.X - PixelPt.X) / GameConstants.CellDimensions[0];
             PixelPtChange.Y = (newPixelPt.Y - PixelPt.Y) / GameConstants.CellDimensions[1];
             //determines the movement in terms of x and y for that move based on the pixel positions
+
+            Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
         }
 
         public void IncrementDisplayNumber()
@@ -517,8 +515,6 @@ namespace A_Level_Project__New_
             {
                 CurrentMovementSpeed = newSpeed;
             }
-
-            Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
 
             if (CurrentMovementSpeed > 0 && CurrentMovementSpeed < 1)
             {
@@ -604,20 +600,17 @@ namespace A_Level_Project__New_
         //a list of movements for the enemy to follow to reach the target
 
         private Behaviour CurrentState = new Behaviour();           //used for debugging
-        private int ColourNum;
         private double PowerupAffinity;
-        private int EnemyLevel;
 
         public Enemy(Point StartMazePt, Point StartPixelPt, int PNumber, double Difficulty, int ColourIndex) : base(StartMazePt, StartPixelPt, PNumber)
         {
             //speed of the enemy is directly proportional to the difficulty i.e. 1 on Easy, 2 on Medium, 3 on hard
             //larger values for speed increase how many pixels the enemy moves per frame
 
-            //EnemyLevel = (int)(0.5 * ((-PNumber % 2) - PNumber - 2));
-            DefaultMovementSpeed = Difficulty;// + EnemyLevel;
+            DefaultMovementSpeed = Difficulty;
             SetSpeed(DefaultMovementSpeed);
 
-            PowerupAffinity = 1;// - (-0.125 * (PNumber + 1));// Math.Pow(0.5, EnemyLevel);
+            PowerupAffinity = 1 + (0.125 * (PNumber + 1));// Math.Pow(0.5, EnemyLevel);
 
             for (int i = 0; i < IMGSources.Length; i++)
             {
@@ -838,7 +831,7 @@ namespace A_Level_Project__New_
                 {
                     NumOfMovesSinceSplit = 0;
                 }
-                else if (NumOfMovesSinceSplit > 4 && RandNumOfWallsToRemove < ValidMoves.Count())
+                else if (NumOfMovesSinceSplit > 2 && RandNumOfWallsToRemove < ValidMoves.Count())
                 {
                     //if it has been 5 moves since the path split, then an additional wall is taken this time
                     RandNumOfWallsToRemove += 1;
@@ -1823,6 +1816,17 @@ namespace A_Level_Project__New_
                 currentTime += 1;
                 //updates the length of time the game has been open, once per second
 
+                if (AppliedPowerUpEffects.Count > 0)
+                {
+                    Powerup NextEffectToExpire = AppliedPowerUpEffects.First;
+
+                    if (NextEffectToExpire.IsExpired())
+                    {
+                        RemovePowerupEffect(NextEffectToExpire);
+                        AppliedPowerUpEffects.Remove(NextEffectToExpire);
+                    }
+                }
+
                 List<Powerup> PowerupsToRemove = new List<Powerup>();
 
                 for (int i = 0; i < VisiblePowerups.Count;)
@@ -1848,17 +1852,6 @@ namespace A_Level_Project__New_
                 foreach (var powerup in AppliedPowerUpEffects)
                 {
                     powerup.IncrementActiveTime();
-                }
-
-                if (AppliedPowerUpEffects.Count > 0)
-                {
-                    Powerup NextEffectToExpire = AppliedPowerUpEffects.First;
-
-                    if (NextEffectToExpire.IsExpired())
-                    {
-                        RemovePowerupEffect(NextEffectToExpire);
-                        AppliedPowerUpEffects.Remove(NextEffectToExpire);
-                    }
                 }
 
                 if (currentTime % PowerupGenDelay == 0)

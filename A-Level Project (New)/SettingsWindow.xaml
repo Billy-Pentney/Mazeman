@@ -20,7 +20,7 @@
         <Label Name="ExclamationMarkLbl" Content="✓" Canvas.Left="188" Foreground="Green" FontWeight="Bold" Canvas.Top="53"/>
         <Label Name="ExclamationMark2Lbl" Content="✓" Canvas.Left="188" Foreground="Green" FontWeight="Bold" Canvas.Top="83"/>
 
-        <CheckBox Name="DefaultCheck" Content="Default Maze Dimensions" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="60" Canvas.Top="125" Checked="DefaultCheck_Checked" Height="16" Width="147"></CheckBox>
+        <CheckBox Name="DefaultCheck" Content="Default Maze Dimensions" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="60" Canvas.Top="125" Checked="DefaultCheck_Checked" Unchecked="DefaultCheck_Unchecked"  Height="16" Width="147"></CheckBox>
         <CheckBox Name="TwoPlayersCheck" Content="Two Players" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="60" Canvas.Top="350"/>
 
         <Button Name="StartBtn" Content="Start Game" Canvas.Bottom="20" Canvas.Right="20" VerticalContentAlignment="Center" Height="30" Width="270" Click="StartBtn_Click" Canvas.Left="249" Canvas.Top="369"></Button>
