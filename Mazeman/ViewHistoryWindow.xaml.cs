@@ -12,7 +12,9 @@ using Newtonsoft.Json;
 namespace Mazeman
 {
     /// <summary>
-    /// Interaction logic for ViewHistoryWindow.xaml
+    /// 
+    /// Window responsible for showing the previous scores of players.
+    /// 
     /// </summary>
 
     class BarLine
