@@ -24,13 +24,6 @@ namespace Mazeman
                 NumOfEnemies = 0;
             }
 
-            BitmapImage WindowIconSource = new BitmapImage();
-            WindowIconSource.BeginInit();
-            WindowIconSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/P1" + GameConstants.FileNameSuffixes[2]);
-            WindowIconSource.EndInit();
-
-            this.Icon = WindowIconSource;
-
             // Scales the window dimensions, proportional to the maze, with an indent and the width of 3 cells as spacing
             this.Width = GameConstants.WinIndent[0] + (MazeDimensions[0] + 3) * GameConstants.CellDimensions[0];
             this.Height = GameConstants.WinIndent[1] + (MazeDimensions[1] + 3) * GameConstants.CellDimensions[1];
@@ -110,8 +103,6 @@ namespace Mazeman
         {
             // Clear the bindings (Stop timers... etc.) in the current game
             NewGame.Destroy();
-
-            // 
             SettingsWindow SW = new SettingsWindow();
             SW.Show();
         }

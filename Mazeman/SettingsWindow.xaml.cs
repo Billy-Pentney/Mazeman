@@ -85,8 +85,8 @@ namespace Mazeman
             TwoPlayersCheck.Foreground = foregroundColour;
             DefaultCheck.Foreground = foregroundColour;
 
-            ExclamationMarkLbl.Foreground = Brushes.Red;
-            ExclamationMark2Lbl.Foreground = Brushes.Red;
+            MazeWidthValidationLbl.Foreground = Brushes.Red;
+            MazeHeightValidationLbl.Foreground = Brushes.Red;
 
             MazeDimText.Foreground = foregroundColour;
             MazeDimText.Background = backgroundColour;
@@ -179,7 +179,7 @@ namespace Mazeman
                 PowerupSpriteSources[i] = new BitmapImage();
 
                 PowerupSpriteSources[i].BeginInit();
-                PowerupSpriteSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Powerup-" + (i) + ".png");
+                PowerupSpriteSources[i].UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Powerup-" + i + ".png");
                 PowerupSpriteSources[i].EndInit();
 
                 PowerupSpriteImages[i] = new Image() { Width = 20, Height = 20};
@@ -211,9 +211,9 @@ namespace Mazeman
 
             #region Point Shapes + Labels
 
-            int NumOfPointSprites = 3;         
-            ///specifies how many different images should be displayed for the points
-            ///only change if more sprites are added
+            int NumOfPointSprites = 3;
+            // Specifies how many different images should be displayed for the points
+            // Only changes if more sprites are added
 
             Image[] PointSpriteImages = new Image[NumOfPointSprites];
             BitmapImage[] PointSpriteSources = new BitmapImage[NumOfPointSprites];
@@ -247,7 +247,6 @@ namespace Mazeman
                 SettingsCanvas.Children.Add(PointLabels[i]);
                 Canvas.SetRight(PointLabels[i], 170);
                 Canvas.SetTop(PointLabels[i], 235 + i * 40);
-                
             }
 
             PointLabels[0].Content = "= 0 Points";
@@ -284,7 +283,7 @@ namespace Mazeman
         private void ChangeEnemyColour()
         {
             EnemyColourIndex++;
-            EnemyColourIndex = EnemyColourIndex % EnemyIMGSources.Length;
+            EnemyColourIndex %= EnemyIMGSources.Length;
             EntitySpriteImages.Last().Source = EnemyIMGSources[EnemyColourIndex];
         }
 
@@ -357,13 +356,15 @@ namespace Mazeman
         {
             if (CheckText(WidthTxt.Text, 0))
             {
-                ExclamationMarkLbl.Foreground = Brushes.Green;
-                ExclamationMarkLbl.Content = "✓";
+                // Dimension is valid, so show the green validation tick
+                MazeWidthValidationLbl.Foreground = Brushes.Green;
+                MazeWidthValidationLbl.Content = "✓";
             }
             else
             {
-                ExclamationMarkLbl.Foreground = Brushes.Red;
-                ExclamationMarkLbl.Content = "X";
+                // Dimension is invalid, so 
+                MazeWidthValidationLbl.Foreground = Brushes.Red;
+                MazeWidthValidationLbl.Content = "X";
             }
         }
 
@@ -371,13 +372,13 @@ namespace Mazeman
         {
             if (CheckText(HeightTxt.Text, 1))
             {
-                ExclamationMark2Lbl.Foreground = Brushes.Green;
-                ExclamationMark2Lbl.Content = "✓";
+                MazeHeightValidationLbl.Foreground = Brushes.Green;
+                MazeHeightValidationLbl.Content = "✓";
             }
             else
             {
-                ExclamationMark2Lbl.Foreground = Brushes.Red;
-                ExclamationMark2Lbl.Content = "X";
+                MazeHeightValidationLbl.Foreground = Brushes.Red;
+                MazeHeightValidationLbl.Content = "X";
             }
         }
     }

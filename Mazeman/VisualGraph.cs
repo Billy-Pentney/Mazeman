@@ -218,47 +218,45 @@ namespace Mazeman
 
         private int GetNumOfBars(List<DataEntry> EntriesToSearch)
         {
-            int count = 0;
+            int totalBars = 0;
 
-            foreach (var item in EntriesToSearch)
+            // Count up the number of players across all games
+            foreach (DataEntry item in EntriesToSearch)
             {
-                foreach (var score in item.PlayerScores)
-                {
-                    count += 1;
-                }
+                // In a game, each player's score is shown by a single vertical bar
+                if (item.PlayerScores != null)
+                    totalBars += item.PlayerScores.Count;
             }
 
-            return count;
+            return totalBars;
         }
 
-        public int DetermineDisplayRange(double width, int startAt)
+        // Determine the number of games which can be displayed in the current window
+        // Returns the index of the last game which can be shown
+        //      e.g. if bars 1-20 can be shown, then the method returns 20
+        public int DetermineDisplayRange(double width, int firstDisplayableIndex)
         {
             double currentLeft = width / 2;
-            int DisplayUpTo = startAt;
 
-            //works out how many bars will fit in the window space
-            //returns the upper limit e.g. if it can display bars 1-20, then this returns 20
+            int lineIndex = firstDisplayableIndex;
 
-            for (int i = startAt; i < GraphLines.Count; i++)
+            while (currentLeft < AvailableArea[0])
             {
-                if (currentLeft >= AvailableArea[0])
+                // Count each bar in a given game
+                foreach (var shape in GraphLines[lineIndex].GetShapes())
                 {
-                    i = GraphLines.Count;
-                    //early exit of for loop
+                    currentLeft += width;
                 }
-                else
-                {
-                    foreach (var shape in GraphLines[i].GetShapes())
-                    {
-                        currentLeft += width;
-                    }
-                    currentLeft += width / 2;
+                // Add a separator between each game in the chart
+                currentLeft += width / 2;
 
-                    DisplayUpTo = i;
-                }                
+                if (lineIndex == GraphLines.Count - 1)
+                    break;
+                else
+                    lineIndex++;
             }
 
-            return DisplayUpTo;
+            return lineIndex;
         }
 
 

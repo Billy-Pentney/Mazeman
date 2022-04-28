@@ -179,17 +179,17 @@ namespace Mazeman
             {
                 int randVal = rand.Next(5, 21);
                 CurrentTime += 1;
-                //updates the unpaused time the game has been open
+                // Updates the unpaused time the game has been open
 
-                foreach (var powerup in AppliedPowerups)
+                foreach (Powerup powerup in AppliedPowerups)
                 {
                     powerup.IncrementActiveTime();
                 }
 
                 if (AppliedPowerups.Count > 0)
                 {
+                    // Orders powerup effects by how long before they should be removed
                     AppliedPowerups = AppliedPowerups.OrderBy(powerup => powerup.GetRemainingTime()).ToList();
-                    //orders powerup effects by how long before they should be removed
                     Powerup NextEffectToExpire = AppliedPowerups.First();
 
                     if (NextEffectToExpire.IsExpired())
@@ -202,12 +202,12 @@ namespace Mazeman
                 for (int i = 0; i < VisiblePowerups.Count;)
                 {
                     VisiblePowerups[i].IncrementActiveTime();
-                    //increments each powerups time by 1
+                    // Increments each powerups time by 1
 
                     if (VisiblePowerups[i].IsExpired())
                     {
-                        //if they have been visible for more than their maximum duration, 
-                        //then they are removed from the map and from the list of powerups
+                        // If they have been visible for more than their maximum duration, 
+                        // Then they are removed from the map and from the list of powerups
                         VisiblePowerups[i].RemoveFromMap();
                         CountOfPowerupType[VisiblePowerups[i].GetTypeNumber()] -= 1;
                         VisiblePowerups.RemoveAt(i);
@@ -220,14 +220,13 @@ namespace Mazeman
 
                 if (CurrentTime % PowerupGenDelay == 0)
                 {
-                    //e.g. generates a powerup every three seconds (time is divisible by 3)
+                    // e.g. generates a powerup every three seconds (time is divisible by 3)
                     GenerateRandomPowerUp();
                 }
             }
             else if (RemainingPauseTime == 0)
             {
                 Unpause();
-
             }
             else
             {
@@ -240,26 +239,28 @@ namespace Mazeman
         {
             UpdateEntityMovement();
 
+            // If all the points have been collected, add them all back again
             if (MazeOne.GetNumofScorePoints() < 1)
             {
-                //resets maze if the board is cleared of collectible points
                 ResetMazeScorePoints();
             }
 
             RemoveExpiredPowerups();
             UpdateScoreAndTime();
 
-            //if no players left in the map
-
+            // If all players have been caught
             if (ActivePlayers.Count() < 1)
             {
+                // Subtract one life
                 PlayerLives -= 1;
                 LifeImages[PlayerLives].Opacity = 0.2;
 
-                if (PlayerLives > 0)
+                // If the player(s) have at least one more life, reset their position and continue
+                if (PlayerLives >= 1)
                 {
                     ResetGame();
                 }
+                // Otherwise, this is the end of the game
                 else
                 {
                     EndGame();

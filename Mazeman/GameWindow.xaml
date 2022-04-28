@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Mazeman" Height="450" Width="800" MinHeight="400" ResizeMode="NoResize" Icon="Data/Sprites/P1-R.png" Closing="Window_Closing">
+        Title="Mazeman" Height="450" Width="800" MinHeight="400" ResizeMode="NoResize" Icon="Icon/game.ico" Closing="Window_Closing">
     <Canvas Name="GameCanvas">
         <Button Name="MenuBtn" Content="Menu" FontSize="8" Canvas.Left="5" Canvas.Bottom="5" Click="MenuBtn_Click"></Button>
         
