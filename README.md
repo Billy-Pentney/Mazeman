@@ -1,4 +1,4 @@
-# A-Level-Project-Pacman
+# Mazeman
 
 Menu/Settings Window
 
