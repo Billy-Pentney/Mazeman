@@ -338,17 +338,17 @@ namespace Mazeman
 
         private void EasyRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = GameConstants.difficulties[0];
+            EnemyDifficulty = GameConstants.Difficulties[0];
         }
 
         private void MedRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = GameConstants.difficulties[1];
+            EnemyDifficulty = GameConstants.Difficulties[1];
         }
 
         private void HardRBtn_Checked(object sender, RoutedEventArgs e)
         {
-            EnemyDifficulty = GameConstants.difficulties[2];
+            EnemyDifficulty = GameConstants.Difficulties[2];
         }
 
         #endregion

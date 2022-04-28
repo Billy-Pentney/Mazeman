@@ -6,386 +6,31 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Shapes;
 using Newtonsoft.Json;
 
 namespace Mazeman
 {
+
     /// <summary>
     /// 
-    /// Window responsible for showing the previous scores of players.
+    /// This window displays the history of the game scores for a given username.
+    /// It reads from the History.txt file and then generates a VisualGraph object
+    /// to contain the details about each game.
     /// 
     /// </summary>
-
-    class BarLine
-    {
-        private List<Rectangle> shapes = new List<Rectangle>();
-        private static double WidthScale = 20;
-        private static double HeightScale = 1;
-        private string GameStatsText;
-        private Brush[] Colours = new Brush[] { Brushes.Green, Brushes.Orange, Brushes.Red };
-        private Brush ClickColour = Brushes.LightBlue;           //colour when the user clicks on/selects a bar
-        private Brush ShapeColour;  // ordinary colour for the shapes
-
-        public BarLine(DataEntry thisEntry)
-        {
-            GameStatsText = "GameID: " + thisEntry.GameID + Environment.NewLine + "Timestamp: " + thisEntry.Timestamp + Environment.NewLine;
-            GameStatsText += Environment.NewLine + "Total Score For All Players: " + Convert.ToString(thisEntry.GetTotalScore()) + " pts" + Environment.NewLine;
-
-            for (int i = 0; i < thisEntry.PlayerNames.Count; i++)
-            {
-                Rectangle thisLine = new Rectangle();
-                ShapeColour = Colours[thisEntry.difficulty - 1];
-                thisLine.Fill = ShapeColour;
-                thisLine.Width = WidthScale;
-                thisLine.Height = thisEntry.PlayerScores[i] * HeightScale;
-                shapes.Add(thisLine);
-                GameStatsText += Environment.NewLine + "Player " + Convert.ToString(i + 1) + " (" + thisEntry.PlayerNames[i] + ") scored " + thisEntry.PlayerScores[i] + " pt";
-
-                if (thisEntry.PlayerScores[i] > 1)
-                {
-                    GameStatsText += "s";
-                };
-            }
-
-            GameStatsText += Environment.NewLine + Environment.NewLine + "Last Player Survived For: " + thisEntry.SurvivedFor + " seconds" + Environment.NewLine;
-            GameStatsText += Environment.NewLine + "Maze Dimensions: " + Convert.ToString(thisEntry.mazeDimensions[0]) + "x" + Convert.ToString(thisEntry.mazeDimensions[1]);
-            GameStatsText += Environment.NewLine + "Enemy Difficulty: ";
-
-            switch (thisEntry.difficulty)
-            {
-                case 1:
-                    GameStatsText += "Easy";
-                    break;
-                case 2:
-                    GameStatsText += "Medium";
-                    break;
-                case 3:
-                    GameStatsText += "Hard";
-                    break;
-                default:
-                    GameStatsText += "Modified File";
-                    break;
-            }
-
-            VisualGraph.thisCanvas.MouseLeftButtonDown += ThisWindow_MouseLeftButtonDown;
-        }
-
-        public static void SetBarScales(double w, double h)
-        {
-            WidthScale = w;
-            HeightScale = h;
-        }
-
-        public static double GetWidth()
-        {
-            return WidthScale;
-        }
-
-        private void ThisWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (shapes.Contains(e.Source))
-            {
-                SetColour(ClickColour);
-                MessageBox.Show(GameStatsText);
-                SetColour(ShapeColour);
-            }
-            
-        }
-
-        private void SetColour(Brush ColourToSet)
-        {
-            foreach (var item in shapes)
-            {
-                item.Fill = ColourToSet;
-            }
-        }
-
-        public List<Rectangle> GetShapes()
-        {
-            return shapes;
-        }
-
-        public void RemoveAllFromCanvas()
-        {
-            foreach (var shape in shapes)
-            {
-                VisualGraph.thisCanvas.Children.Remove(shape);
-            }
-        }
-
-    }
-
-    class VisualGraph
-    {
-        public static Canvas thisCanvas;
-        private List<BarLine> GraphLines = new List<BarLine>();
-        private Line[] GraphSides = new Line[2];
-
-        private double[] BottomLeftIndent = new double[2];    //[0] = from left, [1] = from bottom
-        private double[] TopRightIndent = new double[2];      //[0] = from right, [1] = from top
-        private double[] AvailableArea = new double[2];       //[0] = width of graph, [1] = height of graph
-
-        private int[] DisplayRange = new int[2];
-
-        private List<DataEntry> EntriesToDisplay = new List<DataEntry>();
-        private int HighestScoreForGraph = 0;
-
-        private double EndOfGraph;
-
-        public VisualGraph(Canvas myCanvas)
-        {
-            thisCanvas = myCanvas;
-            //prevents the first objects from being removed from the canvas
-        }
-
-        public void CreateGraph(List<DataEntry> ChosenEntries, int GreatestScore)
-        {
-            #region Preparing Area/Indents
-            ClearCanvas();
-
-            BottomLeftIndent[0] = 60;
-            BottomLeftIndent[1] = 60;
-
-            TopRightIndent[0] = 220;
-            TopRightIndent[1] = 30;
-
-            TopRightIndent[0] += BottomLeftIndent[0];
-            TopRightIndent[1] += BottomLeftIndent[1];
-
-            AvailableArea[0] = thisCanvas.ActualWidth - (BottomLeftIndent[0] + TopRightIndent[0]);
-            AvailableArea[1] = thisCanvas.ActualHeight - (BottomLeftIndent[1] + TopRightIndent[1]);
-
-            #endregion
-
-            HighestScoreForGraph = GreatestScore;
-
-            double HeightScale = AvailableArea[1] / HighestScoreForGraph;
-            int NumOfBars = GetNumOfBars(ChosenEntries);
-
-            double shapeWidth = Math.Round(AvailableArea[0] / (2 * NumOfBars), 1);
-            //1.5 is the multiplier because the graph is half of the width, then a bar
-
-            int minWidth = 7;
-            int maxWidth = 200;
-
-            if (shapeWidth > maxWidth)
-            {
-                shapeWidth = maxWidth;
-            }
-            else if (shapeWidth < minWidth)
-            {
-                shapeWidth = minWidth;
-            }
-
-            BarLine.SetBarScales(shapeWidth, HeightScale);
-
-            EntriesToDisplay = ChosenEntries;
-
-            foreach (var entry in ChosenEntries)
-            {
-                BarLine thisBar = new BarLine(entry);
-                GraphLines.Add(thisBar);
-                //converts all entries into bars
-            }
-
-            DisplayRange[0] = 0;
-            DisplayRange[1] = DetermineDisplayRange(shapeWidth, 0);
-            //determines the range of bars which need to be displayed based on their width e.g. 0-10 of 20 bars
-
-            DrawGraph();
-
-        }
-
-        public void DrawGraph()
-        {
-            double shapeWidth = BarLine.GetWidth();
-            double currentLeft = BottomLeftIndent[0] + shapeWidth / 2;
-
-            for (int i = DisplayRange[0]; i < DisplayRange[1] + 1; i++)
-            {
-                foreach (var bar in GraphLines[i].GetShapes())
-                {
-                    if (!thisCanvas.Children.Contains(bar))
-                    {
-                        thisCanvas.Children.Add(bar);
-                    }
-                    Canvas.SetLeft(bar, currentLeft);
-                    Canvas.SetBottom(bar, BottomLeftIndent[1]);
-                    currentLeft += shapeWidth;
-                }
-                currentLeft += shapeWidth / 2;
-            }
-
-            DrawAxes(currentLeft);
-        }
-
-        public void DrawAxes(double currentLeft)
-        {
-            double fractionFromGraph = 0.01;
-
-            EndOfGraph = currentLeft;
-
-            for (int i = 0; i < GraphSides.Length; i++)
-            {
-                if (!thisCanvas.Children.Contains(GraphSides[i]))
-                {
-                    GraphSides[i] = new Line() { Stroke = Brushes.DarkGray, StrokeThickness = 2 };
-                    thisCanvas.Children.Add(GraphSides[i]);
-                    //initialises lines for the first time only
-                }
-            }
-            
-            GraphSides[0].X1 = BottomLeftIndent[0] * (1 - fractionFromGraph);     //bottom left point
-            GraphSides[0].Y1 = TopRightIndent[1] * (1 + fractionFromGraph) + AvailableArea[1];
-            GraphSides[0].X2 = currentLeft;                           //bottom right point
-            GraphSides[0].Y2 = TopRightIndent[1] * (1 + fractionFromGraph) + AvailableArea[1];
-
-            GraphSides[1].X1 = BottomLeftIndent[0] * (1 - fractionFromGraph);     //top left point
-            GraphSides[1].Y1 = TopRightIndent[1] * (1 - fractionFromGraph);
-            GraphSides[1].X2 = BottomLeftIndent[0] * (1 - fractionFromGraph);     //bottom left point
-            GraphSides[1].Y2 = TopRightIndent[1] * (1 + fractionFromGraph) + AvailableArea[1];
-        }
-
-        public double GetEndOfAxis(char type)
-        {
-            //gets the pixel position for the far end of that graph axes
-
-            if (type == 'x')
-            {
-                return GraphSides[0].X2;
-            }
-            else if (type == 'y')
-            {
-                return GraphSides[1].Y1;
-            }
-
-            return 0;
-        }
-
-        public void ClearCanvas()
-        {
-            //keeps the user input and labels, but removes the graph
-
-            foreach (var item in GraphLines)
-            {
-                item.RemoveAllFromCanvas();
-            }
-
-            GraphLines.Clear();
-            thisCanvas.Children.Remove(GraphSides[0]);
-            thisCanvas.Children.Remove(GraphSides[1]);
-        }
-
-        public void ShiftBars(double difference)
-        { 
-            int UndisplayedRight = (GraphLines.Count - 1) - DisplayRange[1];            // number of bars after the last one on the graph
-            int UndisplayedLeft = DisplayRange[0];  // number of bars before the first one on the graph
-
-            double[] OldDisplayRange = new double[] { DisplayRange[0], DisplayRange[1] };
-
-            if (UndisplayedLeft > 0 && difference < 0)
-            {
-                //SCROLL LEFT
-
-                //if there are more bars to show on the left and the left button is clicked
-
-                DisplayRange[0] += -1;
-                DisplayRange[1] = DetermineDisplayRange(BarLine.GetWidth(), DisplayRange[0]);
-                //determines how many bars to show
-
-                for (int i = DisplayRange[1]; i <= OldDisplayRange[1]; i++)
-                {
-                    GraphLines[i].RemoveAllFromCanvas();
-                }
-                //removes any bars which should no longer be displayed
-
-                DrawGraph();
-            }
-            else if (UndisplayedRight > 0 && difference > 0)
-            {
-                //SCROLL RIGHT
-
-                //if there are more bars to show on the right and the right button is clicked
-
-                GraphLines[DisplayRange[0]].RemoveAllFromCanvas();
-                //removes the left-most bar
-
-                DisplayRange[0] += 1;
-                DisplayRange[1] = DetermineDisplayRange(BarLine.GetWidth(), DisplayRange[0]);
-                //determines how many bars to show
-
-                DrawGraph();
-            }
-        }
-
-        private int GetNumOfBars(List<DataEntry> EntriesToSearch)
-        {
-            int count = 0;
-
-            foreach (var item in EntriesToSearch)
-            {
-                foreach (var score in item.PlayerScores)
-                {
-                    count += 1;
-                }
-            }
-
-            return count;
-        }
-
-        public int DetermineDisplayRange(double width, int startAt)
-        {
-            double currentLeft = width / 2;
-            int DisplayUpTo = startAt;
-
-            //works out how many bars will fit in the window space
-            //returns the upper limit e.g. if it can display bars 1-20, then this returns 20
-
-            for (int i = startAt; i < GraphLines.Count; i++)
-            {
-                if (currentLeft >= AvailableArea[0])
-                {
-                    i = GraphLines.Count;
-                    //early exit of for loop
-                }
-                else
-                {
-                    foreach (var shape in GraphLines[i].GetShapes())
-                    {
-                        currentLeft += width;
-                    }
-                    currentLeft += width / 2;
-
-                    DisplayUpTo = i;
-                }                
-            }
-
-            return DisplayUpTo;
-        }
-
-        public int[] GetDisplayRange()
-        {
-            //the range of entries which are currently being displayed
-            return DisplayRange;
-        }
-
-        public int GetNumOfEntries()
-        {
-            return EntriesToDisplay.Count;
-        }
-    }
-
+   
     public partial class ViewHistoryWindow : Window
     {
         private VisualGraph BarChart;
+        // indicates if the search is case-sensitive
         private bool IncludeCapitals;
+        // indicates if the search should display two-player games
         private bool IncludeTwoPlayers;
 
         private string SearchName;
         private int SortByType = 0;
 
-        private List<DataEntry> AllFileEntries = new List<DataEntry>();     
+        private List<DataEntry> AllFileEntries = new List<DataEntry>();
         //stores all the entries taken from the file
 
         private List<DataEntry> SortedSinglePlayerEntries = new List<DataEntry>();
@@ -448,7 +93,7 @@ namespace Mazeman
             GraphInfoBlock.Foreground = frg;
 
             GamesDisplayedTxt.Foreground = frg;
-            
+
             LeaderboardBtn.Background = bkg;
             LeaderboardBtn.Foreground = frg;
 
@@ -467,20 +112,21 @@ namespace Mazeman
         {
             if (AllFileEntries.Count > 0)
             {
+                // Determine search filters by the state of the checkboxes
                 IncludeCapitals = (bool)IncCapsCheckBox.IsChecked;
                 IncludeTwoPlayers = (bool)IncTwoPlayersCheckBox.IsChecked;
 
+                // Filter the entries by the given name
                 List<DataEntry> EntriesToDisplay = GetAllResultsWithName(SearchName, IncludeCapitals);
-
                 EntriesToDisplay = SortEntries(EntriesToDisplay, SortByType, SearchName, IncludeCapitals);
 
+                // Clear the canvas so that any previous graph is deleted
                 BarChart.ClearCanvas();
                 GraphInfoBlock.Inlines.Clear();
 
+                // If at least one entry is to be displayed
                 if (EntriesToDisplay.Count > 0)
                 {
-                    //at least one entry is to be displayed
-
                     BarChart.CreateGraph(EntriesToDisplay, FindGreatestScore(EntriesToDisplay));
 
                     int[] DisplayRange = BarChart.GetDisplayRange();
@@ -591,7 +237,7 @@ namespace Mazeman
                     xAxisLabel.Content = SearchName + "'s score";
                     break;
                 case 3:
-                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.difficulty).ToList();
+                    SortedList = ToSort.OrderBy(DataEntry => DataEntry.Difficulty).ToList();
                     //Orders entries by the game difficulty 
                     //i.e. all easy games first, then all medium games, then all hard games
                     xAxisLabel.Content = "Difficulty";
