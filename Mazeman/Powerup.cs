@@ -10,17 +10,19 @@ namespace Mazeman
         protected int maxDuration = 10;
         protected int currentActiveTime = 0;
         protected double[] Effects = new double[3] { 1, 1, 1 };
-        //effects[0] = friendly speed multiplier
-        //effects[1] = enemy speed multiplier
-        //effects[2] = the multiplier for the points in the game, as the player collects them
+        //  [0] = friendly speed multiplier
+        //  [1] = enemy speed multiplier
+        //  [2] = the multiplier for the points in the game, as the player collects them
 
         protected Point MazePt;
         protected Point PixelPt;
-        protected bool ReverseEffects = false;
-        //used to flip effects if the enemy collects the powerup
 
+        // Indicates the effects should be flipped (only if the enemy collects it)
+        protected bool ReverseEffects = false;
+
+        // Message displayed to user when the powerup is activated
         protected string DisplayMessage = "Null Effect";
-        //message displayed to user, to indicate the powerup in effect
+
         protected int TypeNumber = -1;
         private static Random rand = new Random();
 
@@ -39,25 +41,29 @@ namespace Mazeman
             }
 
             maxDuration = rand.Next(3, 8);
-            //generates a random time for the powerup to appear/be applied for
-            //e.g. if maxDuration = 5, then the powerup will be displayed for 5 seconds, and then when collected, its effect will be applied for 5 seconds
+            // Generates a random time for the powerup to appear/be applied for
+            //  e.g. if maxDuration = 5, then the powerup will be displayed for 5 seconds, and then when collected, its effect will be applied for 5 seconds
 
             switch (TypeNumber)
             {
                 case 0:
-                    Effects[0] = 1.5;           ///increases speed by 50%
+                    // Increases speed by 50%
+                    Effects[0] = 1.5;
                     DisplayMessage = "Player Speed is increased for " + maxDuration + " seconds!";
                     break;
                 case 1:
-                    Effects[1] = 0.5;           ///decreases enemy speed by 50%
+                    // Decreases enemy speed by 50%
+                    Effects[1] = 0.5;
                     DisplayMessage = "Enemy Speed is decreased for " + maxDuration + " seconds!";
                     break;
                 case 2:
-                    Effects[1] = -1;            ///entitites don't move with negative speed so they "freeze"
+                    // Freezes enemies
+                    Effects[1] = -1;
                     DisplayMessage = "Enemies are frozen for " + maxDuration + " seconds!";
                     break;
                 case 3:
-                    Effects[2] = 2;             ///each collected point is worth twice as many points in the total score
+                    // Doubles the value of each point collected by the player
+                    Effects[2] = 2;    
                     DisplayMessage = "Points are multiplied by " + Effects[2] + " for " + maxDuration + " seconds!";
                     break;
                 default:
@@ -87,25 +93,23 @@ namespace Mazeman
 
         public void Collect(Player collector)
         {
-            //virtual because each type of powerup overrides this method
-
             currentActiveTime = 0;
             RemoveFromMap();
 
             ReverseEffects = (collector is Enemy);
-            //if collected by an Enemy, then the effects need to be reversed, so that the enemy receives the benefit
+            // If collected by an Enemy, then the effects need to be reversed, so that the enemy receives the benefit
 
             if (ReverseEffects)
             {
-                //flips the effects so that the enemy receives the friendly effect, when it collects the powerup
+                // Flips the effects so that the enemy receives the friendly effect, when it collects the powerup
                 double temporaryVal = Effects[0];
                 Effects[0] = Effects[1];
                 Effects[1] = temporaryVal;
 
                 Enemy enemy = (Enemy)collector;
 
+                // Duration of the powerup is proportional to the enemy's speed/difficulty
                 maxDuration = (int)Math.Round(enemy.GetSpeed());
-                //halves the duration if the enemy collected it
 
                 switch (TypeNumber)
                 {
@@ -141,15 +145,11 @@ namespace Mazeman
 
         public void SetDuration(double distance)
         {
-            if (distance < 1)
-            {
-                distance = 1;
-            }
-            else if (distance > 25)
-            {
-                distance = 25;
-            }
+            // Constrains value between 1 and 25
+            distance = Math.Min(25, distance);
+            distance = Math.Max(1, distance);
 
+            // Duration between 1 and 5
             maxDuration = (int)Math.Sqrt(distance);
         }
 
@@ -160,7 +160,7 @@ namespace Mazeman
 
         public int GetTypeNumber()
         {
-            //used to determine which powerup is being applied/collected/removed e.g. 0 = SpeedUp
+            // Used to determine which powerup is being applied/collected/removed e.g. 0 = SpeedUp
             return TypeNumber;
         }
 
@@ -171,7 +171,7 @@ namespace Mazeman
 
         public void IncrementActiveTime()
         {
-            //stores how long the powerup has been displayed/its effect has been applied
+            // Stores how long the powerup has been displayed/its effect has been applied
             currentActiveTime += 1;
         }
 
@@ -187,12 +187,7 @@ namespace Mazeman
 
         public bool IsExpired()
         {
-            if (currentActiveTime > maxDuration)
-            {
-                return true;
-            }
-
-            return false;
+            return currentActiveTime > maxDuration;
         }
 
         public void RemoveFromMap()
@@ -212,16 +207,16 @@ namespace Mazeman
 
         public void UpdateOpacity()
         {
-            //fades powerups in and out when generating/removing from the map
+            // Fades powerups in and out when generating/removing from the map
 
             if (currentActiveTime < 2 && Sprite.Opacity < 0.95)
             {
-                //FADE IN
-                Sprite.Opacity *= 1.18;
+                // FADE IN
+                Sprite.Opacity /= 0.85;
             }
             else if (maxDuration - currentActiveTime <= 1 && Sprite.Opacity > 0.01)
             {
-                //FADE OUT
+                // FADE OUT
                 Sprite.Opacity *= 0.85;
             }
 
@@ -242,19 +237,21 @@ namespace Mazeman
             double speed = thisPlayer.GetSpeed();
             double PointValue = thisPlayer.GetScorePointValue();
 
-            //limitation to prevent two freezes cancelling each other out since -1 * -1 = +1
-
+            // Only apply effect to the enemy if they are not frozen or the effect is not freezing
+            // This prevents two freezes cancelling each other out since -1 * -1 = +1
             if (thisPlayer is Enemy && (speed > 0 || Effects[1] > 0))
             {
                 thisPlayer.SetSpeed(speed * Effects[1]);
             }
             else
             {
+                // Apply effect to Player's speed
                 if (speed > 0 || Effects[0] > 0)
                 {
                     thisPlayer.SetSpeed(speed * Effects[0]);
                 }
 
+                // Apply effect to points
                 if (PointValue > 0 || Effects[2] > 0)
                 {
                     thisPlayer.SetScorePointValue((int)(PointValue * Effects[2]));
@@ -270,17 +267,21 @@ namespace Mazeman
             double speed = thisPlayer.GetSpeed();
             double PointValue = thisPlayer.GetScorePointValue();
 
+            // Only apply effect to the enemy if they are not frozen or the effect is not freezing
+            // This prevents two freezes cancelling each other out since -1 * -1 = +1
             if (thisPlayer is Enemy && !(speed > 0 && Effects[1] < 0))
             {
                 thisPlayer.SetSpeed(speed / Effects[1]);
             }
             else
             {
+                // Apply effect to Player's speed
                 if (!(speed > 0 && Effects[0] < 0))
                 {
                     thisPlayer.SetSpeed(speed / Effects[0]);
                 }
 
+                // Apply effect to points
                 if (!(PointValue > 0 && Effects[2] < 0))
                 {
                     thisPlayer.SetScorePointValue((int)(PointValue / Effects[2]));

@@ -13,7 +13,9 @@ namespace Mazeman
         protected double DefaultMovementSpeed;
         protected Point CurrentMazePt = new Point();
         protected Point PixelPt = new Point();
-        protected int CurrentDirection = -1;     //moving left at start
+
+        // Describes the direction of movement (Clockwise, so 0 = North,... 3 = West)
+        protected int CurrentDirection = -1;
 
         private int Score = 0;
         private int PlayerNum;
@@ -88,7 +90,7 @@ namespace Mazeman
 
         public virtual void Reset()
         {
-            //resets position/speed of player if caught and it still has lives
+            // Resets position/speed of player if caught and it still has lives
 
             CurrentDirection = -1;
             PixelPtChange = new Point(0, 0);
@@ -98,62 +100,14 @@ namespace Mazeman
             SetScorePointValue(1);
             Sprite.Source = IMGSources[1];
 
-            if (PlayerNum >= 0)
-            {
-                //Players
-                Canvas.SetZIndex(Sprite, 0);
-            }
-            else
-            {
-                //Enemies
-                Canvas.SetZIndex(Sprite, 50);
-            }
+            int zIndex = (PlayerNum >= 0) ? 0 : 50;
+            Canvas.SetZIndex(Sprite, zIndex);
         }
 
-        public void UpdateDirection(Key thisKey)
+        public void UpdateDirection(int direction)
         {
-            if (PlayerNum == 0 && CurrentMovementSpeed > 0)
-            {
-                //PLAYER 1 CONTROLS
-                switch (thisKey)
-                {
-                    case Key.W:
-                        CurrentDirection = 0;
-                        break;
-                    case Key.D:
-                        CurrentDirection = 1;
-                        break;
-                    case Key.S:
-                        CurrentDirection = 2;
-                        break;
-                    case Key.A:
-                        CurrentDirection = 3;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else if (PlayerNum == 1 && CurrentMovementSpeed > 0)
-            {
-                //PLAYER 2 CONTROLS
-                switch (thisKey)
-                {
-                    case Key.Up:
-                        CurrentDirection = 0;
-                        break;
-                    case Key.Right:
-                        CurrentDirection = 1;
-                        break;
-                    case Key.Down:
-                        CurrentDirection = 2;
-                        break;
-                    case Key.Left:
-                        CurrentDirection = 3;
-                        break;
-                    default:
-                        break;
-                }
-            }
+            if (direction > -1 && direction < 4)
+                CurrentDirection = direction;
         }
 
         public void IncrementPixelPt()
@@ -194,9 +148,10 @@ namespace Mazeman
         {
             NextPoint = newPoint;
             NextPixelPt = newPixelPt;
+
+            // Determines how many pixels the player should move per frame
             PixelPtChange.X += (newPixelPt.X - PixelPt.X) / GameConstants.CellDimensions[0];
             PixelPtChange.Y += (newPixelPt.Y - PixelPt.Y) / GameConstants.CellDimensions[1];
-            //determines the movement in terms of x and y for that move based on the pixel positions
 
             Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
 
@@ -208,7 +163,7 @@ namespace Mazeman
 
         public void IncrementDisplayNumber()
         {
-            //used to only update position on alternate frames
+            // Used to only update position on alternate frames
             DisplayNumber += 1;
         }
 

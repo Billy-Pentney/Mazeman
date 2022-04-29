@@ -62,7 +62,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="BarLine.cs" />
+    <Compile Include="GraphElement.cs" />
     <Compile Include="Cell.cs" />
     <Compile Include="DataEntry.cs" />
     <Compile Include="Edge.cs" />

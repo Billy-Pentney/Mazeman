@@ -6,10 +6,13 @@ using System.Windows.Shapes;
 
 namespace Mazeman
 {
+    /// <summary>
+    ///     Displays a graph of the user's previous scores, using GraphElement to store each game.
+    /// </summary>
     class VisualGraph
     {
         public static Canvas thisCanvas;
-        private List<BarLine> GraphLines = new List<BarLine>();
+        private List<GraphElement> GraphLines = new List<GraphElement>();
         private Line[] GraphSides = new Line[2];
 
         // Components used for positioning the graph and bars correctly
@@ -18,8 +21,8 @@ namespace Mazeman
         private double[] AvailableArea = new double[2];       //[0] = width of graph, [1] = height of graph
 
         // The interval of the bars which are currently visible
-        //  First index describes which bar is on the extreme left of the window
-        //  Second index describes which bar is on the extreme right of the window
+        //  [0] describes which bar is on the extreme left of the window
+        //  [1] describes which bar is on the extreme right of the window
         private int[] DisplayRange = new int[2];
 
         private List<DataEntry> EntriesToDisplay = new List<DataEntry>();
@@ -69,14 +72,14 @@ namespace Mazeman
                 shapeWidth = minWidth;
             }
 
-            BarLine.SetBarScales(shapeWidth, HeightScale);
+            GraphElement.SetBarScales(shapeWidth, HeightScale);
 
             EntriesToDisplay = ChosenEntries;
 
             // Convert each entry into a single bar object, and add it to the Lines array
             foreach (var entry in ChosenEntries)
             {
-                BarLine thisBar = new BarLine(entry);
+                GraphElement thisBar = new GraphElement(entry);
                 GraphLines.Add(thisBar);
             }
 
@@ -89,7 +92,7 @@ namespace Mazeman
 
         public void DrawGraph()
         {
-            double shapeWidth = BarLine.GetWidth();
+            double shapeWidth = GraphElement.GetWidth();
             double currentLeft = BottomLeftIndent[0] + shapeWidth / 2;
 
             for (int i = DisplayRange[0]; i <= DisplayRange[1]; i++)
@@ -188,7 +191,7 @@ namespace Mazeman
                 // Determines how many bars to show
                 // Note: this must be recalculated, since we cannot assume that the bars are all the 
                 // same width (due to Two-Player games requiring two bars)
-                DisplayRange[1] = DetermineDisplayRange(BarLine.GetWidth(), DisplayRange[0]);
+                DisplayRange[1] = DetermineDisplayRange(GraphElement.GetWidth(), DisplayRange[0]);
 
                 // Removes any bars which have fallen out of the display range
                 for (int i = DisplayRange[1]; i <= OldDisplayRange[1]; i++)
@@ -209,7 +212,7 @@ namespace Mazeman
                 // Determines how many bars to show
                 // Note: this must be recalculated, since we cannot assume that the bars are all the 
                 // same width (due to Two-Player games requiring two bars)
-                DisplayRange[1] = DetermineDisplayRange(BarLine.GetWidth(), DisplayRange[0]);
+                DisplayRange[1] = DetermineDisplayRange(GraphElement.GetWidth(), DisplayRange[0]);
 
                 // Also, redraw with the changes
                 DrawGraph();
@@ -258,7 +261,6 @@ namespace Mazeman
 
             return lineIndex;
         }
-
 
         public int[] GetDisplayRange()
         {

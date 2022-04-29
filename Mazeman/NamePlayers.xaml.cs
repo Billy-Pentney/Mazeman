@@ -6,8 +6,12 @@ using System.Windows.Controls;
 namespace Mazeman
 {
     /// <summary>
-    /// Interaction logic for NamePlayers.xaml
+    ///     The NamePlayers window is responsible for receiving the names which should be 
+    ///     written alongside the score of each player at the end of the game.
+    ///     This window can be called repeatedly, until the response is satisfactory, and is 
+    ///     applicable for both players. 
     /// </summary>
+    
     public partial class NamePlayers : Window
     {
         static TextBox InputTxt = new TextBox() { Width = 150, Height = 25 };

@@ -33,9 +33,9 @@ namespace Mazeman
 
         private int[] CountOfPowerupType;
 
-        // Stores the powerups currently in the maze
+        // Stores uncollected powerups currently in the maze
         private List<Powerup> VisiblePowerups = new List<Powerup>();
-        // Stores powerups which have been collected and the effect is being applied with the priority as the powerup duration
+        // Stores collected powerups, whose effect is being applied with the priority as the powerup duration
         private List<Powerup> AppliedPowerups = new List<Powerup>();
 
         private int NumOfPlayers = 1;
@@ -60,6 +60,14 @@ namespace Mazeman
         private int NextEnemyColourIndex = 0;
         private double RemainingPauseTime = -1;
 
+        // Pixel Width/Height of the images representing player lives 
+        private const int LIFE_IMG_SIZE = 22;
+
+        private const int NORTH = 0;
+        private const int EAST = 1;
+        private const int SOUTH = 2;
+        private const int WEST = 3;
+
         public Game(GameWindow thisWindow, int[] MazeDimensions, bool TwoPlayers, double EnemyDifficulty, int EnemyColourIndex, int NumOfEnemies)
         {
             CurrentWindow = thisWindow;
@@ -67,32 +75,15 @@ namespace Mazeman
 
             CountOfPowerupType = new int[GameConstants.NumOfUniquePowerupTypes];
 
-            for (int i = 0; i < CountOfPowerupType.Length; i++)
-            {
-                CountOfPowerupType[i] = 0;
-            }
-
             this.MazeDimensions = MazeDimensions;
 
             int MazeArea = this.MazeDimensions[0] * this.MazeDimensions[1];
 
-            if (MazeArea < 301)
-            {
-                MaxPowerupsPerType = 1;
-            }
-            else if (MazeArea < 601)
-            {
-                MaxPowerupsPerType = 2;
-            }
-            else
-            {
-                MaxPowerupsPerType = 3;
-            }
+            // Number of powerups available at any given time is proportional to maze size
+            MaxPowerupsPerType = Math.Min(3, MazeArea / 300);
+            MaxPowerupsPerType = Math.Max(1, MaxPowerupsPerType);
 
-            if (TwoPlayers)
-            {
-                NumOfPlayers = 2;
-            }
+            NumOfPlayers = TwoPlayers ? 2 : 1;
 
             NextEnemyColourIndex = EnemyColourIndex;
             Difficulty = EnemyDifficulty;
@@ -112,20 +103,16 @@ namespace Mazeman
 
             MazeOne.SetScorePointColour(1);
 
-            //setting up life images so that users can see the number of lives they have left
+            // Setting up life images so that users can see the number of lives they have left
             LifeIMGSource.BeginInit();
             LifeIMGSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Life.png");
             LifeIMGSource.EndInit();
 
+            // Creates and displays the hearts to represent lives
             for (int i = 0; i < LifeImages.Length; i++)
             {
-                //creates and displays the hearts to represent lives
-                LifeImages[i] = new Image();
-                LifeImages[i].Source = LifeIMGSource;
+                LifeImages[i] = new Image() { Width = LIFE_IMG_SIZE, Height = LIFE_IMG_SIZE, Source = LifeIMGSource } ;
                 CurrentWindow.GameCanvas.Children.Add(LifeImages[i]);
-
-                LifeImages[i].Width = 22;
-                LifeImages[i].Height = 22;
 
                 Canvas.SetLeft(LifeImages[i], 17 + i * 25);
                 Canvas.SetTop(LifeImages[i], 95);
@@ -169,7 +156,7 @@ namespace Mazeman
 
                 NextEnemyColourIndex = (NextEnemyColourIndex) % GameConstants.NumOfEnemyColours + 1;
 
-                FindShortestPath(ActiveEnemies[i - 1]);
+                DetermineEnemyTarget(ActiveEnemies[i - 1]);
             }
         }
 
@@ -276,14 +263,14 @@ namespace Mazeman
             int ClearBoardPoints = GameConstants.CellDimensions[0] + GameConstants.CellDimensions[1];
             int ScorePointValue = 0;
 
-            foreach (var player in ActivePlayers)
+            foreach (Player player in ActivePlayers)
             {
                 ScorePointValue = player.GetScorePointValue();
                 if (ScorePointValue > 0)
                 {
                     player.IncrementScore(ClearBoardPoints * ScorePointValue);
-                    ///adds a bonus based on the size of the board and the number of players.
-                    ///e.g. in 15x15, with 1P, 30pts is added; in 30x20 with 2P, 50 pts is added per player
+                    // Adds a bonus based on the size of the board and the number of players.
+                    //  e.g. in 15x15, with 1P, 30pts is added; in 30x20 with 2P, 50 pts is added per player
                     TotalScore += ClearBoardPoints * ScorePointValue;
                 }
             }
@@ -306,7 +293,7 @@ namespace Mazeman
 
         private void UpdateEntityMovement()
         {
-            //updates the position/direction/points for all players/enemies
+            // Updates the position/direction/points for all players/enemies
 
             for (int i = 0; i < ActivePlayers.Count; i++)
             {
@@ -333,7 +320,7 @@ namespace Mazeman
                 {
                     ActiveEnemies[i].UpdateDirection();
                     UpdatePlayerPosition(ActiveEnemies[i]);
-                    FindShortestPath(ActiveEnemies[i]);
+                    DetermineEnemyTarget(ActiveEnemies[i]);
                 }
 
                 ActiveEnemies[i].Draw();
@@ -348,7 +335,7 @@ namespace Mazeman
             {
                 if (VisiblePowerups[i].IsExpired())
                 {
-                    //removes expired displayed powerups (those which have not been collected in the time limit)
+                    // Removes expired displayed powerups (those which have not been collected in the time limit)
 
                     VisiblePowerups[i].RemoveFromMap();
                     CountOfPowerupType[VisiblePowerups[i].GetTypeNumber()] -= 1;
@@ -375,17 +362,66 @@ namespace Mazeman
             CurrentWindow.ScoreDisplayTXT.Content = Convert.ToString(TotalScore);
         }
 
+        private Player GetPlayerByNum(int num)
+        {
+            foreach (Player player in ActivePlayers)
+            {
+                if (player.GetPlayerNum() == num)
+                    return player;
+            }
+
+            return null;
+        }
+
         public void UpdatePlayerDirection(Key thisKey)
         {
-            foreach (var Player in ActivePlayers)
+            Player player1 = GetPlayerByNum(0);
+            Player player2 = GetPlayerByNum(1);
+
+            switch (thisKey)
             {
-                Player.UpdateDirection(thisKey);
+                // P1 NORTH
+                case Key.W:
+                    player1.UpdateDirection(NORTH);
+                    break;
+                // P1 EAST
+                case Key.D:
+                    player1.UpdateDirection(EAST);
+                    break;
+                // P1 SOUTH
+                case Key.S:
+                    player1.UpdateDirection(SOUTH);
+                    break;
+                // P1 WEST
+                case Key.A:
+                    player1.UpdateDirection(WEST);
+                    break;
+
+                // P2 North
+                case Key.Up:
+                    player2.UpdateDirection(NORTH);
+                    break;
+                // P2 East
+                case Key.Right:
+                    player2.UpdateDirection(EAST);
+                    break;
+                // P2 South
+                case Key.Down:
+                    player2.UpdateDirection(SOUTH);
+                    break;
+                // P2 West
+                case Key.Left:
+                    player2.UpdateDirection(WEST);
+                    break;
+
+                default:
+                    break;
             }
         }
 
         private void CollectPoint(Player thisPlayer)
         {
-            //controls incrementing the score when a player moves over a point
+            // Controls incrementing the score when a player moves over a point
 
             int ScorePointValue = thisPlayer.GetScorePointValue();
             int[] NumOfVisiblePoints = MazeOne.PointCrossed(thisPlayer.GetCurrentMazePt());
@@ -448,72 +484,65 @@ namespace Mazeman
             return occupied.Contains(toCheck);
         }
 
-        private void FindShortestPath(Enemy enemyParam)
+        private void DetermineEnemyTarget(Enemy enemyParam)
         {
             Queue<int> ShortestPath = new Queue<int>();
-            Queue<int> AlternatePath = new Queue<int>();
 
-            double directDistance = 0;
-            double shortestDistance = 0;
-
-            Point closestPowerupPoint = new Point(-1, -1);
-            Point closestPlayerPoint = new Point(-1, -1);
+            Player closestPlayer = null;
+            Powerup closestPowerup = null;
             Point currentPoint = enemyParam.GetCurrentMazePt();
 
-            foreach (var player in ActivePlayers)
-            {
-                directDistance = MazeOne.GetApproximateDistance(currentPoint, player.GetCurrentMazePt());
+            double distanceToClosestPlayer = 0;
+            double distanceToClosestPowerup = 0;
 
-                if (directDistance < shortestDistance || shortestDistance == 0)
+            // Finds closest player to current location
+            foreach (Player player in ActivePlayers)
+            {
+                double directDistance = MazeOne.GetApproximateDistance(currentPoint, player.GetCurrentMazePt());
+
+                if (directDistance < distanceToClosestPlayer || distanceToClosestPlayer == 0)
                 {
-                    shortestDistance = directDistance;
-                    closestPlayerPoint = player.GetCurrentMazePt();
-                }
-
-                //finds closest player to current location
-            }
-
-            shortestDistance = 0;
-
-            foreach (var powerup in VisiblePowerups)
-            {
-                directDistance = MazeOne.GetApproximateDistance(currentPoint, powerup.GetCurrentMazePt());
-
-                if (directDistance < shortestDistance || shortestDistance == 0)
-                {
-                    shortestDistance = directDistance;
-                    closestPowerupPoint = powerup.GetCurrentMazePt();
-                }
-
-                //finds the closest powerup to the current location
-            }
-
-            if (MazeOne.IsValidCell(closestPlayerPoint) && (closestPlayerPoint != enemyParam.GetTarget() || CurrentTime < 1))
-            {
-                //only generates a path if the player is not in the same cell as the previous target
-
-                ShortestPath = MazeOne.GeneratePathToTarget(closestPlayerPoint, currentPoint, GetAllEnemyPositions());
-                //targets the closest player by default
-
-                enemyParam.UpdatePath(ShortestPath);
-                enemyParam.SetTarget(closestPlayerPoint);
-
-            }
-
-            if (MazeOne.IsValidCell(closestPowerupPoint) && closestPowerupPoint != enemyParam.GetTarget())
-            {
-                //only generates a path if the powerup is not in the same cell as the previous target
-
-                AlternatePath = MazeOne.GeneratePathToTarget(closestPowerupPoint, currentPoint, GetAllEnemyPositions());
-
-                //if the path to the nearest powerup is sufficiently small, then it is preferred to the player
-
-                if ((AlternatePath.Count * 4 * enemyParam.GetPlayerAffinity()) < ShortestPath.Count)
-                {
-                    enemyParam.UpdatePath(AlternatePath);
-                    enemyParam.SetTarget(closestPowerupPoint);
+                    distanceToClosestPlayer = directDistance;
+                    closestPlayer = player;
                 }
             }
+
+            // Finds the closest powerup to the current location
+            foreach (Powerup powerup in VisiblePowerups)
+            {
+                double directDistance = MazeOne.GetApproximateDistance(currentPoint, powerup.GetCurrentMazePt());
+
+                if (directDistance < distanceToClosestPowerup || distanceToClosestPowerup == 0)
+                {
+                    distanceToClosestPowerup = directDistance;
+                    closestPowerup = powerup;
+                }
+            }
+
+            Point targetPoint;
+
+            // If no players exist and no powerups exist...
+            if (closestPlayer == null && closestPowerup == null)
+            {
+                // ... then no path can be generated
+                return;
+            }
+
+            // Else if the player is closer than the powerup or there are no powerups in the maze
+            if (closestPowerup == null || distanceToClosestPlayer < distanceToClosestPowerup * enemyParam.GetPlayerAffinity())
+            {
+                targetPoint = closestPlayer.GetCurrentMazePt();
+            }
+            // Otherwise, the powerup is closer or no players exist
+            else
+            {
+                targetPoint = closestPowerup.GetCurrentMazePt();
+            }
+
+            ShortestPath = MazeOne.GeneratePathToTarget(targetPoint, currentPoint, GetAllEnemyPositions());
+            enemyParam.SetTarget(targetPoint);
+            // Store the path in the enemy
+            enemyParam.UpdatePath(ShortestPath);
         }
 
         private void GenerateRandomPowerUp()

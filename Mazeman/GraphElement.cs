@@ -9,22 +9,25 @@ using System.Windows.Shapes;
 namespace Mazeman
 {
     /// <summary>
-    /// 
-    /// Window responsible for showing the previous scores of players.
-    /// 
+    ///     Each object describes a single game, when displaying the VisualGraph of previous scores.
+    ///     Each rectangle within this object corresponds to a player in that game.
     /// </summary>
 
-    class BarLine
+    class GraphElement
     {
-        private List<Rectangle> shapes = new List<Rectangle>();
+        private List<Rectangle> playerBars = new List<Rectangle>();
         private static double WidthScale = 20;
         private static double HeightScale = 1;
         private string GameStatsText;
-        private Brush[] Colours = new Brush[] { Brushes.Green, Brushes.Orange, Brushes.Red };
-        private Brush ClickColour = Brushes.LightBlue;           //colour when the user clicks on/selects a bar
-        private Brush ShapeColour;  // ordinary colour for the shapes
 
-        public BarLine(DataEntry thisEntry)
+        private Brush[] Colours = new Brush[] { Brushes.Green, Brushes.Orange, Brushes.Red };
+
+        // Colour when the user clicks on/selects a bar
+        private Brush ClickColour = Brushes.LightBlue;
+        // Colour for the bars when not clicked
+        private Brush ShapeColour;
+
+        public GraphElement(DataEntry thisEntry)
         {
             GameStatsText = "GameID: " + thisEntry.GameID + Environment.NewLine + "Timestamp: " + thisEntry.Timestamp + Environment.NewLine;
             GameStatsText += Environment.NewLine + "Total Score For All Players: " + Convert.ToString(thisEntry.GetTotalScore()) + " pts" + Environment.NewLine;
@@ -36,7 +39,7 @@ namespace Mazeman
                 thisLine.Fill = ShapeColour;
                 thisLine.Width = WidthScale;
                 thisLine.Height = thisEntry.PlayerScores[i] * HeightScale;
-                shapes.Add(thisLine);
+                playerBars.Add(thisLine);
                 GameStatsText += Environment.NewLine + "Player " + Convert.ToString(i + 1) + " (" + thisEntry.PlayerNames[i] + ") scored " + thisEntry.PlayerScores[i] + " pt";
 
                 if (thisEntry.PlayerScores[i] > 1)
@@ -81,7 +84,7 @@ namespace Mazeman
 
         private void ThisWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (shapes.Contains(e.Source))
+            if (playerBars.Contains(e.Source))
             {
                 SetColour(ClickColour);
                 MessageBox.Show(GameStatsText);
@@ -92,7 +95,7 @@ namespace Mazeman
 
         private void SetColour(Brush ColourToSet)
         {
-            foreach (var item in shapes)
+            foreach (var item in playerBars)
             {
                 item.Fill = ColourToSet;
             }
@@ -100,12 +103,12 @@ namespace Mazeman
 
         public List<Rectangle> GetShapes()
         {
-            return shapes;
+            return playerBars;
         }
 
         public void RemoveAllFromCanvas()
         {
-            foreach (var shape in shapes)
+            foreach (var shape in playerBars)
             {
                 VisualGraph.thisCanvas.Children.Remove(shape);
             }
