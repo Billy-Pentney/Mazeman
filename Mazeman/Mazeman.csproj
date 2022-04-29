@@ -157,7 +157,7 @@
     <EmbeddedResource Include="Data\History.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <Resource Include="Data\Sprite Source.txt" />
+    <Resource Include="Data\Sprite Inspiration.txt" />
     <EmbeddedResource Include="Data\Sprites\ControlsIMG.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
