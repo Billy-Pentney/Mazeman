@@ -11,15 +11,17 @@ namespace Mazeman
     {
         protected double CurrentMovementSpeed;
         protected double DefaultMovementSpeed;
+        protected bool IsFrozen = false;
+
         protected Point CurrentMazePt = new Point();
         protected Point PixelPt = new Point();
 
         // Describes the direction of movement (Clockwise, so 0 = North,... 3 = West)
         protected int CurrentDirection = -1;
 
-        private int Score = 0;
         private int PlayerNum;
-        private int ScorePointValue = 1;
+        private float Score = 0;
+        private float ScorePointValue = 1;
 
         // Tracks the frame number, so the sprite can be updated at different intervals
         private int DisplayNumber = 0;          
@@ -83,7 +85,7 @@ namespace Mazeman
             return CurrentDirection;
         }
 
-        public int GetScore()
+        public float GetScore()
         {
             return Score;
         }
@@ -152,13 +154,6 @@ namespace Mazeman
             // Determines how many pixels the player should move per frame
             PixelPtChange.X += (newPixelPt.X - PixelPt.X) / GameConstants.CellDimensions[0];
             PixelPtChange.Y += (newPixelPt.Y - PixelPt.Y) / GameConstants.CellDimensions[1];
-
-            Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
-
-            if (CurrentMovementSpeed < 0)
-            {
-                Sprite.Source = FrozenIMGSource;
-            }
         }
 
         public void IncrementDisplayNumber()
@@ -172,7 +167,7 @@ namespace Mazeman
             return PixelPtChange.X != 0 || PixelPtChange.Y != 0;
         }
 
-        public void IncrementScore(int Increment)
+        public void IncrementScore(float Increment)
         {
             if (Increment > 0 && ScorePointValue > 0)
             {
@@ -189,9 +184,37 @@ namespace Mazeman
             ScorePointValue = value;
         }
 
-        public int GetScorePointValue()
+        public float GetScorePointValue()
         {
             return ScorePointValue;
+        }
+
+        public void MultiplySpeed(float f)
+        {
+            SetSpeed(CurrentMovementSpeed * f);
+        }
+
+        public void MultiplyScorePointValue(float f)
+        {
+            if (f > 0)
+                ScorePointValue *= f;
+        }
+
+        public void TryFreeze()
+        {
+            // Only freeze players which are NOT already frozen
+            if (!IsFrozen)
+            {
+                IsFrozen = true;
+                Sprite.Source = FrozenIMGSource;
+            }
+        }
+
+        public void TryUnfreeze()
+        {
+            // Only unfreeze players which ARE already frozen
+            if (IsFrozen)
+                IsFrozen = false;
         }
 
         public void SetSpeed(double newSpeed)
@@ -203,19 +226,14 @@ namespace Mazeman
 
             if (CurrentMovementSpeed > 0 && CurrentMovementSpeed < 1)
             {
-                UpdateFrequency = 1 / CurrentMovementSpeed;
                 // UpdateFrequency represents how frequently the player's position is updated
                 // e.g. if the current movement speed is 0.5, then UF = 2, so it is updated every second frame
-            }
-            else if (CurrentMovementSpeed < 0)
-            {
-                // If the character is frozen 
-                Sprite.Source = FrozenIMGSource;
+                UpdateFrequency = 1 / CurrentMovementSpeed;
             }
             else
             {
+                // Updates player position once per frame
                 UpdateFrequency = 1;
-                // Updates player position every frame
             }
 
             DisplayNumber = 0;
@@ -261,10 +279,13 @@ namespace Mazeman
 
         public void Draw()
         {
+            if (IsFrozen)
+                return;
+
             // Moves player position
             IncrementPixelPt();
 
-            if (IsMoving() && CurrentMovementSpeed > 0)
+            if (IsMoving())
             {
                 Sprite.Source = IMGSources[Math.Abs(CurrentDirection)];
             }

@@ -19,10 +19,11 @@ namespace Mazeman
 
         /* */
 
-        public void AddPlayer(string name, int score)
+        public void AddPlayer(string name, float score)
         {
             PlayerNames.Add(name);
-            PlayerScores.Add(score);
+            // Truncate the decimal part of the score
+            PlayerScores.Add((int)score);
         }
 
         public void SetOtherGameVariables(int GameID, int difficulty, int currentTime, int[] mazeDimensions)

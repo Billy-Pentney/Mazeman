@@ -40,7 +40,7 @@ namespace Mazeman
 
         private int NumOfPlayers = 1;
         private int CurrentTime = 0;
-        private int TotalScore = 0;
+        private float TotalScore = 0;
         private double Difficulty = GameConstants.Difficulties.Last();
 
         private int PlayerLives = 3;
@@ -196,7 +196,6 @@ namespace Mazeman
                         // If they have been visible for more than their maximum duration, 
                         // Then they are removed from the map and from the list of powerups
                         VisiblePowerups[i].RemoveFromMap();
-                        CountOfPowerupType[VisiblePowerups[i].GetTypeNumber()] -= 1;
                         VisiblePowerups.RemoveAt(i);
                     }
                     else
@@ -261,7 +260,7 @@ namespace Mazeman
             //resets the board and the entities
 
             int ClearBoardPoints = GameConstants.CellDimensions[0] + GameConstants.CellDimensions[1];
-            int ScorePointValue = 0;
+            float ScorePointValue = 0;
 
             foreach (Player player in ActivePlayers)
             {
@@ -338,7 +337,6 @@ namespace Mazeman
                     // Removes expired displayed powerups (those which have not been collected in the time limit)
 
                     VisiblePowerups[i].RemoveFromMap();
-                    CountOfPowerupType[VisiblePowerups[i].GetTypeNumber()] -= 1;
                     ExpiredPowerupIndexes.Add(i);
                 }
                 else
@@ -423,16 +421,18 @@ namespace Mazeman
         {
             // Controls incrementing the score when a player moves over a point
 
-            int ScorePointValue = thisPlayer.GetScorePointValue();
+            float ScorePointValue = thisPlayer.GetScorePointValue();
             int[] NumOfVisiblePoints = MazeOne.PointCrossed(thisPlayer.GetCurrentMazePt());
-            //0 is the points before this move, 1 is the points after
+            // [0] is the number of collectible points before this move
+            // [1] is the number of points after the move (i.e. 1 less)
 
-            int IncrementScore = NumOfVisiblePoints[0] - NumOfVisiblePoints[1];
+            // The amount of points to add to the player's total
+            float GainedPoints = (NumOfVisiblePoints[0] - NumOfVisiblePoints[1]) * ScorePointValue;
 
             if (ScorePointValue > 0)
             {
-                thisPlayer.IncrementScore(IncrementScore * ScorePointValue);
-                TotalScore += IncrementScore * ScorePointValue;
+                thisPlayer.IncrementScore(GainedPoints);
+                TotalScore += GainedPoints;
             }
 
         }
@@ -547,16 +547,43 @@ namespace Mazeman
 
         private void GenerateRandomPowerUp()
         {
-            Point MazeLocation = GenerateRandomUnoccupiedLocation();        //gets a random cell that is a certain distance from all entites/powerups
-            Point PixelPt = new Point();
+            // Gets a random cell that is a certain distance from all entites/powerups
+            Point MazeLocation = GenerateRandomUnoccupiedLocation();
 
+            // If the chosen cell is Out-Of-Bounds, then we cannot generate a powerup
+            if (!MazeOne.IsValidCell(MazeLocation))
+                return;
+
+            // Otherwise, find the corresponding position in the display
+            Point PixelPt = MazeOne.GetPixelPoint(MazeLocation);
+
+            // Then pick a random type for the powerup
             int type = rand.Next(0, GameConstants.NumOfUniquePowerupTypes);
 
-            if (CountOfPowerupType[type] < MaxPowerupsPerType && MazeOne.IsValidCell(MazeLocation))
+            Powerup generatedPowerup;
+
+            // Convert the type to the corresponding Powerup implementation
+            switch (type)
             {
-                PixelPt = MazeOne.GetPixelPoint(MazeLocation);
-                VisiblePowerups.Add(new Powerup(MazeLocation, PixelPt, type));
-                CountOfPowerupType[type] += 1;
+                case 0:
+                    generatedPowerup = new SpeedUpPlayerPowerup(MazeLocation, PixelPt);
+                    break;
+                case 1:
+                    generatedPowerup = new SpeedDownEnemyPowerup(MazeLocation, PixelPt);
+                    break;
+                case 2:
+                    generatedPowerup = new FreezePowerup(MazeLocation, PixelPt);
+                    break;
+                default:
+                    generatedPowerup = new PointsPowerup(MazeLocation, PixelPt);
+                    break;
+            }
+
+            // Then add it to the maze
+            if (CountOfPowerupType[type] < MaxPowerupsPerType)
+            {
+                VisiblePowerups.Add(generatedPowerup);
+                //CountOfPowerupType[type] += 1;
             }
         }
 
@@ -669,52 +696,50 @@ namespace Mazeman
             thisPowerup.Collect(CollectedBy);
             VisiblePowerups.Remove(thisPowerup);
 
-            double[] Effects = thisPowerup.GetEffects();
+            //if (CollectedBy is Enemy)
+            //{
+            //    //if the enemy collects a powerup, its duration is determined by the distance to the player(s)
+            //    double dist = 999;
 
-            if (CollectedBy is Enemy)
+            //    foreach (var enemy in ActiveEnemies)
+            //    {
+            //        foreach (var player in ActivePlayers)
+            //        {
+            //            Point enemypos = enemy.GetCurrentMazePt();
+            //            Point playerpos = player.GetCurrentMazePt();
+
+            //            double newDist = MazeOne.GetApproximateDistance(playerpos, enemypos);
+
+            //            if (newDist < dist)
+            //            {
+            //                //finds closest player to any enemy
+            //                dist = newDist;
+            //            }
+            //        }
+            //    }
+
+            //    if (dist < 999)
+            //    {
+            //        //sets the duration of the powerup based on the distance to the nearest player to any enemy
+            //        thisPowerup.SetDuration(dist);
+            //    }
+            //}
+
+            foreach (Player player in ActivePlayers)
             {
-                //if the enemy collects a powerup, its duration is determined by the distance to the player(s)
-                double dist = 999;
-
-                foreach (var enemy in ActiveEnemies)
-                {
-                    foreach (var player in ActivePlayers)
-                    {
-                        Point enemypos = enemy.GetCurrentMazePt();
-                        Point playerpos = player.GetCurrentMazePt();
-
-                        double newDist = MazeOne.GetApproximateDistance(playerpos, enemypos);
-
-                        if (newDist < dist)
-                        {
-                            //finds closest player to any enemy
-                            dist = newDist;
-                        }
-                    }
-                }
-
-                if (dist < 999)
-                {
-                    //sets the duration of the powerup based on the distance to the nearest player to any enemy
-                    thisPowerup.SetDuration(dist);
-                }
+                thisPowerup.ApplyEffectToPlayer(player);
             }
 
-            for (int i = 0; i < ActivePlayers.Count; i++)
+            foreach (Enemy enemy in ActiveEnemies)
             {
-                ActivePlayers[i] = thisPowerup.ApplyEffect(ActivePlayers[i]);
-            }
-
-            for (int i = 0; i < ActiveEnemies.Count; i++)
-            {
-                ActiveEnemies[i] = (Enemy)thisPowerup.ApplyEffect(ActiveEnemies[i]);
+                thisPowerup.ApplyEffectToEnemy(enemy);
             }
 
             AppliedPowerups.Add(thisPowerup);
 
-            int ScorePointValue = ActivePlayers[0].GetScorePointValue();
+            float ScorePointValue = ActivePlayers[0].GetScorePointValue();
 
-            if (ScorePointValue < 0)
+            if (ScorePointValue < 1)
             {
                 MazeOne.SetScorePointColour(0);
             }
@@ -728,23 +753,19 @@ namespace Mazeman
 
         private void RemovePowerupEffect(Powerup thisPowerup)
         {
-            double[] Effects = thisPowerup.GetEffects();
-
-            CountOfPowerupType[thisPowerup.GetTypeNumber()] -= 1;
-
-            for (int i = 0; i < ActivePlayers.Count; i++)
+            foreach (Player player in ActivePlayers)
             {
-                ActivePlayers[i] = thisPowerup.RemoveEffect(ActivePlayers[i]);
+                thisPowerup.RemoveEffectFromPlayer(player);
             }
 
-            for (int i = 0; i < ActiveEnemies.Count; i++)
+            foreach (Enemy enemy in ActiveEnemies)
             {
-                ActiveEnemies[i] = (Enemy)thisPowerup.RemoveEffect(ActiveEnemies[i]);
+                thisPowerup.RemoveEffectFromEnemy(enemy);
             }
 
-            int ScorePointValue = ActivePlayers[0].GetScorePointValue();
+            float ScorePointValue = ActivePlayers[0].GetScorePointValue();
 
-            if (ScorePointValue < 0)
+            if (ScorePointValue < 1)
             {
                 MazeOne.SetScorePointColour(0);
             }
@@ -973,7 +994,7 @@ namespace Mazeman
             MovementTimer.Start();
         }
 
-        public void Destroy()
+        public void RemoveBindings()
         {
             //Removes all dependencies of the game object so that it can be replaced with a new game
 

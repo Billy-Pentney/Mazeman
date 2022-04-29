@@ -17,7 +17,9 @@ namespace Mazeman
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 
             int MazeArea = MazeDimensions[0] * MazeDimensions[1];
-            int NumOfEnemies = (int)Math.Floor(4 * MazeArea / 800.0f);
+
+            // 1 Enemy for every 200 cells
+            int NumOfEnemies = (int)Math.Ceiling(MazeArea / 200.0f);
 
             if (DisableEnemies)
             {
@@ -101,8 +103,8 @@ namespace Mazeman
 
         private void CloseGameReturnToMenu()
         {
-            // Clear the bindings (Stop timers... etc.) in the current game
-            NewGame.Destroy();
+            // Clear the bindings (Stop the timers, clear the maze etc.) in the current game
+            NewGame.RemoveBindings();
             SettingsWindow SW = new SettingsWindow();
             SW.Show();
         }

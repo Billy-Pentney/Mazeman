@@ -5,76 +5,33 @@ using System.Windows.Media.Imaging;
 
 namespace Mazeman
 {
-    class Powerup
+    abstract class Powerup
     {
         protected int maxDuration = 10;
         protected int currentActiveTime = 0;
-        protected double[] Effects = new double[3] { 1, 1, 1 };
-        //  [0] = friendly speed multiplier
-        //  [1] = enemy speed multiplier
-        //  [2] = the multiplier for the points in the game, as the player collects them
 
         protected Point MazePt;
         protected Point PixelPt;
 
+        // Indexes of the powerup images, by colour
+        protected const int ORANGE_SPRITE_NUM = 0;
+        protected const int GREEN_SPRITE_NUM = 1;
+        protected const int BLUE_SPRITE_NUM = 2;
+        protected const int PURPLE_SPRITE_NUM = 3;
+
         // Indicates the effects should be flipped (only if the enemy collects it)
-        protected bool ReverseEffects = false;
+        protected bool EffectsAreReversed = false;
 
-        // Message displayed to user when the powerup is activated
-        protected string DisplayMessage = "Null Effect";
-
-        protected int TypeNumber = -1;
         private static Random rand = new Random();
 
         protected Image Sprite = new Image();
         protected BitmapImage IMGSource = new BitmapImage();
 
-        public Powerup(Point mazePt, Point pixelPt, int TypeNum)
+        public Powerup(Point mazePt, Point pixelPt)
         {
-            if (TypeNum > -1 && TypeNum < 5)
-            {
-                TypeNumber = TypeNum;
-            }
-            else
-            {
-                TypeNumber = 0;
-            }
-
-            maxDuration = rand.Next(3, 8);
+            maxDuration = rand.Next(6, 15);
             // Generates a random time for the powerup to appear/be applied for
             //  e.g. if maxDuration = 5, then the powerup will be displayed for 5 seconds, and then when collected, its effect will be applied for 5 seconds
-
-            switch (TypeNumber)
-            {
-                case 0:
-                    // Increases speed by 50%
-                    Effects[0] = 1.5;
-                    DisplayMessage = "Player Speed is increased for " + maxDuration + " seconds!";
-                    break;
-                case 1:
-                    // Decreases enemy speed by 50%
-                    Effects[1] = 0.5;
-                    DisplayMessage = "Enemy Speed is decreased for " + maxDuration + " seconds!";
-                    break;
-                case 2:
-                    // Freezes enemies
-                    Effects[1] = -1;
-                    DisplayMessage = "Enemies are frozen for " + maxDuration + " seconds!";
-                    break;
-                case 3:
-                    // Doubles the value of each point collected by the player
-                    Effects[2] = 2;    
-                    DisplayMessage = "Points are multiplied by " + Effects[2] + " for " + maxDuration + " seconds!";
-                    break;
-                default:
-                    break;
-            }
-
-            IMGSource.BeginInit();
-            IMGSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Powerup-" + TypeNumber + ".png");
-            IMGSource.EndInit();
-
-            Sprite.Source = IMGSource;
 
             Sprite.Width = GameConstants.CellDimensions[0] / 2;
             Sprite.Height = GameConstants.CellDimensions[1] / 2;
@@ -91,56 +48,33 @@ namespace Mazeman
             Sprite.Opacity = 0.1;               //used to fade powerup in when generated
         }
 
+        public void InitImage(int imageNum)
+        {
+            if (imageNum >= ORANGE_SPRITE_NUM && imageNum <= PURPLE_SPRITE_NUM)
+            {
+                IMGSource.BeginInit();
+                IMGSource.UriSource = new Uri(GameConstants.SpriteFolderAddress + "/Powerup-" + imageNum + ".png");
+                IMGSource.EndInit();
+                Sprite.Source = IMGSource;
+            }
+        }
+
         public void Collect(Player collector)
         {
             currentActiveTime = 0;
             RemoveFromMap();
 
-            ReverseEffects = (collector is Enemy);
-            // If collected by an Enemy, then the effects need to be reversed, so that the enemy receives the benefit
-
-            if (ReverseEffects)
+            // If a player collects a powerup, then the effects benefit the player and detriment the enemy.
+            // If an enemy collects the powerup, then the effects must benefit the enemy and detriment the player.
+            if (collector is Enemy)
             {
-                // Flips the effects so that the enemy receives the friendly effect, when it collects the powerup
-                double temporaryVal = Effects[0];
-                Effects[0] = Effects[1];
-                Effects[1] = temporaryVal;
+                this.ReverseEffect();
 
                 Enemy enemy = (Enemy)collector;
 
                 // Duration of the powerup is proportional to the enemy's speed/difficulty
                 maxDuration = (int)Math.Round(enemy.GetSpeed());
-
-                switch (TypeNumber)
-                {
-                    case 0:
-                        DisplayMessage = "Enemy Speed is increased";
-                        break;
-                    case 1:
-                        DisplayMessage = "Player Speed is decreased";
-                        break;
-                    case 2:
-                        DisplayMessage = "Players are frozen";
-                        break;
-                    case 3:
-                        Effects[2] = -1;
-                        DisplayMessage = "Points have no value";
-                        break;
-                    default:
-                        break;
-                }
-
-                DisplayMessage += " for " + maxDuration;
-                if (maxDuration > 1)
-                {
-                    DisplayMessage += " seconds!";
-                }
-                else
-                {
-                    DisplayMessage += " second";
-                }
             }
-
         }
 
         public void SetDuration(double distance)
@@ -151,22 +85,6 @@ namespace Mazeman
 
             // Duration between 1 and 5
             maxDuration = (int)Math.Sqrt(distance);
-        }
-
-        public double[] GetEffects()
-        {
-            return Effects;
-        }
-
-        public int GetTypeNumber()
-        {
-            // Used to determine which powerup is being applied/collected/removed e.g. 0 = SpeedUp
-            return TypeNumber;
-        }
-
-        public string GetMessage()
-        {
-            return DisplayMessage;
         }
 
         public void IncrementActiveTime()
@@ -202,7 +120,7 @@ namespace Mazeman
 
         public bool IsReversed()
         {
-            return ReverseEffects;
+            return EffectsAreReversed;
         }
 
         public void UpdateOpacity()
@@ -232,63 +150,183 @@ namespace Mazeman
             return maxDuration - currentActiveTime;
         }
 
-        public Player ApplyEffect(Player thisPlayer)
+        public abstract Player ApplyEffectToPlayer(Player player);
+
+        public abstract Enemy ApplyEffectToEnemy(Enemy enemy);
+
+        public abstract Player RemoveEffectFromPlayer(Player thisPlayer);
+
+        public abstract Enemy RemoveEffectFromEnemy(Enemy enemy);
+
+
+        public virtual void ReverseEffect() {
+            EffectsAreReversed = !EffectsAreReversed;
+        }
+
+        public abstract string GetMessage();
+    }
+
+    abstract class SpeedPowerup : Powerup
+    {
+        protected float playerSpeedMultiplier = 1.0f;
+        protected float enemySpeedMultiplier = 1.0f;
+
+        public SpeedPowerup(Point mazePt, Point pixelPt) : base(mazePt, pixelPt) { }
+
+        public override Player ApplyEffectToPlayer(Player player)
         {
-            double speed = thisPlayer.GetSpeed();
-            double PointValue = thisPlayer.GetScorePointValue();
+            player.MultiplySpeed(playerSpeedMultiplier);
+            return player;
+        }
 
-            // Only apply effect to the enemy if they are not frozen or the effect is not freezing
-            // This prevents two freezes cancelling each other out since -1 * -1 = +1
-            if (thisPlayer is Enemy && (speed > 0 || Effects[1] > 0))
-            {
-                thisPlayer.SetSpeed(speed * Effects[1]);
-            }
-            else
-            {
-                // Apply effect to Player's speed
-                if (speed > 0 || Effects[0] > 0)
-                {
-                    thisPlayer.SetSpeed(speed * Effects[0]);
-                }
+        public override Enemy ApplyEffectToEnemy(Enemy enemy)
+        {
+            enemy.MultiplySpeed(enemySpeedMultiplier);
+            return enemy;
+        }
 
-                // Apply effect to points
-                if (PointValue > 0 || Effects[2] > 0)
-                {
-                    thisPlayer.SetScorePointValue((int)(PointValue * Effects[2]));
-                }
-            }
+        public override Player RemoveEffectFromPlayer(Player player)
+        {
+            player.MultiplySpeed(1.0f / playerSpeedMultiplier);
+            return player;
+        }
 
-            return thisPlayer;
+        public override Enemy RemoveEffectFromEnemy(Enemy enemy)
+        {
+            enemy.MultiplySpeed(1.0f / enemySpeedMultiplier);
+            return enemy;
+        }
+
+        public override void ReverseEffect()
+        {
+            base.ReverseEffect();
+            float temp = playerSpeedMultiplier;
+            playerSpeedMultiplier = enemySpeedMultiplier;
+            enemySpeedMultiplier = temp;
+        }
+    }
+
+    class SpeedUpPlayerPowerup : SpeedPowerup
+    {
+
+        public SpeedUpPlayerPowerup(Point mazePt, Point pixelPt): base(mazePt, pixelPt)
+        {
+            playerSpeedMultiplier = 1.5f;
+            InitImage(ORANGE_SPRITE_NUM);
+        }
+
+        public override string GetMessage()
+        {
+            return (EffectsAreReversed ? "Enemy" : "Player") + " Speed is increased for " + maxDuration + " seconds!";
+        }
+    }
+
+    class SpeedDownEnemyPowerup : SpeedPowerup
+    {
+        public SpeedDownEnemyPowerup(Point mazePt, Point pixelPt) : base(mazePt, pixelPt)
+        {
+            enemySpeedMultiplier = 0.5f;
+            InitImage(GREEN_SPRITE_NUM);
+        }
+
+        public override string GetMessage()
+        {
+            return (EffectsAreReversed ? "Player" : "Enemy") + " Speed is decreased for " + maxDuration + " seconds!";
+        }
+    }
+
+    class FreezePowerup : Powerup
+    {
+        public FreezePowerup(Point mazePt, Point pixelPt) : base(mazePt, pixelPt) 
+        {
+            InitImage(BLUE_SPRITE_NUM);
+        }
+
+        public override Player ApplyEffectToPlayer(Player player)
+        {
+            // If the player is already frozen, don't do anything
+            if (EffectsAreReversed)
+                player.TryFreeze();
+
+            return player;
+        }
+
+        public override Enemy ApplyEffectToEnemy(Enemy enemy)
+        {
+            // If the enemy is already frozen, don't do anything
+            if (!EffectsAreReversed)
+                enemy.TryFreeze();
+
+            return enemy;
+        }
+
+        public override Player RemoveEffectFromPlayer(Player player)
+        {
+            // If the player isn't frozen, don't do anything
+            if (EffectsAreReversed)
+                player.TryUnfreeze();
+
+            return player;
+        }
+
+        public override Enemy RemoveEffectFromEnemy(Enemy enemy)
+        {
+            if (!EffectsAreReversed)
+                enemy.TryUnfreeze();
+
+            return enemy;
+        }
+
+        public override string GetMessage()
+        {
+            return (EffectsAreReversed ? "Players" : "Enemies") + " are frozen for " + maxDuration + " seconds!";
+        }
+    }
+
+    class PointsPowerup : Powerup
+    {
+        // This should be a positive value; otherwise point addition will be weird
+        float PointValueMultiplier = 1.0f;
+
+        public PointsPowerup(Point mazePt, Point pixelPt) : base(mazePt, pixelPt)
+        {
+            InitImage(PURPLE_SPRITE_NUM);
+            PointValueMultiplier = 2.0f;
+        }
+
+        public override Player ApplyEffectToPlayer(Player player)
+        {
+            player.MultiplyScorePointValue(PointValueMultiplier);
+            return player;
+        }
+
+        public override Enemy ApplyEffectToEnemy(Enemy enemy)
+        {
+            return enemy;
+        }
+
+        public override Player RemoveEffectFromPlayer(Player player)
+        {
+            player.MultiplyScorePointValue(1.0f / PointValueMultiplier);
+            return player;
 
         }
 
-        public Player RemoveEffect(Player thisPlayer)
+        public override Enemy RemoveEffectFromEnemy(Enemy enemy)
         {
-            double speed = thisPlayer.GetSpeed();
-            double PointValue = thisPlayer.GetScorePointValue();
+            return enemy;
+        }
 
-            // Only apply effect to the enemy if they are not frozen or the effect is not freezing
-            // This prevents two freezes cancelling each other out since -1 * -1 = +1
-            if (thisPlayer is Enemy && !(speed > 0 && Effects[1] < 0))
-            {
-                thisPlayer.SetSpeed(speed / Effects[1]);
-            }
-            else
-            {
-                // Apply effect to Player's speed
-                if (!(speed > 0 && Effects[0] < 0))
-                {
-                    thisPlayer.SetSpeed(speed / Effects[0]);
-                }
+        public override string GetMessage()
+        {
+            return "Points are multiplied by " + PointValueMultiplier + " for " + maxDuration + " seconds!";
+        }
 
-                // Apply effect to points
-                if (!(PointValue > 0 && Effects[2] < 0))
-                {
-                    thisPlayer.SetScorePointValue((int)(PointValue / Effects[2]));
-                }
-            }
-
-            return thisPlayer;
+        public override void ReverseEffect()
+        {
+            base.ReverseEffect();
+            // Take Reciprocal -> if the normal value is 2, then the reversed multiplier is 0.5
+            PointValueMultiplier = 1.0f / PointValueMultiplier;
         }
     }
 }
