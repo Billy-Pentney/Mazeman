@@ -260,11 +260,11 @@ namespace Mazeman
             //resets the board and the entities
 
             int ClearBoardPoints = GameConstants.CellDimensions[0] + GameConstants.CellDimensions[1];
-            float ScorePointValue = 0;
+            int ScorePointValue = 0;
 
             foreach (Player player in ActivePlayers)
             {
-                ScorePointValue = player.GetScorePointValue();
+                ScorePointValue = (int)player.GetScorePointValue();
                 if (ScorePointValue > 0)
                 {
                     player.IncrementScore(ClearBoardPoints * ScorePointValue);

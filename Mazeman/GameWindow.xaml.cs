@@ -98,7 +98,7 @@ namespace Mazeman
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            CloseGameReturnToMenu();
+            //CloseGameReturnToMenu();
         }
 
         private void CloseGameReturnToMenu()

@@ -14,27 +14,27 @@
 
         <TextBox Name="WidthTxt" Width="50" Canvas.Left="133" Canvas.Top="55" Height="26" TextChanged="WidthTxt_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"></TextBox>
         <TextBox Name="HeightTxt" Width="50" Canvas.Left="133" Canvas.Top="85" Height="26" TextChanged="HeightTxt_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"></TextBox>
-        <TextBox Name="MazeDimExplainText" Text="Input the size of the maze you would like to use. &#x0a; Select default to use 15x15" FontSize="11" IsReadOnly="True" BorderThickness="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="Wrap" Height="55" Width="165" Canvas.Left="48" Canvas.Top="146"></TextBox>
+        <TextBox Name="MazeDimExplainText" Text="Input the size of the maze you would like to use. &#x0a; Select default to use 15x15" FontSize="11" IsReadOnly="True" BorderThickness="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" TextWrapping="Wrap" Height="55" Width="165" Canvas.Left="48" Canvas.Top="150"></TextBox>
 
         <Label Name="MazeWidthValidationLbl" Content="✓" Canvas.Left="188" Foreground="Green" FontWeight="Bold" Canvas.Top="53"/>
         <Label Name="MazeHeightValidationLbl" Content="✓" Canvas.Left="188" Foreground="Green" FontWeight="Bold" Canvas.Top="83"/>
 
         <CheckBox Name="DefaultCheck" Content="Default Maze Dimensions" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="60" Canvas.Top="125" Checked="DefaultCheck_Checked" Height="16" Width="147"></CheckBox>
-        <CheckBox Name="TwoPlayersCheck" Content="Two Players" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="60" Canvas.Top="350"/>
+        <CheckBox Name="TwoPlayersCheck" Content="Two Players" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="95" Canvas.Top="357"/>
 
         <Button Name="StartBtn" Content="Start Game" Canvas.Bottom="20" Canvas.Right="20" VerticalContentAlignment="Center" Height="30" Width="270" Click="StartBtn_Click" Canvas.Left="249" Canvas.Top="369"></Button>
 
-        <RadioButton Name="EasyRBtn" Canvas.Left="60" Canvas.Top="255" Checked="EasyRBtn_Checked"></RadioButton>
-        <RadioButton Name="MedRBtn" Canvas.Left="125" Canvas.Top="255" Checked="MedRBtn_Checked"></RadioButton>
-        <RadioButton Name="HardRBtn" Canvas.Left="190" Canvas.Top="255" Checked="HardRBtn_Checked"></RadioButton>
+        <RadioButton Name="EasyRBtn" Canvas.Left="60" Canvas.Top="265" Checked="EasyRBtn_Checked"></RadioButton>
+        <RadioButton Name="MedRBtn" Canvas.Left="125" Canvas.Top="265" Checked="MedRBtn_Checked"></RadioButton>
+        <RadioButton Name="HardRBtn" Canvas.Left="190" Canvas.Top="265" Checked="HardRBtn_Checked"></RadioButton>
 
-        <Label Name="EasyLbl" Content="Easy" FontSize="9" Canvas.Left="54" Canvas.Top="270"></Label>
-        <Label Name="MediumLbl" Content="Medium" FontSize="9" Canvas.Left="112" Canvas.Top="270"></Label>
-        <Label Name="HardLbl" Content="Hard" FontSize="9" HorizontalContentAlignment="Center" Canvas.Left="180" Canvas.Top="270" Width="36"></Label>
+        <Label Name="EasyLbl" Content="Easy" FontSize="9" Canvas.Left="54" Canvas.Top="280"></Label>
+        <Label Name="MediumLbl" Content="Medium" FontSize="9" Canvas.Left="112" Canvas.Top="280"></Label>
+        <Label Name="HardLbl" Content="Hard" FontSize="9" HorizontalContentAlignment="Center" Canvas.Left="180" Canvas.Top="280" Width="36"></Label>
 
         <Label Name="MazeDimText" Content="Maze Dimensions:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="168" Canvas.Left="48" Canvas.Top="10"/>
         <Label Name="EnemyDifficultyText" Content="Enemy Difficulty:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="35" Width="168" Canvas.Left="48" Canvas.Top="216"/>
-        <Label Name="OtherOptionsText" Content="Game Options:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="36" Width="168" Canvas.Left="48" Canvas.Top="309"/>
+        <Label Name="OtherOptionsText" Content="Game Options:" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" BorderThickness="0" FontStyle="Italic" FontSize="15" FontWeight="SemiBold" Height="45" Width="168" Canvas.Left="48" Canvas.Top="309"/>
 
         <TextBlock Name="ControlsExplainText" Width="0" Text="Player 1 is controlled by the W,A,S,D keys.&#x0a; &#x0a;Player 2 is controlled by the arrow keys." TextWrapping="Wrap" Height="92" Canvas.Left="402" Canvas.Top="253"></TextBlock>
 
@@ -45,6 +45,6 @@
 
         <Line Name="SeparatorLine" StrokeThickness="0.5" Stroke="Gray" X1="235" X2="235" Y1="5" Y2="415"></Line>
 
-        <CheckBox Name="DisableEnemiesChk" Content="Disable Enemies (Testing)" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="60" Canvas.Top="369"></CheckBox>
+        <CheckBox Visibility="Hidden" Name="DisableEnemiesChk" Content="Disable Enemies (Testing)" FontSize="10" VerticalContentAlignment="Center"  Canvas.Left="65" Canvas.Top="380"></CheckBox>
     </Canvas>
 </Window>
